@@ -1,12 +1,13 @@
 import Link from "next/link";
 
-import { AboutPreview } from "@/components/sections/about-preview";
-import { GallerySection } from "@/components/sections/gallery-section";
-import { HeroSection } from "@/components/sections/hero-section";
-import { NewsletterSection } from "@/components/sections/newsletter-section";
-import { ResearchHighlight } from "@/components/sections/research-highlight";
-import { ServicesOverview } from "@/components/sections/services-overview";
+import { InteractiveHeroSection } from "@/components/home/interactive-hero";
+import { StatisticsSection } from "@/components/home/statistics-section";
+import { ParallaxAboutSection } from "@/components/home/parallax-about";
+import { InteractiveServicesSection } from "@/components/home/interactive-services";
+import { ScrollZoomResearchSection } from "@/components/home/scroll-zoom-research";
 import { TestimonialsCarousel } from "@/components/sections/testimonials-carousel";
+import { GallerySection } from "@/components/sections/gallery-section";
+import { NewsletterSection } from "@/components/sections/newsletter-section";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { createMetadata } from "@/lib/site";
@@ -17,10 +18,11 @@ export const metadata = createMetadata("Home", undefined, "/");
 export default function HomePage() {
   return (
     <>
-      <HeroSection />
-      <AboutPreview />
-      <ServicesOverview />
-      <ResearchHighlight />
+      <InteractiveHeroSection />
+      <StatisticsSection />
+      <ParallaxAboutSection />
+      <InteractiveServicesSection />
+      <ScrollZoomResearchSection />
       <TestimonialsCarousel />
       <GallerySection />
       <section className="section-space">
