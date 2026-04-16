@@ -1,0 +1,43 @@
+[
+  {
+    "id": "0137f398-5084-4fb3-9702-764a3f9e7a77",
+    "action": "media.uploaded",
+    "actor": "admin",
+    "summary": "Uploaded steve.jpg",
+    "metadata": {
+      "contentType": "image/jpeg",
+      "size": 56091
+    },
+    "createdAt": "2026-04-16T17:42:19.760439+00:00"
+  },
+  {
+    "id": "a2b5d212-19b4-4754-8777-bdf808b22fe3",
+    "action": "auth.login",
+    "actor": "admin",
+    "summary": "Admin login succeeded",
+    "metadata": {
+      "ipAddress": "127.0.0.1"
+    },
+    "createdAt": "2026-04-16T17:40:28.904343+00:00"
+  },
+  {
+    "id": "57d7d713-fead-4872-9135-2cd340d1dcaf",
+    "action": "auth.login",
+    "actor": "admin",
+    "summary": "Admin login succeeded",
+    "metadata": {
+      "ipAddress": "127.0.0.1"
+    },
+    "createdAt": "2026-04-16T15:55:25.912165+00:00"
+  },
+  {
+    "id": "922dfbe2-3cb8-45ae-b572-19f3528c66ee",
+    "action": "auth.login",
+    "actor": "admin",
+    "summary": "Admin login succeeded",
+    "metadata": {
+      "ipAddress": "127.0.0.1"
+    },
+    "createdAt": "2026-04-16T15:20:28.547353+00:00"
+  }
+]

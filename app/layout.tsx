@@ -5,7 +5,8 @@ import "@/app/globals.css";
 
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
-import { ThemeProvider } from "@/components/providers/theme-provider";
+import { AppProviders } from "@/components/providers/app-providers";
+import { CookieBanner } from "@/components/privacy/cookie-banner";
 import { siteConfig } from "@/lib/site";
 
 const sans = Raleway({
@@ -36,14 +37,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${sans.variable} ${display.variable} min-h-screen font-sans`}>
-        <ThemeProvider>
+        <AppProviders>
           <div className="relative flex min-h-screen flex-col">
             <div className="absolute inset-0 -z-10 bg-grid [background-size:20px_20px] opacity-[0.35]" />
             <SiteHeader />
             <main className="flex-1">{children}</main>
             <SiteFooter />
+            <CookieBanner />
           </div>
-        </ThemeProvider>
+        </AppProviders>
       </body>
     </html>
   );

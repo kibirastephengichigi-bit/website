@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { SectionHeading } from "@/components/layout/section-heading";
 import { Card } from "@/components/ui/card";
 import { createMetadata } from "@/lib/site";
@@ -14,7 +16,7 @@ export default function AboutPage() {
           title="Full biography, affiliations, and professional focus."
           description="This page carries forward the detailed biography and leadership profile from the original website."
         />
-        <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="space-y-8">
           <Card className="p-8 sm:p-10">
             <div className="prose-copy">
               {siteContent.aboutFull.map((paragraph) => (
@@ -22,7 +24,7 @@ export default function AboutPage() {
               ))}
             </div>
           </Card>
-          <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
             <Card className="p-7">
               <h3 className="font-display text-3xl">Affiliations</h3>
               <ul className="mt-4 space-y-3 text-sm leading-7 text-muted-foreground">
@@ -41,6 +43,37 @@ export default function AboutPage() {
                 <li>Thanatology</li>
                 <li>Cultural evolution</li>
                 <li>Indigenization of psychological practice</li>
+              </ul>
+            </Card>
+            <Card className="p-7">
+              <h3 className="font-display text-3xl">Honors and Awards</h3>
+              <ul className="mt-4 space-y-3 text-sm leading-7 text-muted-foreground">
+                {siteContent.awards.map((award) => (
+                  <li key={`${award.title}-${award.year}`}>
+                    <span className="font-semibold text-foreground">{award.year}</span> {award.title}
+                    {award.href ? (
+                      <>
+                        {" "}
+                        <Link href={award.href} className="text-foreground underline-offset-4 hover:underline">
+                          View
+                        </Link>
+                      </>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+            <Card className="p-7">
+              <h3 className="font-display text-3xl">Profiles and Networks</h3>
+              <ul className="mt-4 space-y-4 text-sm leading-7 text-muted-foreground">
+                {siteContent.externalProfiles.map((profile) => (
+                  <li key={profile.label}>
+                    <Link href={profile.href} className="font-semibold text-foreground underline-offset-4 hover:underline">
+                      {profile.label}
+                    </Link>
+                    <p>{profile.description}</p>
+                  </li>
+                ))}
               </ul>
             </Card>
           </div>

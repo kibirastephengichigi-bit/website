@@ -1,24 +1,5 @@
 {
-  "node": {
-    "00c79b5e1ece65afa8ba7ec6e2441dd61833c1419b": {
-      "workers": {
-        "app/admin/page": {
-          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fworkspaces%2FStephen-Asatsa-Website%2Fcomponents%2Fadmin%2Fadmin-shell.tsx%22%2C%5B%7B%22id%22%3A%2200c79b5e1ece65afa8ba7ec6e2441dd61833c1419b%22%2C%22exportedName%22%3A%22%24%24RSC_SERVER_ACTION_0%22%2C%22filename%22%3A%22components%2Fadmin%2Fadmin-shell.tsx%22%7D%5D%5D%5D&__client_imported__=!",
-          "async": false
-        },
-        "app/admin/research/page": {
-          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fworkspaces%2FStephen-Asatsa-Website%2Fcomponents%2Fadmin%2Fadmin-shell.tsx%22%2C%5B%7B%22id%22%3A%2200c79b5e1ece65afa8ba7ec6e2441dd61833c1419b%22%2C%22exportedName%22%3A%22%24%24RSC_SERVER_ACTION_0%22%2C%22filename%22%3A%22components%2Fadmin%2Fadmin-shell.tsx%22%7D%5D%5D%5D&__client_imported__=!",
-          "async": false
-        }
-      },
-      "layer": {
-        "app/admin/page": "rsc",
-        "app/admin/research/page": "rsc"
-      },
-      "filename": "components/admin/admin-shell.tsx",
-      "exportedName": "$$RSC_SERVER_ACTION_0"
-    }
-  },
+  "node": {},
   "edge": {},
-  "encryptionKey": "hGHkMElqxw/9PknIRjkF49EunyYG3A7XZ7gcKYFZS10="
+  "encryptionKey": "IbL5MpsCQ+cpSRdCCGqkJmKq5T8+rdjxe5PTZYIoQ24="
 }

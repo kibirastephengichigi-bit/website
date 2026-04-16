@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 import { SectionHeading } from "@/components/layout/section-heading";
 import { Card } from "@/components/ui/card";
@@ -8,7 +9,7 @@ import { siteContent } from "@/lib/content/site-content";
 
 export function TestimonialsCarousel() {
   return (
-    <section className="section-space bg-primary text-primary-foreground">
+    <section className="section-space">
       <div className="container-shell space-y-10">
         <SectionHeading
           eyebrow="Testimonials"
@@ -24,12 +25,23 @@ export function TestimonialsCarousel() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.08 }}
             >
-              <Card className="h-full border-white/10 bg-white/10 p-7 text-primary-foreground backdrop-blur-sm">
-                <p className="text-base leading-8">“{testimonial.quote}”</p>
-                <div className="mt-6">
-                  <p className="font-semibold">{testimonial.name}</p>
-                  <p className="text-sm text-primary-foreground/70">{testimonial.role}</p>
+              <Card className="h-full border-border/50 bg-card/50 p-7 backdrop-blur-sm">
+                <div className="mb-5 flex items-center gap-4">
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-border bg-muted">
+                    <Image
+                      src={testimonial.image}
+                      alt={testimonial.name}
+                      fill
+                      sizes="64px"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">{testimonial.name}</p>
+                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                  </div>
                 </div>
+                <p className="text-base leading-8 text-foreground">“{testimonial.quote}”</p>
               </Card>
             </motion.div>
           ))}

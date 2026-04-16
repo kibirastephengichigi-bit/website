@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { blogContentBySlug, blogPosts } from "@/lib/content/blog-data";
 import { createMetadata } from "@/lib/site";
+import { SaveItemButton } from "@/components/user/save-item-button";
 
 export async function generateStaticParams() {
   return blogPosts.map((post) => ({ slug: post.slug }));
@@ -41,6 +42,15 @@ export default async function BlogPostPage({
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">{post.category}</p>
           <h1 className="mt-4 font-display text-5xl">{post.title}</h1>
           <p className="mt-3 text-sm uppercase tracking-[0.2em] text-muted-foreground">{post.publishedAt}</p>
+          <div className="mt-6">
+            <SaveItemButton
+              type="blog"
+              itemKey={post.slug}
+              title={post.title}
+              href={`/blog/${post.slug}`}
+              image={post.featuredImage}
+            />
+          </div>
           <div className="prose-copy mt-8">
             {blogContentBySlug[slug].map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>

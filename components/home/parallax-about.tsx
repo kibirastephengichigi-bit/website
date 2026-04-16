@@ -10,7 +10,7 @@ export function ParallaxAboutSection() {
   const y2 = useTransform(scrollYProgress, [0, 1], [0, -50]);
 
   return (
-    <section className="py-20 overflow-hidden">
+    <section id="who-we-are" className="py-20 overflow-hidden">
       <div className="container-shell">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Text Content */}

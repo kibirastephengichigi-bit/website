@@ -1,52 +1,13 @@
 import type { BlogPostSummary } from "@/types";
 
-export const blogPosts: BlogPostSummary[] = [
-  {
-    id: "mental-health-communities",
-    title: "Mental Health Support That Respects Community Realities",
-    slug: "mental-health-support-that-respects-community-realities",
-    excerpt:
-      "Mental health care is most effective when it takes seriously the lived worlds, relationships, and cultural resources that people already use to make meaning.",
-    category: "Mental Health",
-    publishedAt: "2026-01-10",
-    featuredImage: "/assets/gallery/steve3.jpg",
-  },
-  {
-    id: "decolonizing-psychology",
-    title: "Why Decolonizing Psychology Is a Practice, Not a Slogan",
-    slug: "why-decolonizing-psychology-is-a-practice-not-a-slogan",
-    excerpt:
-      "Decolonization asks us to revisit assumptions about knowledge, healing, expertise, and the communities psychology claims to serve.",
-    category: "Decolonizing Psychology",
-    publishedAt: "2026-02-14",
-    featuredImage: "/assets/gallery/project.jpeg",
-  },
-  {
-    id: "thanatology-and-ritual",
-    title: "Thanatology, Ritual, and the Human Need for Meaning",
-    slug: "thanatology-ritual-and-the-human-need-for-meaning",
-    excerpt:
-      "Mourning rituals do more than preserve tradition; they hold emotional, relational, and developmental wisdom that modern systems often overlook.",
-    category: "Thanatology",
-    publishedAt: "2026-03-02",
-    featuredImage: "/assets/gallery/awards.jpeg",
-  },
-];
+import blogData from "./blog-data.json";
 
-export const blogContentBySlug: Record<string, string[]> = {
-  "mental-health-support-that-respects-community-realities": [
-    "When people seek help, they are not simply presenting symptoms. They arrive with histories, communities, responsibilities, spiritual commitments, and social pressures that shape both suffering and healing.",
-    "A responsive mental health practice pays attention to those realities instead of reducing care to a detached technical exercise. This is especially important in African contexts where relational belonging often shapes how distress is interpreted and responded to.",
-    "Professional care matters deeply, but so does cultural humility. The future of mental health support depends on our ability to combine evidence, dignity, and context-sensitive practice.",
-  ],
-  "why-decolonizing-psychology-is-a-practice-not-a-slogan": [
-    "Decolonizing psychology is not achieved by changing vocabulary alone. It requires a real reconsideration of whose knowledge counts, how interventions are designed, and which forms of evidence are treated as legitimate.",
-    "Indigenous knowledge systems are not obstacles to modern care. They are sources of theory, practice, and ethical insight that can widen the discipline rather than narrow it.",
-    "The work of decolonization is therefore scholarly, professional, and deeply practical. It reshapes teaching, supervision, research design, and the everyday encounter between practitioner and client.",
-  ],
-  "thanatology-ritual-and-the-human-need-for-meaning": [
-    "Thanatology invites us to take mortality seriously as a psychological and cultural reality. Across communities, rituals around death often provide language, structure, and belonging in moments of disruption.",
-    "These practices can support grief, affirm continuity, and restore shared meaning. Rather than dismiss them as peripheral, psychology can learn from the emotional intelligence they embody.",
-    "A culturally grounded approach to loss helps individuals and communities mourn with dignity while remaining attentive to the specific challenges of the present.",
-  ],
+type BlogData = {
+  blogPosts: BlogPostSummary[];
+  blogContentBySlug: Record<string, string[]>;
 };
+
+const typedBlogData = blogData as BlogData;
+
+export const blogPosts = typedBlogData.blogPosts;
+export const blogContentBySlug = typedBlogData.blogContentBySlug;

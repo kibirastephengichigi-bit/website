@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
+import { SaveItemButton } from "@/components/user/save-item-button";
 import type { BlogPostSummary } from "@/types";
 
 export function BlogFilters({
@@ -63,9 +64,18 @@ export function BlogFilters({
             <h2 className="mt-3 font-display text-3xl">{post.title}</h2>
             <p className="mt-3 text-sm leading-7 text-muted-foreground">{post.excerpt}</p>
             <p className="mt-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">{post.publishedAt}</p>
-            <Link href={`/blog/${post.slug}`} className="mt-4 inline-block text-sm font-semibold text-primary">
-              Read article
-            </Link>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link href={`/blog/${post.slug}`} className="inline-block text-sm font-semibold text-primary">
+                Read article
+              </Link>
+              <SaveItemButton
+                type="blog"
+                itemKey={post.slug}
+                title={post.title}
+                href={`/blog/${post.slug}`}
+                image={post.featuredImage}
+              />
+            </div>
           </Card>
         ))}
       </div>

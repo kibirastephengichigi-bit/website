@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { Menu, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { siteContent } from "@/lib/content/site-content";
 
 const links = [
   { href: "/", label: "Home" },
@@ -18,6 +20,7 @@ const links = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const { data: session } = useSession();
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur-xl">
@@ -40,10 +43,37 @@ export function SiteHeader() {
               {link.label}
             </Link>
           ))}
+          <div className="flex items-center gap-2">
+            {siteContent.contact.socialLinks.slice(0, 4).map((social) => {
+              const Icon = social.label === "Facebook" ? Facebook : 
+                          social.label === "Twitter" || social.label === "X" ? Twitter :
+                          social.label === "Instagram" ? Instagram : 
+                          social.label === "LinkedIn" ? Linkedin : null;
+              if (!Icon) return null;
+              return (
+                <Button key={social.label} asChild size="sm" variant="ghost" className="h-8 w-8 p-0">
+                  <a href={social.href} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
+                    <Icon className="h-4 w-4" />
+                  </a>
+                </Button>
+              );
+            })}
+          </div>
           <ThemeToggle />
-          <Button asChild size="sm">
-            <Link href="/admin">Admin</Link>
-          </Button>
+          {session?.user ? (
+            <>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/account">Account</Link>
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => void signOut({ callbackUrl: "/" })}>
+                Sign out
+              </Button>
+            </>
+          ) : (
+            <Button asChild size="sm">
+              <Link href="/signin">Sign in with Google</Link>
+            </Button>
+          )}
         </nav>
 
         <button
@@ -63,10 +93,37 @@ export function SiteHeader() {
                 {link.label}
               </Link>
             ))}
+            <div className="flex items-center gap-2 pt-2">
+              {siteContent.contact.socialLinks.slice(0, 4).map((social) => {
+                const Icon = social.label === "Facebook" ? Facebook : 
+                            social.label === "Twitter" || social.label === "X" ? Twitter :
+                            social.label === "Instagram" ? Instagram : 
+                            social.label === "LinkedIn" ? Linkedin : null;
+                if (!Icon) return null;
+                return (
+                  <Button key={social.label} asChild size="sm" variant="ghost" className="h-8 w-8 p-0">
+                    <a href={social.href} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
+                      <Icon className="h-4 w-4" />
+                    </a>
+                  </Button>
+                );
+              })}
+            </div>
             <ThemeToggle />
-            <Button asChild size="sm">
-              <Link href="/admin">Admin</Link>
-            </Button>
+            {session?.user ? (
+              <>
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/account">Account</Link>
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => void signOut({ callbackUrl: "/" })}>
+                  Sign out
+                </Button>
+              </>
+            ) : (
+              <Button asChild size="sm">
+                <Link href="/signin">Sign in</Link>
+              </Button>
+            )}
           </div>
         </div>
       ) : null}
