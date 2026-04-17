@@ -2,7 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { Chrome, Loader2 } from "lucide-react";
+import { Chrome, Loader2, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,18 @@ export function SignInForm() {
   const [loading, setLoading] = useState(false);
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") || "/account";
+  const error = params.get("error");
+
+  // Check if Google OAuth is configured
+  const isGoogleConfigured = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID &&
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID !== "your-google-client-id-here";
 
   async function handleGoogleSignIn() {
     setLoading(true);
     try {
       await signIn("google", { callbackUrl });
+    } catch (err) {
+      console.error("Sign in error:", err);
     } finally {
       setLoading(false);
     }
@@ -32,7 +39,39 @@ export function SignInForm() {
         </p>
       </div>
 
-      <Button className="w-full" size="lg" onClick={() => void handleGoogleSignIn()} disabled={loading}>
+      {error && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            <span className="font-medium">Authentication Error</span>
+          </div>
+          <p className="mt-1">
+            {error === "Configuration" && "Google OAuth is not properly configured."}
+            {error === "AccessDenied" && "Access was denied. Please try again."}
+            {error === "Verification" && "Email verification failed."}
+            {!["Configuration", "AccessDenied", "Verification"].includes(error) && "An error occurred during sign in."}
+          </p>
+        </div>
+      )}
+
+      {!isGoogleConfigured && (
+        <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-700">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            <span className="font-medium">Google OAuth Not Configured</span>
+          </div>
+          <p className="mt-1">
+            Google authentication is not set up yet. Please configure Google OAuth credentials in your environment variables.
+          </p>
+        </div>
+      )}
+
+      <Button
+        className="w-full"
+        size="lg"
+        onClick={() => void handleGoogleSignIn()}
+        disabled={loading || !isGoogleConfigured}
+      >
         {loading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

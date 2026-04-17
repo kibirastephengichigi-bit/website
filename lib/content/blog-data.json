@@ -26,6 +26,15 @@
       "category": "Thanatology",
       "publishedAt": "2026-03-02",
       "featuredImage": "/assets/gallery/awards.jpeg"
+    },
+    {
+      "id": "post-1776440416716",
+      "title": "test",
+      "slug": "new-post-1776440416716",
+      "excerpt": "test blog post",
+      "category": "all",
+      "publishedAt": "01/020/2000",
+      "featuredImage": ""
     }
   ],
   "blogContentBySlug": {
@@ -43,6 +52,9 @@
       "Thanatology invites us to take mortality seriously as a psychological and cultural reality. Across communities, rituals around death often provide language, structure, and belonging in moments of disruption.",
       "These practices can support grief, affirm continuity, and restore shared meaning. Rather than dismiss them as peripheral, psychology can learn from the emotional intelligence they embody.",
       "A culturally grounded approach to loss helps individuals and communities mourn with dignity while remaining attentive to the specific challenges of the present."
+    ],
+    "new-post-1776440416716": [
+      "this is a test blog post"
     ]
   }
 }

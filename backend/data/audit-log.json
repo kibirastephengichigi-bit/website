@@ -1,5 +1,25 @@
 [
   {
+    "id": "e2bb8296-363e-403f-bee0-38db20482a83",
+    "action": "blog.updated",
+    "actor": "admin",
+    "summary": "Saved blog post collection",
+    "metadata": {
+      "postCount": 4
+    },
+    "createdAt": "2026-04-17T12:41:41.081182+00:00"
+  },
+  {
+    "id": "599e8f0a-e654-45bf-a00b-2f2781277f6d",
+    "action": "auth.login",
+    "actor": "admin",
+    "summary": "Admin login succeeded",
+    "metadata": {
+      "ipAddress": "127.0.0.1"
+    },
+    "createdAt": "2026-04-17T12:39:23.342940+00:00"
+  },
+  {
     "id": "0137f398-5084-4fb3-9702-764a3f9e7a77",
     "action": "media.uploaded",
     "actor": "admin",

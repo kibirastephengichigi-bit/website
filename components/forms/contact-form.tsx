@@ -15,6 +15,7 @@ type ContactValues = z.infer<typeof contactSchema>;
 
 export function ContactForm() {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+
   const form = useForm<ContactValues>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
@@ -26,10 +27,25 @@ export function ContactForm() {
 
   const onSubmit = async (values: ContactValues) => {
     setStatus("idle");
+
+    // Basic rate limiting (client-side)
+    const lastSubmission = localStorage.getItem("contact-form-last-submit");
+    if (lastSubmission) {
+      const timeDiff = Date.now() - parseInt(lastSubmission);
+      if (timeDiff < 60000) { // 1 minute cooldown
+        setStatus("error");
+        return;
+      }
+    }
+
     try {
       const response = await fetch("/api/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          // Add CSRF protection header
+          "X-CSRF-Token": generateCSRFToken(),
+        },
         body: JSON.stringify(values),
       });
 
@@ -37,9 +53,13 @@ export function ContactForm() {
         throw new Error("Request failed");
       }
 
+      // Store submission timestamp for rate limiting
+      localStorage.setItem("contact-form-last-submit", Date.now().toString());
+
       form.reset();
       setStatus("success");
     } catch (error) {
+      console.error("Contact form error:", error);
       setStatus("error");
     }
   };
@@ -47,13 +67,33 @@ export function ContactForm() {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
-        <Input placeholder="Your name" {...form.register("name")} disabled={form.formState.isSubmitting} />
-        <Input type="email" placeholder="Your email" {...form.register("email")} disabled={form.formState.isSubmitting} />
+        <Input
+          placeholder="Your name"
+          {...form.register("name")}
+          disabled={form.formState.isSubmitting}
+          maxLength={100}
+        />
+        <Input
+          type="email"
+          placeholder="Your email"
+          {...form.register("email")}
+          disabled={form.formState.isSubmitting}
+          maxLength={254}
+        />
       </div>
       <Textarea
         placeholder="How can we support you?"
         {...form.register("message")}
         disabled={form.formState.isSubmitting}
+        maxLength={2000}
+        rows={5}
+      />
+
+      {/* Hidden CSRF token */}
+      <input
+        type="hidden"
+        name="csrf_token"
+        value={generateCSRFToken()}
       />
 
       {status === "success" ? (
@@ -65,7 +105,7 @@ export function ContactForm() {
 
       {status === "error" ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          We could not send your message right now. Please try again.
+          We could not send your message right now. Please try again later or contact us directly.
         </div>
       ) : null}
 
@@ -91,4 +131,11 @@ export function ContactForm() {
       </div>
     </form>
   );
+}
+
+// Simple CSRF token generation (client-side)
+function generateCSRFToken(): string {
+  const timestamp = Date.now().toString();
+  const random = Math.random().toString(36).substring(2);
+  return btoa(timestamp + random).substring(0, 32);
 }

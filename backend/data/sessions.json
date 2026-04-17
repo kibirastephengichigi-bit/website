@@ -1,26 +1,10 @@
 [
   {
-    "token": "z4rsgUrg3zqL9l-Yzp4pVGKcAaEugPXs_vOl7lOOH_FyqHeu6sKPRZlJHh7mYvOi",
-    "username": "admin",
-    "ipAddress": "127.0.0.1",
-    "userAgent": "curl/8.19.0",
-    "createdAt": "2026-04-16T15:20:28.547037+00:00",
-    "expiresAt": "2026-04-16T23:20:28.547026+00:00"
-  },
-  {
-    "token": "B6WkVuvUjmO-47J0e0zXiMeIQ1dBT6MVL_Vm62csBrX4zSXPznF_zGNKpw9tP0s1",
-    "username": "admin",
-    "ipAddress": "127.0.0.1",
-    "userAgent": "curl/8.19.0",
-    "createdAt": "2026-04-16T15:55:25.911182+00:00",
-    "expiresAt": "2026-04-16T23:55:25.911164+00:00"
-  },
-  {
-    "token": "XKQ9JI95MoqCcEJga2zU2zjgYy2u6A4evCEbQE9Z5xiLBCNgnMFQqAt8-4Tu2DHE",
+    "token": "bWe6YR7EoIJw3zkN89P8B28-v98t7AjNB1O08VF1LEDREN4Oaqbg6T6BLvA2CZJp",
     "username": "admin",
     "ipAddress": "127.0.0.1",
     "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
-    "createdAt": "2026-04-16T17:40:28.903974+00:00",
-    "expiresAt": "2026-04-17T01:40:28.903962+00:00"
+    "createdAt": "2026-04-17T12:39:23.342045+00:00",
+    "expiresAt": "2026-04-17T20:39:23.342033+00:00"
   }
 ]

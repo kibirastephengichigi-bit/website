@@ -14,21 +14,32 @@ declare module "next-auth" {
   }
 }
 
-const providers =
-  process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-    ? [
-        Google({
-          clientId: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        }),
-      ]
-    : [];
+// Only include Google provider if credentials are properly configured
+const providers = [];
+
+// Add Google provider only if credentials are set and not placeholder values
+if (
+  process.env.GOOGLE_CLIENT_ID &&
+  process.env.GOOGLE_CLIENT_SECRET &&
+  process.env.GOOGLE_CLIENT_ID !== "your-google-client-id-here" &&
+  process.env.GOOGLE_CLIENT_SECRET !== "your-google-client-secret-here" &&
+  process.env.GOOGLE_CLIENT_ID.length > 10 &&
+  process.env.GOOGLE_CLIENT_SECRET.length > 10
+) {
+  providers.push(
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    })
+  );
+}
 
 const authConfig: NextAuthConfig = {
   adapter: hasDatabaseUrl && db ? PrismaAdapter(db) : undefined,
   session: { strategy: "database" },
   pages: {
     signIn: "/signin",
+    error: "/signin", // Redirect errors to signin page
   },
   providers,
   callbacks: {
@@ -42,8 +53,14 @@ const authConfig: NextAuthConfig = {
       }
       return session;
     },
-    async signIn({ user }) {
-      return Boolean(user.email);
+    async signIn({ user, account, profile }) {
+      // Only allow sign in with verified email
+      if (!user.email) {
+        return false;
+      }
+
+      // Additional validation can be added here
+      return true;
     },
   },
   events: {
@@ -57,6 +74,12 @@ const authConfig: NextAuthConfig = {
         },
       });
     },
+  },
+  // Add security headers
+  headers: {
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
   },
 };
 

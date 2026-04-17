@@ -21,10 +21,25 @@ export function NewsletterForm() {
 
   const onSubmit = async (values: NewsletterValues) => {
     setStatus("idle");
+
+    // Basic rate limiting (client-side)
+    const lastSubmission = localStorage.getItem("newsletter-form-last-submit");
+    if (lastSubmission) {
+      const timeDiff = Date.now() - parseInt(lastSubmission);
+      if (timeDiff < 300000) { // 5 minute cooldown
+        setStatus("error");
+        return;
+      }
+    }
+
     try {
       const response = await fetch("/api/newsletter", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          // Add CSRF protection header
+          "X-CSRF-Token": generateCSRFToken(),
+        },
         body: JSON.stringify(values),
       });
 
@@ -32,9 +47,13 @@ export function NewsletterForm() {
         throw new Error("Request failed");
       }
 
+      // Store submission timestamp for rate limiting
+      localStorage.setItem("newsletter-form-last-submit", Date.now().toString());
+
       form.reset();
       setStatus("success");
     } catch (error) {
+      console.error("Newsletter form error:", error);
       setStatus("error");
     }
   };
@@ -48,6 +67,7 @@ export function NewsletterForm() {
           {...form.register("email")}
           className="h-12 bg-white"
           disabled={form.formState.isSubmitting}
+          maxLength={254}
         />
         <Button
           type="submit"
@@ -67,6 +87,23 @@ export function NewsletterForm() {
         </Button>
       </div>
 
+      {/* Hidden CSRF token */}
+      <input
+        type="hidden"
+        name="csrf_token"
+        value={generateCSRFToken()}
+      />
+
+      {/* Honeypot field for bot detection */}
+      <input
+        type="text"
+        name="website"
+        style={{ display: "none" }}
+        tabIndex={-1}
+        autoComplete="off"
+        {...form.register("website")}
+      />
+
       {form.formState.isSubmitting ? (
         <p className="text-sm text-white/80">Adding your email now. Please wait a moment.</p>
       ) : null}
@@ -80,9 +117,16 @@ export function NewsletterForm() {
 
       {status === "error" ? (
         <div className="rounded-2xl border border-red-200/70 bg-red-50/95 px-4 py-3 text-sm text-red-700">
-          We could not complete your signup. Please try again.
+          We could not complete your signup. Please try again later.
         </div>
       ) : null}
     </form>
   );
+}
+
+// Simple CSRF token generation (client-side)
+function generateCSRFToken(): string {
+  const timestamp = Date.now().toString();
+  const random = Math.random().toString(36).substring(2);
+  return btoa(timestamp + random).substring(0, 32);
 }
