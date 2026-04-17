@@ -68,6 +68,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   reactStrictMode: true,
+  // Enable standalone output for Docker
+  output: 'standalone',
 };
 
 export default nextConfig;

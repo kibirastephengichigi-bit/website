@@ -1,0 +1,31 @@
+# Use Python 3.11 Alpine for smaller image size
+FROM python:3.11-alpine AS base
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    && rm -rf /var/cache/apk/*
+
+# Copy Python requirements (if any - create requirements.txt if needed)
+# For now, using only standard library dependencies
+
+# Copy backend code
+COPY backend/ ./backend/
+
+# Create uploads directory
+RUN mkdir -p public/uploads/admin
+
+# Expose port
+EXPOSE 8000
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV ADMIN_API_PORT=8000
+ENV ADMIN_ALLOWED_ORIGIN=http://localhost:3000
+
+# Run the admin backend
+CMD ["python", "-m", "backend"]
