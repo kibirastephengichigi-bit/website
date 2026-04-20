@@ -9,16 +9,17 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json* ./
-# Reuse the workspace's installed dependencies to avoid flaky network installs
-# during Docker builds in this environment.
-COPY node_modules ./node_modules
+# Install dependencies needed for the build.
+RUN npm ci
 
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./_node_modules
-RUN mv ./_node_modules ./node_modules
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Generate Prisma client during the build on real deployment hosts.
+RUN npx prisma generate
 
 # Build the application
 RUN npm run build
