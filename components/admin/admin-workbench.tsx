@@ -1,0 +1,1641 @@
+"use client";
+
+import Link from "next/link";
+import {
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+  startTransition,
+  useEffect,
+  useState,
+} from "react";
+import {
+  FileText,
+  Images,
+  LayoutDashboard,
+  Loader2,
+  LockKeyhole,
+  LogOut,
+  Plus,
+  RefreshCw,
+  Save,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { blogContentBySlug as seedBlogContent, blogPosts as seedBlogPosts } from "@/lib/content/blog-data";
+import { siteContent as seedSiteContent, type SiteContent } from "@/lib/content/site-content";
+import type { BlogPostSummary } from "@/types";
+
+type Panel = "overview" | "content" | "research" | "blog" | "media" | "security";
+
+type DashboardPayload = {
+  welcome: {
+    title: string;
+    subtitle: string;
+    username: string;
+    mfaConfigured: boolean;
+  };
+  metrics: Array<{ label: string; value: number }>;
+  quickActions: Array<{ id: string; label: string; section: Panel }>;
+  auditEvents: AuditEvent[];
+};
+
+type AuditEvent = {
+  id: string;
+  action: string;
+  actor: string;
+  summary: string;
+  createdAt: string;
+};
+
+type MediaItem = {
+  id: string;
+  fileName: string;
+  url: string;
+  altText?: string;
+  contentType?: string;
+  size: number;
+  uploadedAt: string;
+};
+
+type AuthUser = {
+  username: string;
+  displayName: string;
+  role: string;
+  mfaConfigured: boolean;
+};
+
+type BlogData = {
+  blogPosts: BlogPostSummary[];
+  blogContentBySlug: Record<string, string[]>;
+};
+
+const API_BASE = "/api/admin";
+
+const panels: Array<{ id: Panel; label: string; description: string; icon: typeof LayoutDashboard }> = [
+  { id: "overview", label: "Overview", description: "Status, quick actions, and publishing visibility.", icon: LayoutDashboard },
+  { id: "content", label: "Site Content", description: "Hero, story, services, quote, and contact info.", icon: Sparkles },
+  { id: "research", label: "Research Data", description: "Projects, publications, testimonials, and advanced collections.", icon: FileText },
+  { id: "blog", label: "Blog Manager", description: "Create, edit, and organize publishable articles.", icon: FileText },
+  { id: "media", label: "Media Library", description: "Upload image and document assets for the website.", icon: Images },
+  { id: "security", label: "Security", description: "Authentication posture, sessions, and audit history.", icon: ShieldCheck },
+];
+
+const advancedKeys = [
+  "awards",
+  "conferences",
+  "invitedTalks",
+  "externalProfiles",
+  "collaborators",
+  "media",
+  "gallery",
+  "blogCategories",
+] as const;
+
+type AdvancedKey = (typeof advancedKeys)[number];
+
+const emptyBlogPost: BlogPostSummary = {
+  id: "",
+  title: "",
+  slug: "",
+  excerpt: "",
+  category: "",
+  publishedAt: "",
+  featuredImage: "",
+};
+
+function toLines(value: string[]) {
+  return value.join("\n");
+}
+
+function fromLines(value: string) {
+  return value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function prettyJson(value: unknown) {
+  return JSON.stringify(value, null, 2);
+}
+
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: ReactNode;
+}) {
+  return (
+    <label className="space-y-2">
+      <div>
+        <p className="text-sm font-semibold text-foreground">{label}</p>
+        {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+      </div>
+      {children}
+    </label>
+  );
+}
+
+function SectionCard({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <Card className="space-y-6 p-6">
+      <div className="space-y-1">
+        <h2 className="font-display text-3xl">{title}</h2>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+      {children}
+    </Card>
+  );
+}
+
+export function AdminWorkbench() {
+  const [activePanel, setActivePanel] = useState<Panel>("overview");
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [dashboard, setDashboard] = useState<DashboardPayload | null>(null);
+  const [siteContent, setSiteContent] = useState<SiteContent>(seedSiteContent);
+  const [blogData, setBlogData] = useState<BlogData>({
+    blogPosts: seedBlogPosts,
+    blogContentBySlug: seedBlogContent,
+  });
+  const [advancedDrafts, setAdvancedDrafts] = useState<Record<AdvancedKey, string>>(() => ({
+    awards: prettyJson(seedSiteContent.awards),
+    conferences: prettyJson(seedSiteContent.conferences),
+    invitedTalks: prettyJson(seedSiteContent.invitedTalks),
+    externalProfiles: prettyJson(seedSiteContent.externalProfiles),
+    collaborators: prettyJson(seedSiteContent.collaborators),
+    media: prettyJson(seedSiteContent.media),
+    gallery: prettyJson(seedSiteContent.gallery),
+    blogCategories: prettyJson(seedSiteContent.blogCategories),
+  }));
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [booting, setBooting] = useState(true);
+  const [pendingAction, setPendingAction] = useState<"content" | "blog" | "upload" | "auth" | null>(null);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [loginForm, setLoginForm] = useState({ username: "admin", password: "", otp: "" });
+
+  const request = async <T,>(path: string, init?: RequestInit) => {
+    const response = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(init?.headers || {}),
+      },
+    });
+
+    const contentType = response.headers.get("content-type") || "";
+    const payloadText = await response.text();
+
+    if (!response.ok) {
+      if (contentType.includes("application/json")) {
+        const data = JSON.parse(payloadText) as { error?: string };
+        throw new Error(data.error || "Request failed");
+      }
+      throw new Error(payloadText.slice(0, 180) || "Request failed");
+    }
+
+    if (!contentType.includes("application/json")) {
+      throw new Error(`Expected JSON from ${path}, got ${contentType || "unknown content type"}`);
+    }
+    return JSON.parse(payloadText) as T;
+  };
+
+  const syncAdvancedDrafts = (content: SiteContent) => {
+    setAdvancedDrafts({
+      awards: prettyJson(content.awards),
+      conferences: prettyJson(content.conferences),
+      invitedTalks: prettyJson(content.invitedTalks),
+      externalProfiles: prettyJson(content.externalProfiles),
+      collaborators: prettyJson(content.collaborators),
+      media: prettyJson(content.media),
+      gallery: prettyJson(content.gallery),
+      blogCategories: prettyJson(content.blogCategories),
+    });
+  };
+
+  const loadWorkspace = async () => {
+    const [dashboardData, siteData, blogPayload, mediaPayload, auditPayload] = await Promise.all([
+      request<DashboardPayload>("/dashboard"),
+      request<{ content: SiteContent }>("/content/site"),
+      request<{ content: BlogData }>("/content/blog"),
+      request<{ items: MediaItem[] }>("/media"),
+      request<{ events: AuditEvent[] }>("/audit"),
+    ]);
+
+    setDashboard(dashboardData);
+    setSiteContent(siteData.content);
+    syncAdvancedDrafts(siteData.content);
+    setBlogData(blogPayload.content);
+    setMediaItems(mediaPayload.items);
+    setAuditEvents(auditPayload.events);
+  };
+
+  useEffect(() => {
+    async function boot() {
+      setBooting(true);
+      setErrorMessage("");
+
+      try {
+        const auth = await request<{ authenticated: boolean; user?: AuthUser }>("/auth/me", {
+          headers: {},
+        });
+
+        if (!auth.authenticated || !auth.user) {
+          setUser(null);
+          setDashboard(null);
+          setBooting(false);
+          return;
+        }
+
+        setUser(auth.user);
+        await loadWorkspace();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unable to connect to the admin service.";
+        setErrorMessage(message);
+      } finally {
+        setBooting(false);
+      }
+    }
+
+    void boot();
+    // Mount-only boot for the admin workspace.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const blogRows = blogData.blogPosts.map((post) => ({
+    ...post,
+    body: toLines(blogData.blogContentBySlug[post.slug] || []),
+  }));
+
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPendingAction("auth");
+    setStatusMessage("");
+    setErrorMessage("");
+
+    try {
+      const result = await request<{ authenticated: boolean; user: AuthUser }>("/auth/login", {
+        method: "POST",
+        body: JSON.stringify(loginForm),
+      });
+      setUser(result.user);
+      setStatusMessage("Signed in successfully.");
+      await loadWorkspace();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Sign-in failed.";
+      setErrorMessage(message);
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function handleLogout() {
+    setPendingAction("auth");
+    setStatusMessage("");
+    setErrorMessage("");
+
+    try {
+      await request("/auth/logout", { method: "POST", body: "{}" });
+      setUser(null);
+      setDashboard(null);
+      setStatusMessage("Signed out.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Sign-out failed.";
+      setErrorMessage(message);
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function refreshWorkspace() {
+    setStatusMessage("");
+    setErrorMessage("");
+    try {
+      await loadWorkspace();
+      setStatusMessage("Admin data refreshed.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Refresh failed.";
+      setErrorMessage(message);
+    }
+  }
+
+  async function saveSiteContent() {
+    setPendingAction("content");
+    setStatusMessage("");
+    setErrorMessage("");
+
+    try {
+      const payload: SiteContent = {
+        ...siteContent,
+        awards: JSON.parse(advancedDrafts.awards),
+        conferences: JSON.parse(advancedDrafts.conferences),
+        invitedTalks: JSON.parse(advancedDrafts.invitedTalks),
+        externalProfiles: JSON.parse(advancedDrafts.externalProfiles),
+        collaborators: JSON.parse(advancedDrafts.collaborators),
+        media: JSON.parse(advancedDrafts.media),
+        gallery: JSON.parse(advancedDrafts.gallery),
+        blogCategories: JSON.parse(advancedDrafts.blogCategories),
+      };
+
+      await request("/content/site", {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      setSiteContent(payload);
+      setStatusMessage("Site content saved to the live JSON data source.");
+      await loadWorkspace();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Content save failed.";
+      setErrorMessage(message);
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function saveBlogData() {
+    setPendingAction("blog");
+    setStatusMessage("");
+    setErrorMessage("");
+
+    try {
+      await request("/content/blog", {
+        method: "PUT",
+        body: JSON.stringify(blogData),
+      });
+      setStatusMessage("Blog library saved.");
+      await loadWorkspace();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Blog save failed.";
+      setErrorMessage(message);
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function uploadMedia(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setPendingAction("upload");
+    setStatusMessage("");
+    setErrorMessage("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(`${API_BASE}/media`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      const contentType = response.headers.get("content-type") || "";
+      const responseText = await response.text();
+
+      if (!response.ok) {
+        if (contentType.includes("application/json")) {
+          const data = JSON.parse(responseText) as { error?: string };
+          throw new Error(data.error || "Upload failed");
+        }
+        throw new Error(responseText.slice(0, 180) || "Upload failed");
+      }
+
+      if (!contentType.includes("application/json")) {
+        throw new Error(`Expected JSON from upload response, got ${contentType || "unknown content type"}`);
+      }
+
+      const data = JSON.parse(responseText) as { item?: MediaItem };
+      setStatusMessage(`${file.name} uploaded successfully.`);
+      if (data.item) {
+        setMediaItems((current) => [data.item as MediaItem, ...current]);
+      }
+      await loadWorkspace();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed.";
+      setErrorMessage(message);
+    } finally {
+      event.target.value = "";
+      setPendingAction(null);
+    }
+  }
+
+  function updateBlogPost(index: number, field: keyof BlogPostSummary, value: string) {
+    setBlogData((current) => {
+      const nextPosts = [...current.blogPosts];
+      nextPosts[index] = {
+        ...nextPosts[index],
+        [field]: value,
+      };
+      return { ...current, blogPosts: nextPosts };
+    });
+  }
+
+  function updateBlogBody(slug: string, value: string, previousSlug?: string) {
+    setBlogData((current) => {
+      const sourceSlug = previousSlug || slug;
+      const nextContent = { ...current.blogContentBySlug };
+      const paragraphs = fromLines(value);
+
+      if (sourceSlug !== slug) {
+        delete nextContent[sourceSlug];
+      }
+      nextContent[slug] = paragraphs;
+
+      return {
+        ...current,
+        blogContentBySlug: nextContent,
+      };
+    });
+  }
+
+  if (booting) {
+    return (
+      <section className="section-space">
+        <div className="container-shell">
+          <Card className="flex items-center gap-3 p-6 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading the admin control room...
+          </Card>
+        </div>
+      </section>
+    );
+  }
+
+  if (!user) {
+    return (
+      <section className="section-space">
+        <div className="container-shell grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+          <Card className="space-y-6 p-8">
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent">Python-backed admin</p>
+              <h1 className="font-display text-5xl">Secure website operations without the clutter.</h1>
+              <p className="max-w-2xl text-muted-foreground">
+                This new admin is designed for fast content updates, blog publishing, image uploads, and a stronger
+                security posture. The frontend lives here in Next.js, while the control API runs from a Python service.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card className="p-5">
+                <p className="text-sm font-semibold">What you can do</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Edit hero copy, update services, manage research entries, publish blog posts, upload assets, and
+                  review audit history.
+                </p>
+              </Card>
+              <Card className="p-5">
+                <p className="text-sm font-semibold">How auth works</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Signed sessions are issued by the Python service. If `ADMIN_TOTP_SECRET` is configured, one-time code
+                  verification is enforced too.
+                </p>
+              </Card>
+            </div>
+            <Card className="space-y-2 border-dashed p-5">
+              <p className="text-sm font-semibold">Run the backend service</p>
+              <code className="block rounded-2xl bg-slate-950 px-4 py-3 text-xs text-white">
+                cd /home/kopen/Documents/website && python -m backend
+              </code>
+              <p className="text-xs text-muted-foreground">
+                Default API URL: <code>{API_BASE}</code>. Default credentials come from `ADMIN_USERNAME` and
+                `ADMIN_PASSWORD`.
+              </p>
+            </Card>
+          </Card>
+
+          <Card className="space-y-6 p-8">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent">Admin sign in</p>
+              <h2 className="font-display text-4xl">Open the control room</h2>
+            </div>
+
+            <form className="space-y-4" onSubmit={handleLogin}>
+              <Field label="Username">
+                <Input
+                  value={loginForm.username}
+                  onChange={(event) => setLoginForm((current) => ({ ...current, username: event.target.value }))}
+                />
+              </Field>
+
+              <Field label="Password">
+                <Input
+                  type="password"
+                  value={loginForm.password}
+                  onChange={(event) => setLoginForm((current) => ({ ...current, password: event.target.value }))}
+                />
+              </Field>
+
+              <Field label="One-time code" hint="Required only when `ADMIN_TOTP_SECRET` is configured.">
+                <Input
+                  inputMode="numeric"
+                  value={loginForm.otp}
+                  onChange={(event) => setLoginForm((current) => ({ ...current, otp: event.target.value }))}
+                />
+              </Field>
+
+              <Button className="w-full" type="submit" disabled={pendingAction === "auth"}>
+                {pendingAction === "auth" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    <LockKeyhole className="mr-2 h-4 w-4" />
+                    Sign in
+                  </>
+                )}
+              </Button>
+            </form>
+
+            {errorMessage ? (
+              <Card className="border-red-200 bg-red-50 p-4 text-sm text-red-700">{errorMessage}</Card>
+            ) : null}
+          </Card>
+        </div>
+      </section>
+    );
+  }
+
+  const welcome = dashboard?.welcome;
+
+  return (
+    <section className="section-space">
+      <div className="container-shell space-y-6">
+        <Card className="overflow-hidden">
+          <div className="grid gap-6 border-b border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(214,145,72,0.18),_transparent_34%),linear-gradient(135deg,_rgba(255,255,255,0.98),_rgba(251,245,236,0.96))] p-6 lg:grid-cols-[1.25fr_0.75fr] lg:p-8">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent">Admin control room</p>
+                <h1 className="font-display text-5xl">{welcome?.title || "Website operations"}</h1>
+                <p className="max-w-3xl text-muted-foreground">{welcome?.subtitle}</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button variant="outline" onClick={() => void refreshWorkspace()}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Refresh data
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link href="/">View public site</Link>
+                </Button>
+              </div>
+            </div>
+
+            <div className="rounded-[28px] border border-white/70 bg-white/80 p-5">
+              <p className="text-sm font-semibold text-foreground">{user.displayName}</p>
+              <p className="text-sm text-muted-foreground">
+                {user.role} • {welcome?.mfaConfigured ? "MFA enabled" : "MFA not configured yet"}
+              </p>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Keep this session private. Every content save, upload, login, and logout is recorded in the audit log.
+              </p>
+              <Button className="mt-5" variant="outline" onClick={() => void handleLogout()}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-5 p-6 lg:grid-cols-[260px_1fr]">
+            <aside className="space-y-3">
+              {panels.map((panel) => {
+                const Icon = panel.icon;
+                const active = activePanel === panel.id;
+                return (
+                  <button
+                    key={panel.id}
+                    type="button"
+                    onClick={() => startTransition(() => setActivePanel(panel.id))}
+                    className={`w-full rounded-[24px] border px-4 py-4 text-left transition ${
+                      active
+                        ? "border-accent/40 bg-accent/10 shadow-soft"
+                        : "border-border/70 bg-background hover:bg-muted/70"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="rounded-2xl bg-white/80 p-2">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold">{panel.label}</p>
+                        <p className="text-xs text-muted-foreground">{panel.description}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </aside>
+
+            <div className="space-y-6">
+              {statusMessage ? <Card className="border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{statusMessage}</Card> : null}
+              {errorMessage ? <Card className="border-red-200 bg-red-50 p-4 text-sm text-red-700">{errorMessage}</Card> : null}
+
+              <SectionCard
+                title="Where this content appears"
+                description="A quick map of what gets updated on the public site when you save each section."
+              >
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  <Card className="p-5">
+                    <p className="text-sm font-semibold">Homepage essentials</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Hero text, about copy, services, quote, and contact details appear on the homepage, about page,
+                      services page, and contact page.
+                    </p>
+                  </Card>
+                  <Card className="p-5">
+                    <p className="text-sm font-semibold">Blog manager</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Blog posts and article bodies appear on `/blog` and the individual blog post pages.
+                    </p>
+                  </Card>
+                  <Card className="p-5">
+                    <p className="text-sm font-semibold">Research data</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Research projects, publications, awards, collaborators, talks, and profiles appear on the
+                      research and about pages.
+                    </p>
+                  </Card>
+                  <Card className="p-5">
+                    <p className="text-sm font-semibold">Media library</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Uploaded images and PDFs are stored in `public/uploads/admin` and become available for page
+                      content, galleries, and downloads.
+                    </p>
+                  </Card>
+                  <Card className="p-5">
+                    <p className="text-sm font-semibold">Testimonials</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Testimonials and collaborator headshots appear in the testimonial carousel and related profile
+                      sections.
+                    </p>
+                  </Card>
+                  <Card className="p-5">
+                    <p className="text-sm font-semibold">Security and audit</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Login, save, and upload activity appears in the audit timeline so admin changes stay traceable.
+                    </p>
+                  </Card>
+                </div>
+              </SectionCard>
+
+              {activePanel === "overview" ? (
+                <>
+                  <SectionCard
+                    title="Operational overview"
+                    description="A quick sense of current publishing volume, media readiness, and recent admin activity."
+                  >
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                      {dashboard?.metrics.map((metric) => (
+                        <Card key={metric.label} className="p-5">
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{metric.label}</p>
+                          <p className="mt-3 font-display text-4xl">{metric.value}</p>
+                        </Card>
+                      ))}
+                    </div>
+                  </SectionCard>
+
+                  <SectionCard title="Quick actions" description="Jump straight into the tasks that matter most day to day.">
+                    <div className="flex flex-wrap gap-3">
+                      {dashboard?.quickActions.map((action) => (
+                        <Button key={action.id} variant="outline" onClick={() => startTransition(() => setActivePanel(action.section))}>
+                          {action.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </SectionCard>
+
+                  <SectionCard title="Recent activity" description="Authentication and publishing actions recorded by the backend service.">
+                    <div className="space-y-3">
+                      {auditEvents.slice(0, 8).map((event) => (
+                        <Card key={event.id} className="flex items-center justify-between gap-4 p-4">
+                          <div>
+                            <p className="text-sm font-semibold">{event.summary}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {event.actor} • {event.action}
+                            </p>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{new Date(event.createdAt).toLocaleString()}</p>
+                        </Card>
+                      ))}
+                    </div>
+                  </SectionCard>
+                </>
+              ) : null}
+
+              {activePanel === "content" ? (
+                <>
+                  <SectionCard title="Homepage essentials" description="These are the high-frequency fields an admin will update most often.">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <Field label="Hero name">
+                        <Input
+                          value={siteContent.hero.name}
+                          onChange={(event) =>
+                            setSiteContent((current) => ({
+                              ...current,
+                              hero: { ...current.hero, name: event.target.value },
+                            }))
+                          }
+                        />
+                      </Field>
+                      <Field label="Hero eyebrow">
+                        <Input
+                          value={siteContent.hero.eyebrow}
+                          onChange={(event) =>
+                            setSiteContent((current) => ({
+                              ...current,
+                              hero: { ...current.hero, eyebrow: event.target.value },
+                            }))
+                          }
+                        />
+                      </Field>
+                      <div className="md:col-span-2">
+                        <Field label="Hero headline">
+                          <Textarea
+                            value={siteContent.hero.headline}
+                            onChange={(event) =>
+                              setSiteContent((current) => ({
+                                ...current,
+                                hero: { ...current.hero, headline: event.target.value },
+                              }))
+                            }
+                          />
+                        </Field>
+                      </div>
+                      <div className="md:col-span-2">
+                        <Field label="Hero subheadline">
+                          <Textarea
+                            value={siteContent.hero.subheadline}
+                            onChange={(event) =>
+                              setSiteContent((current) => ({
+                                ...current,
+                                hero: { ...current.hero, subheadline: event.target.value },
+                              }))
+                            }
+                          />
+                        </Field>
+                      </div>
+                    </div>
+                  </SectionCard>
+
+                  <SectionCard title="Calls to action" description="Keep the main site buttons accurate and aligned with the current booking flow.">
+                    <div className="grid gap-4 lg:grid-cols-3">
+                      {[
+                        ["primaryCta", "Primary CTA"],
+                        ["publicationsCta", "Publications CTA"],
+                        ["secondaryCta", "Secondary CTA"],
+                      ].map(([key, label]) => {
+                        const cta = siteContent.hero[key as keyof typeof siteContent.hero];
+                        if (typeof cta !== "object" || !cta || !("label" in cta)) {
+                          return null;
+                        }
+                        return (
+                          <Card key={key} className="space-y-4 p-5">
+                            <p className="text-sm font-semibold">{label}</p>
+                            <Field label="Label">
+                              <Input
+                                value={cta.label}
+                                onChange={(event) =>
+                                  setSiteContent((current) => ({
+                                    ...current,
+                                    hero: {
+                                      ...current.hero,
+                                      [key]: { ...cta, label: event.target.value },
+                                    },
+                                  }))
+                                }
+                              />
+                            </Field>
+                            <Field label="Link">
+                              <Input
+                                value={cta.href}
+                                onChange={(event) =>
+                                  setSiteContent((current) => ({
+                                    ...current,
+                                    hero: {
+                                      ...current.hero,
+                                      [key]: { ...cta, href: event.target.value },
+                                    },
+                                  }))
+                                }
+                              />
+                            </Field>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </SectionCard>
+
+                  <SectionCard title="Bio and quote" description="Short and long-form content that supports the homepage and about sections.">
+                    <Field label="Short biography">
+                      <Textarea
+                        value={siteContent.aboutShort}
+                        onChange={(event) => setSiteContent((current) => ({ ...current, aboutShort: event.target.value }))}
+                      />
+                    </Field>
+
+                    <Field label="Full biography paragraphs" hint="One paragraph per line break block.">
+                      <Textarea
+                        value={toLines(siteContent.aboutFull)}
+                        onChange={(event) =>
+                          setSiteContent((current) => ({
+                            ...current,
+                            aboutFull: fromLines(event.target.value),
+                          }))
+                        }
+                      />
+                    </Field>
+
+                    <div className="grid gap-4 md:grid-cols-[1fr_280px]">
+                      <Field label="Quote text">
+                        <Textarea
+                          value={siteContent.quote.text}
+                          onChange={(event) =>
+                            setSiteContent((current) => ({
+                              ...current,
+                              quote: { ...current.quote, text: event.target.value },
+                            }))
+                          }
+                        />
+                      </Field>
+                      <Field label="Quote author">
+                        <Input
+                          value={siteContent.quote.author}
+                          onChange={(event) =>
+                            setSiteContent((current) => ({
+                              ...current,
+                              quote: { ...current.quote, author: event.target.value },
+                            }))
+                          }
+                        />
+                      </Field>
+                    </div>
+                  </SectionCard>
+
+                  <SectionCard title="Services editor" description="Each service card can be updated independently and reordered manually.">
+                    <div className="space-y-4">
+                      {siteContent.services.map((service, index) => (
+                        <Card key={`${service.title}-${index}`} className="space-y-4 p-5">
+                          <div className="flex items-center justify-between gap-4">
+                            <p className="text-sm font-semibold">Service {index + 1}</p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setSiteContent((current) => ({
+                                  ...current,
+                                  services: current.services.filter((_, itemIndex) => itemIndex !== index),
+                                }))
+                              }
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <Field label="Title">
+                              <Input
+                                value={service.title}
+                                onChange={(event) =>
+                                  setSiteContent((current) => {
+                                    const services = [...current.services];
+                                    services[index] = { ...services[index], title: event.target.value };
+                                    return { ...current, services };
+                                  })
+                                }
+                              />
+                            </Field>
+                            <Field label="Bullets" hint="One bullet per line.">
+                              <Textarea
+                                value={toLines(service.bullets)}
+                                onChange={(event) =>
+                                  setSiteContent((current) => {
+                                    const services = [...current.services];
+                                    services[index] = { ...services[index], bullets: fromLines(event.target.value) };
+                                    return { ...current, services };
+                                  })
+                                }
+                              />
+                            </Field>
+                            <div className="md:col-span-2">
+                              <Field label="Description">
+                                <Textarea
+                                  value={service.description}
+                                  onChange={(event) =>
+                                    setSiteContent((current) => {
+                                      const services = [...current.services];
+                                      services[index] = { ...services[index], description: event.target.value };
+                                      return { ...current, services };
+                                    })
+                                  }
+                                />
+                              </Field>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        setSiteContent((current) => ({
+                          ...current,
+                          services: [
+                            ...current.services,
+                            { title: "New service", description: "Describe the service offering.", bullets: ["Key outcome"] },
+                          ],
+                        }))
+                      }
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add service
+                    </Button>
+                  </SectionCard>
+
+                  <SectionCard title="Contact channels" description="Details used across the contact page, footer, and booking calls to action.">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <Field label="Address lines" hint="One line per row.">
+                        <Textarea
+                          value={toLines(siteContent.contact.addressLines)}
+                          onChange={(event) =>
+                            setSiteContent((current) => ({
+                              ...current,
+                              contact: { ...current.contact, addressLines: fromLines(event.target.value) },
+                            }))
+                          }
+                        />
+                      </Field>
+                      <Field label="Phone numbers" hint="One number per row.">
+                        <Textarea
+                          value={toLines(siteContent.contact.phones)}
+                          onChange={(event) =>
+                            setSiteContent((current) => ({
+                              ...current,
+                              contact: { ...current.contact, phones: fromLines(event.target.value) },
+                            }))
+                          }
+                        />
+                      </Field>
+                      <Field label="WhatsApp link">
+                        <Input
+                          value={siteContent.contact.whatsapp}
+                          onChange={(event) =>
+                            setSiteContent((current) => ({
+                              ...current,
+                              contact: { ...current.contact, whatsapp: event.target.value },
+                            }))
+                          }
+                        />
+                      </Field>
+                      <Field label="Booking URL">
+                        <Input
+                          value={siteContent.contact.bookingUrl}
+                          onChange={(event) =>
+                            setSiteContent((current) => ({
+                              ...current,
+                              contact: { ...current.contact, bookingUrl: event.target.value },
+                            }))
+                          }
+                        />
+                      </Field>
+                      <div className="md:col-span-2">
+                        <Field label="Map embed URL">
+                          <Input
+                            value={siteContent.contact.mapEmbed}
+                            onChange={(event) =>
+                              setSiteContent((current) => ({
+                                ...current,
+                                contact: { ...current.contact, mapEmbed: event.target.value },
+                              }))
+                            }
+                          />
+                        </Field>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <p className="text-sm font-semibold">Social links</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setSiteContent((current) => ({
+                              ...current,
+                              contact: {
+                                ...current.contact,
+                                socialLinks: [...current.contact.socialLinks, { label: "Platform", href: "https://" }],
+                              },
+                            }))
+                          }
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add social link
+                        </Button>
+                      </div>
+
+                      {siteContent.contact.socialLinks.map((social, index) => (
+                        <Card key={`${social.label}-${index}`} className="grid gap-4 p-4 md:grid-cols-[220px_1fr_auto]">
+                          <Input
+                            value={social.label}
+                            onChange={(event) =>
+                              setSiteContent((current) => {
+                                const socialLinks = [...current.contact.socialLinks];
+                                socialLinks[index] = { ...socialLinks[index], label: event.target.value };
+                                return { ...current, contact: { ...current.contact, socialLinks } };
+                              })
+                            }
+                          />
+                          <Input
+                            value={social.href}
+                            onChange={(event) =>
+                              setSiteContent((current) => {
+                                const socialLinks = [...current.contact.socialLinks];
+                                socialLinks[index] = { ...socialLinks[index], href: event.target.value };
+                                return { ...current, contact: { ...current.contact, socialLinks } };
+                              })
+                            }
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setSiteContent((current) => ({
+                                ...current,
+                                contact: {
+                                  ...current.contact,
+                                  socialLinks: current.contact.socialLinks.filter((_, itemIndex) => itemIndex !== index),
+                                },
+                              }))
+                            }
+                          >
+                            Remove
+                          </Button>
+                        </Card>
+                      ))}
+                    </div>
+
+                    <Button onClick={() => void saveSiteContent()} disabled={pendingAction === "content"}>
+                      {pendingAction === "content" ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save site content
+                        </>
+                      )}
+                    </Button>
+                  </SectionCard>
+                </>
+              ) : null}
+
+              {activePanel === "research" ? (
+                <>
+                  <SectionCard title="Research projects" description="Structured cards for research, grants, status, and public links.">
+                    <div className="space-y-4">
+                      {siteContent.researchProjects.map((project, index) => (
+                        <Card key={`${project.title}-${index}`} className="space-y-4 p-5">
+                          <div className="flex items-center justify-between gap-4">
+                            <p className="text-sm font-semibold">Project {index + 1}</p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setSiteContent((current) => ({
+                                  ...current,
+                                  researchProjects: current.researchProjects.filter((_, itemIndex) => itemIndex !== index),
+                                }))
+                              }
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <Field label="Title">
+                              <Input
+                                value={project.title}
+                                onChange={(event) =>
+                                  setSiteContent((current) => {
+                                    const researchProjects = [...current.researchProjects];
+                                    researchProjects[index] = { ...researchProjects[index], title: event.target.value };
+                                    return { ...current, researchProjects };
+                                  })
+                                }
+                              />
+                            </Field>
+                            <Field label="Category">
+                              <Input
+                                value={project.category}
+                                onChange={(event) =>
+                                  setSiteContent((current) => {
+                                    const researchProjects = [...current.researchProjects];
+                                    researchProjects[index] = { ...researchProjects[index], category: event.target.value };
+                                    return { ...current, researchProjects };
+                                  })
+                                }
+                              />
+                            </Field>
+                            <Field label="Status">
+                              <Input
+                                value={project.status}
+                                onChange={(event) =>
+                                  setSiteContent((current) => {
+                                    const researchProjects = [...current.researchProjects];
+                                    researchProjects[index] = { ...researchProjects[index], status: event.target.value };
+                                    return { ...current, researchProjects };
+                                  })
+                                }
+                              />
+                            </Field>
+                            <Field label="Funding">
+                              <Input
+                                value={project.funding || ""}
+                                onChange={(event) =>
+                                  setSiteContent((current) => {
+                                    const researchProjects = [...current.researchProjects];
+                                    researchProjects[index] = { ...researchProjects[index], funding: event.target.value };
+                                    return { ...current, researchProjects };
+                                  })
+                                }
+                              />
+                            </Field>
+                            <Field label="Link" hint="Optional external project URL.">
+                              <Input
+                                value={project.link || ""}
+                                onChange={(event) =>
+                                  setSiteContent((current) => {
+                                    const researchProjects = [...current.researchProjects];
+                                    researchProjects[index] = { ...researchProjects[index], link: event.target.value };
+                                    return { ...current, researchProjects };
+                                  })
+                                }
+                              />
+                            </Field>
+                            <div className="md:col-span-2">
+                              <Field label="Summary">
+                                <Textarea
+                                  value={project.summary}
+                                  onChange={(event) =>
+                                    setSiteContent((current) => {
+                                      const researchProjects = [...current.researchProjects];
+                                      researchProjects[index] = { ...researchProjects[index], summary: event.target.value };
+                                      return { ...current, researchProjects };
+                                    })
+                                  }
+                                />
+                              </Field>
+                            </div>
+                            <div className="md:col-span-2">
+                              <Field label="Detail bullets" hint="One bullet per line.">
+                                <Textarea
+                                  value={toLines(project.details || [])}
+                                  onChange={(event) =>
+                                    setSiteContent((current) => {
+                                      const researchProjects = [...current.researchProjects];
+                                      researchProjects[index] = { ...researchProjects[index], details: fromLines(event.target.value) };
+                                      return { ...current, researchProjects };
+                                    })
+                                  }
+                                />
+                              </Field>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        setSiteContent((current) => ({
+                          ...current,
+                          researchProjects: [
+                            ...current.researchProjects,
+                            {
+                              title: "New research project",
+                              summary: "Describe the project focus and impact.",
+                              category: "Category",
+                              status: "Draft",
+                              funding: "",
+                              details: [],
+                              link: "",
+                            },
+                          ],
+                        }))
+                      }
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add project
+                    </Button>
+                  </SectionCard>
+
+                  <SectionCard title="Publications and testimonials" description="Keep public credibility assets current without touching code.">
+                    <div className="grid gap-6 xl:grid-cols-2">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between gap-4">
+                          <p className="text-sm font-semibold">Publications</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setSiteContent((current) => ({
+                                ...current,
+                                publications: [
+                                  ...current.publications,
+                                  { title: "New publication", year: "2026", type: "Article", summary: "", fileUrl: "" },
+                                ],
+                              }))
+                            }
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add publication
+                          </Button>
+                        </div>
+                        {siteContent.publications.map((publication, index) => (
+                          <Card key={`${publication.title}-${index}`} className="space-y-4 p-4">
+                            <Input
+                              value={publication.title}
+                              onChange={(event) =>
+                                setSiteContent((current) => {
+                                  const publications = [...current.publications];
+                                  publications[index] = { ...publications[index], title: event.target.value };
+                                  return { ...current, publications };
+                                })
+                              }
+                            />
+                            <div className="grid gap-4 md:grid-cols-2">
+                              <Input
+                                value={publication.year}
+                                onChange={(event) =>
+                                  setSiteContent((current) => {
+                                    const publications = [...current.publications];
+                                    publications[index] = { ...publications[index], year: event.target.value };
+                                    return { ...current, publications };
+                                  })
+                                }
+                              />
+                              <Input
+                                value={publication.type}
+                                onChange={(event) =>
+                                  setSiteContent((current) => {
+                                    const publications = [...current.publications];
+                                    publications[index] = { ...publications[index], type: event.target.value };
+                                    return { ...current, publications };
+                                  })
+                                }
+                              />
+                            </div>
+                            <Textarea
+                              value={publication.summary}
+                              onChange={(event) =>
+                                setSiteContent((current) => {
+                                  const publications = [...current.publications];
+                                  publications[index] = { ...publications[index], summary: event.target.value };
+                                  return { ...current, publications };
+                                })
+                              }
+                            />
+                            <Input
+                              value={publication.fileUrl || ""}
+                              onChange={(event) =>
+                                setSiteContent((current) => {
+                                  const publications = [...current.publications];
+                                  publications[index] = { ...publications[index], fileUrl: event.target.value };
+                                  return { ...current, publications };
+                                })
+                              }
+                            />
+                          </Card>
+                        ))}
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between gap-4">
+                          <p className="text-sm font-semibold">Testimonials</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setSiteContent((current) => ({
+                                ...current,
+                                testimonials: [
+                                  ...current.testimonials,
+                                  { name: "New testimonial", role: "Role", quote: "", image: "" },
+                                ],
+                              }))
+                            }
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add testimonial
+                          </Button>
+                        </div>
+                        {siteContent.testimonials.map((testimonial, index) => (
+                          <Card key={`${testimonial.name}-${index}`} className="space-y-4 p-4">
+                            <Input
+                              value={testimonial.name}
+                              onChange={(event) =>
+                                setSiteContent((current) => {
+                                  const testimonials = [...current.testimonials];
+                                  testimonials[index] = { ...testimonials[index], name: event.target.value };
+                                  return { ...current, testimonials };
+                                })
+                              }
+                            />
+                            <Input
+                              value={testimonial.role}
+                              onChange={(event) =>
+                                setSiteContent((current) => {
+                                  const testimonials = [...current.testimonials];
+                                  testimonials[index] = { ...testimonials[index], role: event.target.value };
+                                  return { ...current, testimonials };
+                                })
+                              }
+                            />
+                            <Textarea
+                              value={testimonial.quote}
+                              onChange={(event) =>
+                                setSiteContent((current) => {
+                                  const testimonials = [...current.testimonials];
+                                  testimonials[index] = { ...testimonials[index], quote: event.target.value };
+                                  return { ...current, testimonials };
+                                })
+                              }
+                            />
+                            <Input
+                              value={testimonial.image}
+                              onChange={(event) =>
+                                setSiteContent((current) => {
+                                  const testimonials = [...current.testimonials];
+                                  testimonials[index] = { ...testimonials[index], image: event.target.value };
+                                  return { ...current, testimonials };
+                                })
+                              }
+                            />
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  </SectionCard>
+
+                  <SectionCard title="Advanced collections" description="These JSON editors cover the more structured content that changes less frequently.">
+                    <div className="grid gap-5 xl:grid-cols-2">
+                      {advancedKeys.map((key) => (
+                        <Field
+                          key={key}
+                          label={key}
+                          hint="Leave valid JSON here. This is the fallback editor for complex collections."
+                        >
+                          <Textarea
+                            className="min-h-[220px] font-mono text-xs"
+                            value={advancedDrafts[key]}
+                            onChange={(event) =>
+                              setAdvancedDrafts((current) => ({
+                                ...current,
+                                [key]: event.target.value,
+                              }))
+                            }
+                          />
+                        </Field>
+                      ))}
+                    </div>
+
+                    <Button onClick={() => void saveSiteContent()} disabled={pendingAction === "content"}>
+                      {pendingAction === "content" ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save research and advanced content
+                        </>
+                      )}
+                    </Button>
+                  </SectionCard>
+                </>
+              ) : null}
+
+              {activePanel === "blog" ? (
+                <>
+                  <SectionCard title="Blog post manager" description="Draft and revise articles with metadata and post body paragraphs together.">
+                    <div className="space-y-5">
+                      {blogRows.map((post, index) => (
+                        <Card key={`${post.slug || "post"}-${index}`} className="space-y-5 p-5">
+                          <div className="flex items-center justify-between gap-4">
+                            <p className="text-sm font-semibold">Post {index + 1}</p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setBlogData((current) => {
+                                  const nextPosts = current.blogPosts.filter((_, itemIndex) => itemIndex !== index);
+                                  const nextContent = { ...current.blogContentBySlug };
+                                  delete nextContent[post.slug];
+                                  return { blogPosts: nextPosts, blogContentBySlug: nextContent };
+                                })
+                              }
+                            >
+                              Remove
+                            </Button>
+                          </div>
+
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <Field label="Title">
+                              <Input value={post.title} onChange={(event) => updateBlogPost(index, "title", event.target.value)} />
+                            </Field>
+                            <Field label="Slug">
+                              <Input
+                                value={post.slug}
+                                onChange={(event) => {
+                                  const nextSlug = event.target.value;
+                                  const previousSlug = blogData.blogPosts[index]?.slug;
+                                  updateBlogPost(index, "slug", nextSlug);
+                                  updateBlogBody(nextSlug, post.body, previousSlug);
+                                }}
+                              />
+                            </Field>
+                            <Field label="ID">
+                              <Input value={post.id} onChange={(event) => updateBlogPost(index, "id", event.target.value)} />
+                            </Field>
+                            <Field label="Category">
+                              <Input value={post.category} onChange={(event) => updateBlogPost(index, "category", event.target.value)} />
+                            </Field>
+                            <Field label="Publish date" hint="Use YYYY-MM-DD.">
+                              <Input
+                                value={post.publishedAt}
+                                onChange={(event) => updateBlogPost(index, "publishedAt", event.target.value)}
+                              />
+                            </Field>
+                            <Field label="Featured image URL">
+                              <Input
+                                value={post.featuredImage || ""}
+                                onChange={(event) => updateBlogPost(index, "featuredImage", event.target.value)}
+                              />
+                            </Field>
+                            <div className="md:col-span-2">
+                              <Field label="Excerpt">
+                                <Textarea value={post.excerpt} onChange={(event) => updateBlogPost(index, "excerpt", event.target.value)} />
+                              </Field>
+                            </div>
+                            <div className="md:col-span-2">
+                              <Field label="Article body" hint="One paragraph per line.">
+                                <Textarea
+                                  value={post.body}
+                                  onChange={(event) => updateBlogBody(post.slug, event.target.value)}
+                                />
+                              </Field>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          const timestamp = Date.now();
+                          const nextId = `post-${timestamp}`;
+                          const nextSlug = `new-post-${timestamp}`;
+
+                          setBlogData((current) => ({
+                            blogPosts: [...current.blogPosts, { ...emptyBlogPost, id: nextId, slug: nextSlug }],
+                            blogContentBySlug: {
+                              ...current.blogContentBySlug,
+                              [nextSlug]: [],
+                            },
+                          }));
+                        }}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add blog post
+                      </Button>
+                      <Button onClick={() => void saveBlogData()} disabled={pendingAction === "blog"}>
+                        {pendingAction === "blog" ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="mr-2 h-4 w-4" />
+                            Save blog content
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </SectionCard>
+                </>
+              ) : null}
+
+              {activePanel === "media" ? (
+                <>
+                  <SectionCard title="Media library" description="Upload image and PDF assets into the public website folder without leaving the admin.">
+                    <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+                      <Field label="Upload file" hint="Accepted types: JPG, PNG, WEBP, GIF, PDF up to 10MB.">
+                        <Input type="file" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" onChange={(event) => void uploadMedia(event)} />
+                      </Field>
+                      <Button variant="outline" onClick={() => void refreshWorkspace()}>
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Refresh library
+                      </Button>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                      {mediaItems.map((item) => (
+                        <Card key={item.id} className="space-y-3 p-4">
+                          <div className="aspect-[4/3] overflow-hidden rounded-[20px] border border-border/70 bg-muted">
+                            {item.contentType?.startsWith("image/") ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img alt={item.altText || item.fileName} className="h-full w-full object-cover" src={item.url} />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Document asset</div>
+                            )}
+                          </div>
+                          <div>
+                            <p className="truncate text-sm font-semibold">{item.fileName}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {Math.round(item.size / 1024)} KB • {new Date(item.uploadedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <Input readOnly value={item.url} />
+                        </Card>
+                      ))}
+                    </div>
+                  </SectionCard>
+                </>
+              ) : null}
+
+              {activePanel === "security" ? (
+                <>
+                  <SectionCard title="Authentication posture" description="Keep the admin restricted to trusted operators only.">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <Card className="space-y-3 p-5">
+                        <p className="text-sm font-semibold">Current session</p>
+                        <p className="text-sm text-muted-foreground">
+                          Signed in as <span className="font-semibold text-foreground">{user.username}</span> with role{" "}
+                          <span className="font-semibold text-foreground">{user.role}</span>.
+                        </p>
+                      </Card>
+                      <Card className="space-y-3 p-5">
+                        <p className="text-sm font-semibold">MFA status</p>
+                        <p className="text-sm text-muted-foreground">
+                          {user.mfaConfigured
+                            ? "One-time code verification is configured in the backend."
+                            : "MFA is not configured yet. Set `ADMIN_TOTP_SECRET` before production use."}
+                        </p>
+                      </Card>
+                    </div>
+                    <Card className="space-y-3 border-dashed p-5">
+                      <p className="text-sm font-semibold">Recommended production hardening</p>
+                      <p className="text-sm text-muted-foreground">
+                        Move off the fallback password immediately, define `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and
+                        `ADMIN_TOTP_SECRET`, restrict `ADMIN_ALLOWED_ORIGIN`, and run the Python service behind HTTPS.
+                      </p>
+                    </Card>
+                  </SectionCard>
+
+                  <SectionCard title="Audit timeline" description="Every login, logout, save, and upload appears here for traceability.">
+                    <div className="space-y-3">
+                      {auditEvents.map((event) => (
+                        <Card key={event.id} className="flex items-center justify-between gap-4 p-4">
+                          <div>
+                            <p className="text-sm font-semibold">{event.summary}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {event.action} • {event.actor}
+                            </p>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{new Date(event.createdAt).toLocaleString()}</p>
+                        </Card>
+                      ))}
+                    </div>
+                  </SectionCard>
+                </>
+              ) : null}
+            </div>
+          </div>
+        </Card>
+      </div>
+    </section>
+  );
+}

@@ -1,0 +1,218 @@
+[
+  {
+    "id": "df4941ed-5273-45c0-a1fe-8ba3c28c5f69",
+    "action": "content.updated",
+    "actor": "admin",
+    "summary": "Updated editable site content",
+    "metadata": {
+      "areas": [
+        "aboutFull",
+        "aboutShort",
+        "awards",
+        "blogCategories",
+        "collaborators",
+        "conferences",
+        "contact",
+        "externalProfiles",
+        "gallery",
+        "grants",
+        "hero",
+        "invitedTalks",
+        "media",
+        "publications",
+        "quote",
+        "researchProjects",
+        "services",
+        "testimonials"
+      ]
+    },
+    "createdAt": "2026-04-19T13:25:51.487359+00:00"
+  },
+  {
+    "id": "f901444b-949f-43e6-83e2-e26dc2e6d793",
+    "action": "content.updated",
+    "actor": "admin",
+    "summary": "Updated editable site content",
+    "metadata": {
+      "areas": [
+        "aboutFull",
+        "aboutShort",
+        "awards",
+        "blogCategories",
+        "collaborators",
+        "conferences",
+        "contact",
+        "externalProfiles",
+        "gallery",
+        "grants",
+        "hero",
+        "invitedTalks",
+        "media",
+        "publications",
+        "quote",
+        "researchProjects",
+        "services",
+        "testimonials"
+      ]
+    },
+    "createdAt": "2026-04-19T13:08:58.938347+00:00"
+  },
+  {
+    "id": "90ffdb64-f73b-4bad-b73b-53ea91193183",
+    "action": "content.updated",
+    "actor": "admin",
+    "summary": "Updated editable site content",
+    "metadata": {
+      "areas": [
+        "aboutFull",
+        "aboutShort",
+        "awards",
+        "blogCategories",
+        "collaborators",
+        "conferences",
+        "contact",
+        "externalProfiles",
+        "gallery",
+        "grants",
+        "hero",
+        "invitedTalks",
+        "media",
+        "publications",
+        "quote",
+        "researchProjects",
+        "services",
+        "testimonials"
+      ]
+    },
+    "createdAt": "2026-04-19T13:02:26.214441+00:00"
+  },
+  {
+    "id": "04d7c7f1-0ede-4b0c-9d12-6c8326a23964",
+    "action": "content.updated",
+    "actor": "admin",
+    "summary": "Updated editable site content",
+    "metadata": {
+      "areas": [
+        "aboutFull",
+        "aboutShort",
+        "awards",
+        "blogCategories",
+        "collaborators",
+        "conferences",
+        "contact",
+        "externalProfiles",
+        "gallery",
+        "grants",
+        "hero",
+        "invitedTalks",
+        "media",
+        "publications",
+        "quote",
+        "researchProjects",
+        "services",
+        "testimonials"
+      ]
+    },
+    "createdAt": "2026-04-19T12:58:30.630946+00:00"
+  },
+  {
+    "id": "8782cc4b-6b1a-4e8f-8805-dfa53bc7df91",
+    "action": "content.updated",
+    "actor": "admin",
+    "summary": "Updated editable site content",
+    "metadata": {
+      "areas": [
+        "aboutFull",
+        "aboutShort",
+        "awards",
+        "blogCategories",
+        "collaborators",
+        "conferences",
+        "contact",
+        "externalProfiles",
+        "gallery",
+        "grants",
+        "hero",
+        "invitedTalks",
+        "media",
+        "publications",
+        "quote",
+        "researchProjects",
+        "services",
+        "testimonials"
+      ]
+    },
+    "createdAt": "2026-04-19T12:57:12.698213+00:00"
+  },
+  {
+    "id": "3b81c6bd-4992-4b71-bd1e-334e51762615",
+    "action": "auth.login",
+    "actor": "admin",
+    "summary": "Admin login succeeded",
+    "metadata": {
+      "ipAddress": "127.0.0.1"
+    },
+    "createdAt": "2026-04-19T12:56:15.120973+00:00"
+  },
+  {
+    "id": "e2bb8296-363e-403f-bee0-38db20482a83",
+    "action": "blog.updated",
+    "actor": "admin",
+    "summary": "Saved blog post collection",
+    "metadata": {
+      "postCount": 4
+    },
+    "createdAt": "2026-04-17T12:41:41.081182+00:00"
+  },
+  {
+    "id": "599e8f0a-e654-45bf-a00b-2f2781277f6d",
+    "action": "auth.login",
+    "actor": "admin",
+    "summary": "Admin login succeeded",
+    "metadata": {
+      "ipAddress": "127.0.0.1"
+    },
+    "createdAt": "2026-04-17T12:39:23.342940+00:00"
+  },
+  {
+    "id": "0137f398-5084-4fb3-9702-764a3f9e7a77",
+    "action": "media.uploaded",
+    "actor": "admin",
+    "summary": "Uploaded steve.jpg",
+    "metadata": {
+      "contentType": "image/jpeg",
+      "size": 56091
+    },
+    "createdAt": "2026-04-16T17:42:19.760439+00:00"
+  },
+  {
+    "id": "a2b5d212-19b4-4754-8777-bdf808b22fe3",
+    "action": "auth.login",
+    "actor": "admin",
+    "summary": "Admin login succeeded",
+    "metadata": {
+      "ipAddress": "127.0.0.1"
+    },
+    "createdAt": "2026-04-16T17:40:28.904343+00:00"
+  },
+  {
+    "id": "57d7d713-fead-4872-9135-2cd340d1dcaf",
+    "action": "auth.login",
+    "actor": "admin",
+    "summary": "Admin login succeeded",
+    "metadata": {
+      "ipAddress": "127.0.0.1"
+    },
+    "createdAt": "2026-04-16T15:55:25.912165+00:00"
+  },
+  {
+    "id": "922dfbe2-3cb8-45ae-b572-19f3528c66ee",
+    "action": "auth.login",
+    "actor": "admin",
+    "summary": "Admin login succeeded",
+    "metadata": {
+      "ipAddress": "127.0.0.1"
+    },
+    "createdAt": "2026-04-16T15:20:28.547353+00:00"
+  }
+]
