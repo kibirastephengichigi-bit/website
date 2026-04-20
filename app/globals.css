@@ -15,8 +15,8 @@
   --accent: 157 45% 36%;
   --accent-foreground: 0 0% 100%;
   --ring: 157 45% 36%;
-  --font-sans: "Raleway";
-  --font-display: "Cormorant Garamond";
+  --font-sans: "Trebuchet MS", "Segoe UI", sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
 }
 
 .dark {
