@@ -8,6 +8,7 @@ import { createMetadata } from "@/lib/site";
 import { siteContent } from "@/lib/content/site-content";
 
 export const metadata = createMetadata("Contact", "Contact Dr. Stephen Asatsa for consultations, collaboration, or media inquiries.", "/contact");
+export const revalidate = 3600;
 
 export default function ContactPage() {
   return (

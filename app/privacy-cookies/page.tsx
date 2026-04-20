@@ -5,6 +5,7 @@ export const metadata = createMetadata(
   "How sign-in cookies, preference cookies, and privacy choices work on the site.",
   "/privacy-cookies",
 );
+export const revalidate = 3600;
 
 export default function PrivacyCookiesPage() {
   return (
@@ -41,4 +42,3 @@ export default function PrivacyCookiesPage() {
     </section>
   );
 }
-

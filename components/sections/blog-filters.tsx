@@ -14,7 +14,7 @@ export function BlogFilters({
 }: {
   posts: BlogPostSummary[];
   categories: string[];
-  isSignedIn: boolean;
+  isSignedIn?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");

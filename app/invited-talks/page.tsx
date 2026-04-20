@@ -11,6 +11,7 @@ export const metadata = createMetadata(
   "Invited presentations and keynote speeches by Dr. Stephen Asatsa on psychology, decolonization, and cultural evolution topics.",
   "/invited-talks"
 );
+export const revalidate = 3600;
 
 export default function InvitedTalksPage() {
   return (

@@ -1,15 +1,13 @@
 import { SectionHeading } from "@/components/layout/section-heading";
 import { BlogFilters } from "@/components/sections/blog-filters";
-import { auth } from "@/lib/auth";
 import { createMetadata } from "@/lib/site";
 import { blogPosts } from "@/lib/content/blog-data";
 import { siteContent } from "@/lib/content/site-content";
 
 export const metadata = createMetadata("Blog and Insights", "Mental health, decolonizing psychology, thanatology, and research insights.", "/blog");
+export const revalidate = 3600;
 
-export default async function BlogPage() {
-  const session = await auth();
-
+export default function BlogPage() {
   return (
     <>
       <section
@@ -42,7 +40,7 @@ export default async function BlogPage() {
             title="Browse articles, reflections, and research-driven commentary."
             description="Filter content by topic and explore a cleaner reading experience built for future admin publishing."
           />
-          <BlogFilters posts={blogPosts} categories={siteContent.blogCategories} isSignedIn={Boolean(session?.user)} />
+          <BlogFilters posts={blogPosts} categories={siteContent.blogCategories} />
         </div>
       </section>
     </>

@@ -11,6 +11,7 @@ export const metadata = createMetadata(
   "Professional recognition, awards, and honors received by Dr. Stephen Asatsa for contributions to psychology research and academic leadership.",
   "/honors-awards"
 );
+export const revalidate = 3600;
 
 export default function HonorsAwardsPage() {
   return (

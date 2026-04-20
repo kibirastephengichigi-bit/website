@@ -5,7 +5,6 @@ import { SectionHeading } from "@/components/layout/section-heading";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SaveItemButton } from "@/components/user/save-item-button";
-import { auth } from "@/lib/auth";
 import { siteContent } from "@/lib/content/site-content";
 import { createMetadata } from "@/lib/site";
 import { EnhancedCaseStudies } from "@/components/sections/enhanced-case-studies";
@@ -15,6 +14,7 @@ export const metadata = createMetadata(
   "Filterable research, publications, grants, and talks.",
   "/research",
 );
+export const revalidate = 3600;
 
 const researchHighlights = [
   { label: "Projects", value: siteContent.researchProjects.length },
@@ -24,8 +24,6 @@ const researchHighlights = [
 ];
 
 export default async function ResearchPage() {
-  const session = await auth();
-
   return (
     <>
       <section className="section-space">
@@ -77,7 +75,6 @@ export default async function ResearchPage() {
                     itemKey={project.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}
                     title={project.title}
                     href={project.link}
-                    isSignedIn={Boolean(session?.user)}
                   />
                 </div>
               ) : null}

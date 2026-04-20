@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { mkdir, readdir } from "fs/promises";
 import path from "path";
 
@@ -39,3 +40,7 @@ export async function listGalleryAssets(): Promise<GalleryAsset[]> {
       url: `${galleryPublicPath}/${encodeURIComponent(name)}`,
     }));
 }
+
+export const getCachedGalleryAssets = unstable_cache(listGalleryAssets, ["gallery-assets"], {
+  revalidate: 3600,
+});

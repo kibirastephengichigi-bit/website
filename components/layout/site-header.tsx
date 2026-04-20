@@ -1,7 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Menu, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 
-import { signOut, auth } from "@/lib/auth";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { siteContent } from "@/lib/content/site-content";
@@ -15,12 +17,12 @@ const links = [
   { href: "/contact", label: "Contact" },
 ];
 
-export async function SiteHeader() {
-  const session = await auth();
+export function SiteHeader() {
+  const { data: session, status } = useSession();
+  const isSignedIn = Boolean(session?.user);
 
-  async function handleSignOut() {
-    "use server";
-    await signOut({ redirectTo: "/" });
+  function handleSignOut() {
+    void signOut({ callbackUrl: "/" });
   }
 
   return (
@@ -61,16 +63,14 @@ export async function SiteHeader() {
             })}
           </div>
           <ThemeToggle />
-          {session?.user ? (
+          {isSignedIn ? (
             <>
               <Button asChild size="sm" variant="outline">
                 <Link href="/account">Account</Link>
               </Button>
-              <form action={handleSignOut}>
-                <Button size="sm" variant="ghost" type="submit">
-                  Sign out
-                </Button>
-              </form>
+              <Button size="sm" variant="ghost" type="button" onClick={handleSignOut} disabled={status === "loading"}>
+                Sign out
+              </Button>
             </>
           ) : (
             <Button asChild size="sm">
@@ -108,16 +108,14 @@ export async function SiteHeader() {
                 })}
               </div>
               <ThemeToggle />
-              {session?.user ? (
+              {isSignedIn ? (
                 <>
                   <Button asChild size="sm" variant="outline">
                     <Link href="/account">Account</Link>
                   </Button>
-                  <form action={handleSignOut}>
-                    <Button size="sm" variant="ghost" type="submit">
-                      Sign out
-                    </Button>
-                  </form>
+                  <Button size="sm" variant="ghost" type="button" onClick={handleSignOut} disabled={status === "loading"}>
+                    Sign out
+                  </Button>
                 </>
               ) : (
                 <Button asChild size="sm">

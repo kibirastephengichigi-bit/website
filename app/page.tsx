@@ -15,6 +15,7 @@ import { createMetadata } from "@/lib/site";
 import { siteContent } from "@/lib/content/site-content";
 
 export const metadata = createMetadata("Home", undefined, "/");
+export const revalidate = 3600;
 
 export default function HomePage() {
   return (

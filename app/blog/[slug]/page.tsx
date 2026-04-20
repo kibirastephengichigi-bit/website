@@ -2,9 +2,10 @@ import { notFound } from "next/navigation";
 
 import { Card } from "@/components/ui/card";
 import { blogContentBySlug, blogPosts } from "@/lib/content/blog-data";
-import { auth } from "@/lib/auth";
 import { createMetadata } from "@/lib/site";
 import { SaveItemButton } from "@/components/user/save-item-button";
+
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
   return blogPosts.map((post) => ({ slug: post.slug }));
@@ -29,7 +30,6 @@ export default async function BlogPostPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const session = await auth();
   const { slug } = await params;
   const post = blogPosts.find((item) => item.slug === slug);
 
@@ -51,7 +51,6 @@ export default async function BlogPostPage({
               title={post.title}
               href={`/blog/${post.slug}`}
               image={post.featuredImage}
-              isSignedIn={Boolean(session?.user)}
             />
           </div>
           <div className="prose-copy mt-8">

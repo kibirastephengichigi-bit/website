@@ -9,6 +9,7 @@ import { siteContent } from "@/lib/content/site-content";
 import { ProcessSection } from "@/components/sections/process-section";
 
 export const metadata = createMetadata("Services", "Therapy, consulting, mentorship, and institutional training.", "/services");
+export const revalidate = 3600;
 
 export default function ServicesPage() {
   return (

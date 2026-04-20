@@ -11,6 +11,7 @@ export const metadata = createMetadata(
   "Conference presentations and interviews by Dr. Stephen Asatsa featuring international academic engagements and research dissemination.",
   "/conferences"
 );
+export const revalidate = 3600;
 
 export default function ConferencesPage() {
   return (

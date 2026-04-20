@@ -61,6 +61,10 @@ export function middleware(request: NextRequest) {
 
   response.headers.set("X-Robots-Tag", "noindex, nofollow, nosnippet, noarchive");
 
+  if (request.method === "GET" && request.nextUrl.pathname.startsWith("/uploads/")) {
+    response.headers.set("Cache-Control", "public, max-age=31536000, immutable");
+  }
+
   if (request.url.startsWith("https://")) {
     response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   }

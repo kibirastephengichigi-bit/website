@@ -3,10 +3,10 @@ import Image from "next/image";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { Card } from "@/components/ui/card";
 import { siteContent } from "@/lib/content/site-content";
-import { listGalleryAssets } from "@/lib/gallery";
+import { getCachedGalleryAssets } from "@/lib/gallery";
 
 export async function GallerySection() {
-  const items = await listGalleryAssets();
+  const items = await getCachedGalleryAssets();
 
   return (
     <section className="section-space">
