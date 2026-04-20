@@ -1,0 +1,18 @@
+[Unit]
+Description=DevMain Backend API Service
+After=network.target
+
+[Service]
+Type=simple
+User=codecrafter
+WorkingDirectory=/home/codecrafter/work/website
+EnvironmentFile=-/home/codecrafter/work/website/.env
+ExecStart=/usr/bin/python3 -m backend
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+Environment=ADMIN_API_PORT=8000
+Environment=ADMIN_ALLOWED_ORIGIN=https://devmain.co.ke
+
+[Install]
+WantedBy=multi-user.target

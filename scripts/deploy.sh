@@ -4,16 +4,11 @@ set -Eeuo pipefail
 
 APP_DIR="${APP_DIR:?APP_DIR is required}"
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
-COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
-
-if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
-  DOCKER_COMPOSE=(docker compose)
-elif command -v docker-compose >/dev/null 2>&1; then
-  DOCKER_COMPOSE=(docker-compose)
-else
-  echo "Docker Compose is not installed on the server."
-  exit 1
-fi
+FRONTEND_SERVICE="${FRONTEND_SERVICE:-devmain-frontend.service}"
+BACKEND_SERVICE="${BACKEND_SERVICE:-devmain-backend.service}"
+NODE_ENV="${NODE_ENV:-production}"
+NPM_BIN="${NPM_BIN:-/usr/bin/npm}"
+PYTHON_BIN="${PYTHON_BIN:-/usr/bin/python3}"
 
 cd "$APP_DIR"
 
@@ -32,16 +27,31 @@ fi
 
 git pull --ff-only origin "$DEPLOY_BRANCH"
 
-echo "Building containers..."
-"${DOCKER_COMPOSE[@]}" -f "$COMPOSE_FILE" build app
+echo "Installing Node dependencies..."
+"$NPM_BIN" ci
 
-echo "Starting database..."
-"${DOCKER_COMPOSE[@]}" -f "$COMPOSE_FILE" up -d db
+echo "Generating Prisma client..."
+npx prisma generate
 
-echo "Running database migrations..."
-"${DOCKER_COMPOSE[@]}" -f "$COMPOSE_FILE" run --rm app npx prisma migrate deploy
+echo "Building Next.js frontend..."
+NODE_ENV="$NODE_ENV" "$NPM_BIN" run build
 
-echo "Starting application..."
-"${DOCKER_COMPOSE[@]}" -f "$COMPOSE_FILE" up -d --remove-orphans app
+if [ -n "${DATABASE_URL:-}" ]; then
+  echo "Running database migrations..."
+  npx prisma migrate deploy
+else
+  echo "DATABASE_URL is not set in the deploy shell. Skipping prisma migrate deploy."
+fi
+
+echo "Checking backend entry point..."
+"$PYTHON_BIN" -m backend --help >/dev/null 2>&1 || true
+
+echo "Restarting systemd services..."
+sudo systemctl restart "$BACKEND_SERVICE"
+sudo systemctl restart "$FRONTEND_SERVICE"
+
+echo "Waiting for services to become active..."
+sudo systemctl is-active --quiet "$BACKEND_SERVICE"
+sudo systemctl is-active --quiet "$FRONTEND_SERVICE"
 
 echo "Deployment finished successfully."

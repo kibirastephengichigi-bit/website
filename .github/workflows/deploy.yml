@@ -62,8 +62,9 @@ jobs:
           SERVER_USER: ${{ secrets.SERVER_USER }}
           SERVER_APP_DIR: ${{ secrets.SERVER_APP_DIR }}
           DEPLOY_BRANCH: ${{ github.ref_name }}
-          COMPOSE_FILE: docker-compose.yml
+          FRONTEND_SERVICE: ${{ secrets.FRONTEND_SERVICE }}
+          BACKEND_SERVICE: ${{ secrets.BACKEND_SERVICE }}
         run: |
           ssh -p "${SERVER_PORT:-22}" "${SERVER_USER}@${SERVER_HOST}" \
-            "APP_DIR='${SERVER_APP_DIR}' DEPLOY_BRANCH='${DEPLOY_BRANCH}' COMPOSE_FILE='${COMPOSE_FILE}' bash -s" \
+            "APP_DIR='${SERVER_APP_DIR}' DEPLOY_BRANCH='${DEPLOY_BRANCH}' FRONTEND_SERVICE='${FRONTEND_SERVICE:-devmain-frontend.service}' BACKEND_SERVICE='${BACKEND_SERVICE:-devmain-backend.service}' bash -s" \
             < scripts/deploy.sh
