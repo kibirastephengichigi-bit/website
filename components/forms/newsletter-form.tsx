@@ -26,7 +26,7 @@ export function NewsletterForm() {
     const lastSubmission = localStorage.getItem("newsletter-form-last-submit");
     if (lastSubmission) {
       const timeDiff = Date.now() - parseInt(lastSubmission);
-      if (timeDiff < 300000) { // 5 minute cooldown
+      if (timeDiff < 300000) {
         setStatus("error");
         return;
       }
@@ -87,20 +87,10 @@ export function NewsletterForm() {
         </Button>
       </div>
 
-      {/* Hidden CSRF token */}
-      <input
-        type="hidden"
-        name="csrf_token"
-        value={generateCSRFToken()}
-      />
+      <input type="hidden" name="csrf_token" value={generateCSRFToken()} />
 
-      {/* Honeypot field for bot detection */}
       <input
         type="text"
-<<<<<<< HEAD
-=======
-        name="website"
->>>>>>> 2b901905c51a30f2ce2812606eaa2bc859199a5e
         style={{ display: "none" }}
         tabIndex={-1}
         autoComplete="off"
@@ -127,7 +117,6 @@ export function NewsletterForm() {
   );
 }
 
-// Simple CSRF token generation (client-side)
 function generateCSRFToken(): string {
   const timestamp = Date.now().toString();
   const random = Math.random().toString(36).substring(2);

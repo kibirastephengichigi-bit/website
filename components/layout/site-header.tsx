@@ -1,10 +1,7 @@
-"use client";
-
 import Link from "next/link";
 import { Menu, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
-import { useState } from "react";
-import { useSession, signOut } from "next-auth/react";
 
+import { signOut, auth } from "@/lib/auth";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { siteContent } from "@/lib/content/site-content";
@@ -18,9 +15,13 @@ const links = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function SiteHeader() {
-  const [open, setOpen] = useState(false);
-  const { data: session } = useSession();
+export async function SiteHeader() {
+  const session = await auth();
+
+  async function handleSignOut() {
+    "use server";
+    await signOut({ redirectTo: "/" });
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur-xl">
@@ -65,9 +66,11 @@ export function SiteHeader() {
               <Button asChild size="sm" variant="outline">
                 <Link href="/account">Account</Link>
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => void signOut({ callbackUrl: "/" })}>
-                Sign out
-              </Button>
+              <form action={handleSignOut}>
+                <Button size="sm" variant="ghost" type="submit">
+                  Sign out
+                </Button>
+              </form>
             </>
           ) : (
             <Button asChild size="sm">
@@ -76,57 +79,55 @@ export function SiteHeader() {
           )}
         </nav>
 
-        <button
-          type="button"
-          className="inline-flex rounded-full border border-border p-3 lg:hidden"
-          onClick={() => setOpen((value) => !value)}
-          aria-label="Toggle navigation"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-      </div>
-      {open ? (
-        <div className="border-t border-border/70 bg-background lg:hidden">
-          <div className="container-shell flex flex-col gap-4 py-4">
-            {links.map((link) => (
-              <Link key={link.href} href={link.href} className="text-sm font-medium" onClick={() => setOpen(false)}>
-                {link.label}
-              </Link>
-            ))}
-            <div className="flex items-center gap-2 pt-2">
-              {siteContent.contact.socialLinks.slice(0, 4).map((social) => {
-                const Icon = social.label === "Facebook" ? Facebook : 
-                            social.label === "Twitter" || social.label === "X" ? Twitter :
-                            social.label === "Instagram" ? Instagram : 
-                            social.label === "LinkedIn" ? Linkedin : null;
-                if (!Icon) return null;
-                return (
-                  <Button key={social.label} asChild size="sm" variant="ghost" className="h-8 w-8 p-0">
-                    <a href={social.href} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
-                      <Icon className="h-4 w-4" />
-                    </a>
+        <details className="group lg:hidden">
+          <summary className="inline-flex list-none rounded-full border border-border p-3 marker:hidden">
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle navigation</span>
+          </summary>
+          <div className="absolute right-4 top-[calc(100%+0.75rem)] w-[min(22rem,calc(100vw-2rem))] rounded-[28px] border border-border/80 bg-background p-5 shadow-2xl">
+            <div className="flex flex-col gap-4">
+              {links.map((link) => (
+                <Link key={link.href} href={link.href} className="text-sm font-medium">
+                  {link.label}
+                </Link>
+              ))}
+              <div className="flex items-center gap-2 pt-2">
+                {siteContent.contact.socialLinks.slice(0, 4).map((social) => {
+                  const Icon = social.label === "Facebook" ? Facebook :
+                    social.label === "Twitter" || social.label === "X" ? Twitter :
+                    social.label === "Instagram" ? Instagram :
+                    social.label === "LinkedIn" ? Linkedin : null;
+                  if (!Icon) return null;
+                  return (
+                    <Button key={social.label} asChild size="sm" variant="ghost" className="h-8 w-8 p-0">
+                      <a href={social.href} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
+                        <Icon className="h-4 w-4" />
+                      </a>
+                    </Button>
+                  );
+                })}
+              </div>
+              <ThemeToggle />
+              {session?.user ? (
+                <>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href="/account">Account</Link>
                   </Button>
-                );
-              })}
+                  <form action={handleSignOut}>
+                    <Button size="sm" variant="ghost" type="submit">
+                      Sign out
+                    </Button>
+                  </form>
+                </>
+              ) : (
+                <Button asChild size="sm">
+                  <Link href="/signin">Sign in</Link>
+                </Button>
+              )}
             </div>
-            <ThemeToggle />
-            {session?.user ? (
-              <>
-                <Button asChild size="sm" variant="outline">
-                  <Link href="/account">Account</Link>
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => void signOut({ callbackUrl: "/" })}>
-                  Sign out
-                </Button>
-              </>
-            ) : (
-              <Button asChild size="sm">
-                <Link href="/signin">Sign in</Link>
-              </Button>
-            )}
           </div>
-        </div>
-      ) : null}
+        </details>
+      </div>
     </header>
   );
 }

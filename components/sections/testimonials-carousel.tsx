@@ -1,6 +1,3 @@
-"use client";
-
-import { motion } from "framer-motion";
 import Image from "next/image";
 
 import { SectionHeading } from "@/components/layout/section-heading";
@@ -18,18 +15,12 @@ export function TestimonialsCarousel() {
         />
         <div className="grid gap-6 lg:grid-cols-3">
           {siteContent.testimonials.map((testimonial, index) => (
-            <motion.div
-              key={testimonial.name}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.08 }}
-            >
+            <div key={testimonial.name}>
               <Card className="h-full border-border/50 bg-card/50 p-7 backdrop-blur-sm">
                 <div className="mb-5 flex items-center gap-4">
                   <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-border bg-muted">
                     <Image
-                      src={testimonial.image}
+                      src={testimonial.image.replace(/\.(png|jpe?g)$/i, ".webp")}
                       alt={testimonial.name}
                       fill
                       sizes="64px"
@@ -43,7 +34,7 @@ export function TestimonialsCarousel() {
                 </div>
                 <p className="text-base leading-8 text-foreground">“{testimonial.quote}”</p>
               </Card>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

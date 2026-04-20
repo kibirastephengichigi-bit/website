@@ -5,6 +5,7 @@ import { SectionHeading } from "@/components/layout/section-heading";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SaveItemButton } from "@/components/user/save-item-button";
+import { auth } from "@/lib/auth";
 import { siteContent } from "@/lib/content/site-content";
 import { createMetadata } from "@/lib/site";
 import { EnhancedCaseStudies } from "@/components/sections/enhanced-case-studies";
@@ -22,7 +23,9 @@ const researchHighlights = [
   { label: "Talks", value: siteContent.conferences.length + siteContent.invitedTalks.length },
 ];
 
-export default function ResearchPage() {
+export default async function ResearchPage() {
+  const session = await auth();
+
   return (
     <>
       <section className="section-space">
@@ -74,6 +77,7 @@ export default function ResearchPage() {
                     itemKey={project.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}
                     title={project.title}
                     href={project.link}
+                    isSignedIn={Boolean(session?.user)}
                   />
                 </div>
               ) : null}

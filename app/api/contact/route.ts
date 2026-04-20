@@ -28,11 +28,7 @@ function checkRateLimit(ip: string, maxRequests: number = 5, windowMs: number = 
 function validateCSRFToken(token: string): boolean {
   // Simple validation - in production, use proper CSRF tokens
   // This is a basic check; implement proper CSRF validation
-<<<<<<< HEAD
   return token.length >= 16;
-=======
-  return token && token.length >= 16;
->>>>>>> 2b901905c51a30f2ce2812606eaa2bc859199a5e
 }
 
 export async function POST(request: Request) {

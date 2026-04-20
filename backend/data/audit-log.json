@@ -1,6 +1,5 @@
 [
   {
-<<<<<<< HEAD
     "id": "df4941ed-5273-45c0-a1fe-8ba3c28c5f69",
     "action": "content.updated",
     "actor": "admin",
@@ -156,8 +155,6 @@
     "createdAt": "2026-04-19T12:56:15.120973+00:00"
   },
   {
-=======
->>>>>>> 2b901905c51a30f2ce2812606eaa2bc859199a5e
     "id": "e2bb8296-363e-403f-bee0-38db20482a83",
     "action": "blog.updated",
     "actor": "admin",

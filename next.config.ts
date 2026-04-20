@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: "https",
@@ -62,20 +63,35 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        source: "/assets/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/uploads/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, stale-while-revalidate=604800",
+          },
+        ],
+      },
     ];
   },
   // Additional security settings
   poweredByHeader: false,
   compress: true,
   reactStrictMode: true,
-<<<<<<< HEAD
   experimental: {
     webpackBuildWorker: false,
   },
-=======
->>>>>>> 2b901905c51a30f2ce2812606eaa2bc859199a5e
   // Enable standalone output for Docker
-  output: 'standalone',
+  output: "standalone",
 };
 
 export default nextConfig;

@@ -10,9 +10,11 @@ import type { BlogPostSummary } from "@/types";
 export function BlogFilters({
   posts,
   categories,
+  isSignedIn,
 }: {
   posts: BlogPostSummary[];
   categories: string[];
+  isSignedIn: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -74,6 +76,7 @@ export function BlogFilters({
                 title={post.title}
                 href={`/blog/${post.slug}`}
                 image={post.featuredImage}
+                isSignedIn={isSignedIn}
               />
             </div>
           </Card>

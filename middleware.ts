@@ -41,35 +41,26 @@ function isSuspiciousRequest(request: NextRequest): boolean {
     /rapid7/i,
   ];
 
-  return suspiciousPatterns.some(pattern => pattern.test(userAgent));
+  return suspiciousPatterns.some((pattern) => pattern.test(userAgent));
 }
 
 export function middleware(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for") ||
              request.headers.get("x-real-ip") ||
-<<<<<<< HEAD
-=======
-             request.ip ||
->>>>>>> 2b901905c51a30f2ce2812606eaa2bc859199a5e
              "unknown";
 
-  // Basic rate limiting
   if (!checkRateLimit(ip)) {
     return new NextResponse("Too many requests", { status: 429 });
   }
 
-  // Block suspicious requests
   if (isSuspiciousRequest(request)) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  // Add security headers
   const response = NextResponse.next();
 
-  // Additional headers that can't be set in next.config.ts
   response.headers.set("X-Robots-Tag", "noindex, nofollow, nosnippet, noarchive");
 
-  // Only add HSTS for HTTPS requests
   if (request.url.startsWith("https://")) {
     response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   }
@@ -79,18 +70,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
     "/((?!api|_next/static|_next/image|favicon.ico|public/).*)",
   ],
-<<<<<<< HEAD
 };
-=======
-};
->>>>>>> 2b901905c51a30f2ce2812606eaa2bc859199a5e

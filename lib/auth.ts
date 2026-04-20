@@ -45,8 +45,9 @@ const authConfig: NextAuthConfig = {
   callbacks: {
     async session({ session, user }) {
       if (session.user && user) {
+        const userWithRole = user as typeof user & { role?: string };
         session.user.id = user.id;
-        session.user.role = user.role || "USER";
+        session.user.role = userWithRole.role || "USER";
         session.user.name = user.name;
         session.user.email = user.email;
         session.user.image = user.image;
@@ -65,7 +66,7 @@ const authConfig: NextAuthConfig = {
   },
   events: {
     async createUser({ user }) {
-      if (!db) return;
+      if (!db || !user.id) return;
       await db.userPreference.upsert({
         where: { userId: user.id },
         update: {},
@@ -74,12 +75,6 @@ const authConfig: NextAuthConfig = {
         },
       });
     },
-  },
-  // Add security headers
-  headers: {
-    "X-Frame-Options": "DENY",
-    "X-Content-Type-Options": "nosniff",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
   },
 };
 

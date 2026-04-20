@@ -29,6 +29,7 @@ export async function GallerySection() {
                   alt={item.title}
                   width={1200}
                   height={900}
+                  sizes={index === 0 ? "(max-width: 768px) 100vw, 40vw" : "(max-width: 768px) 100vw, 20vw"}
                   className="h-full min-h-[220px] w-full rounded-[20px] object-cover"
                 />
               </Card>
