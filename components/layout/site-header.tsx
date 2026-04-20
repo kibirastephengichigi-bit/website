@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Menu, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
@@ -29,8 +30,8 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur-xl">
       <div className="container-shell flex h-20 items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <div className="rounded-2xl bg-primary px-3 py-2 text-xs font-bold uppercase tracking-[0.25em] text-primary-foreground">
-            SA
+          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-white shadow-sm">
+            <Image src="/assets/branding/logo.png" alt="Stephen Asatsa logo" width={48} height={48} className="h-10 w-10 object-contain" />
           </div>
           <div>
             <p className="font-display text-2xl leading-none">Dr. Stephen Asatsa</p>
@@ -65,6 +66,9 @@ export function SiteHeader() {
           <ThemeToggle />
           {isSignedIn ? (
             <>
+              <Button asChild size="sm">
+                <a href={siteContent.contact.bookingUrl} target="_blank" rel="noopener noreferrer">Book Now</a>
+              </Button>
               <Button asChild size="sm" variant="outline">
                 <Link href="/account">Account</Link>
               </Button>
@@ -73,9 +77,14 @@ export function SiteHeader() {
               </Button>
             </>
           ) : (
-            <Button asChild size="sm">
-              <Link href="/signin">Sign in with Google</Link>
-            </Button>
+            <>
+              <Button asChild size="sm">
+                <a href={siteContent.contact.bookingUrl} target="_blank" rel="noopener noreferrer">Book Now</a>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/signin">Sign in with Google</Link>
+              </Button>
+            </>
           )}
         </nav>
 
@@ -110,6 +119,9 @@ export function SiteHeader() {
               <ThemeToggle />
               {isSignedIn ? (
                 <>
+                  <Button asChild size="sm">
+                    <a href={siteContent.contact.bookingUrl} target="_blank" rel="noopener noreferrer">Book Now</a>
+                  </Button>
                   <Button asChild size="sm" variant="outline">
                     <Link href="/account">Account</Link>
                   </Button>
@@ -118,9 +130,14 @@ export function SiteHeader() {
                   </Button>
                 </>
               ) : (
-                <Button asChild size="sm">
-                  <Link href="/signin">Sign in</Link>
-                </Button>
+                <>
+                  <Button asChild size="sm">
+                    <a href={siteContent.contact.bookingUrl} target="_blank" rel="noopener noreferrer">Book Now</a>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href="/signin">Sign in</Link>
+                  </Button>
+                </>
               )}
             </div>
           </div>

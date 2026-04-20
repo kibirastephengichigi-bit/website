@@ -1,3 +1,5 @@
+import { AnimatedStat } from "@/components/home/animated-stat";
+
 export function StatisticsSection() {
   const stats = [
     { value: 15, suffix: "+", label: "Years of Experience" },
@@ -20,8 +22,7 @@ export function StatisticsSection() {
           {stats.map((stat) => (
             <div key={stat.label} className="text-center">
               <div className="mb-2 font-display text-4xl font-bold text-accent">
-                {stat.value}
-                {stat.suffix}
+                <AnimatedStat value={stat.value} suffix={stat.suffix} />
               </div>
               <div className="text-sm font-medium text-muted-foreground">{stat.label}</div>
             </div>

@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, Download, ExternalLink } from "lucide-react";
+import { BadgeCheck, CalendarDays, ChevronDown, Download, ExternalLink, Mail, PhoneCall } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { siteContent } from "@/lib/content/site-content";
+import { siteConfig } from "@/lib/site";
 
 export function InteractiveHeroSection() {
   return (
@@ -31,21 +32,26 @@ export function InteractiveHeroSection() {
               {siteContent.hero.eyebrow}
             </p>
 
+            <div className="flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="rounded-full border border-border bg-white/80 px-3 py-2">Licensed Psychologist</span>
+              <span className="rounded-full border border-border bg-white/80 px-3 py-2">Senior Lecturer</span>
+              <span className="rounded-full border border-border bg-white/80 px-3 py-2">Research Leader</span>
+            </div>
+
             <h1 className="font-display text-5xl leading-[0.95] text-foreground sm:text-6xl lg:text-7xl">
-              Stephen
-              <br />
-              Asatsa, PhD
+              {siteContent.hero.headline}
             </h1>
 
             <p className="max-w-2xl text-lg leading-8 text-muted-foreground">
-              is a senior Lecturer and Head of Department of Psychology at the Catholic University of Eastern Africa
-              with extensive experience in academic strategy and research. Proven track record as a Lecturer of
-              Psychology, excelling in teaching, research, and student mentorship.
+              {siteContent.hero.subheadline}
             </p>
 
             <div className="flex flex-wrap gap-4 pt-2">
               <Button asChild size="lg">
-                <Link href="#who-we-are">Read More</Link>
+                <a href={siteContent.contact.bookingUrl} target="_blank" rel="noopener noreferrer">
+                  <CalendarDays className="mr-2 h-4 w-4" />
+                  {siteContent.hero.primaryCta.label}
+                </a>
               </Button>
               <Button asChild size="lg" variant="outline">
                 <a href={siteContent.hero.publicationsCta.href} target="_blank" rel="noopener noreferrer">
@@ -54,9 +60,7 @@ export function InteractiveHeroSection() {
                 </a>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/research">
-                  View Research
-                </Link>
+                <Link href="#who-we-are">Explore Profile</Link>
               </Button>
               <Button asChild size="lg" variant="outline">
                 <Link href={siteContent.hero.secondaryCta.href}>
@@ -64,6 +68,33 @@ export function InteractiveHeroSection() {
                   {siteContent.hero.secondaryCta.label}
                 </Link>
               </Button>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-[24px] border border-border/80 bg-white/85 p-5 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent/10 text-accent">
+                    <BadgeCheck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Trusted Credentials</p>
+                    <p className="text-sm text-muted-foreground">CUEA leadership, licensed practice, international research profile.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[24px] border border-border/80 bg-white/85 p-5 shadow-sm">
+                <div className="space-y-3 text-sm">
+                  <a href={`tel:${siteContent.contact.phones[0].replace(/\s+/g, "")}`} className="flex items-center gap-3 text-foreground transition hover:text-accent">
+                    <PhoneCall className="h-4 w-4" />
+                    <span>{siteContent.contact.phones[0]}</span>
+                  </a>
+                  <a href={`mailto:${siteConfig.email}`} className="flex items-center gap-3 text-foreground transition hover:text-accent">
+                    <Mail className="h-4 w-4" />
+                    <span>{siteConfig.email}</span>
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </div>

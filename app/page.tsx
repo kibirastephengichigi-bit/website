@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { InteractiveHeroSection } from "@/components/home/interactive-hero";
 import { StatisticsSection } from "@/components/home/statistics-section";
+import { TrustStrip } from "@/components/home/trust-strip";
 import { ParallaxAboutSection } from "@/components/home/parallax-about";
 import { InteractiveServicesSection } from "@/components/home/interactive-services";
 import { ScrollZoomResearchSection } from "@/components/home/scroll-zoom-research";
@@ -22,6 +23,7 @@ export default function HomePage() {
     <>
       <InteractiveHeroSection />
       <StatisticsSection />
+      <TrustStrip />
       <ParallaxAboutSection />
       <InteractiveServicesSection />
       <ScrollZoomResearchSection />
