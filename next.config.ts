@@ -68,9 +68,12 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   reactStrictMode: true,
+<<<<<<< HEAD
   experimental: {
     webpackBuildWorker: false,
   },
+=======
+>>>>>>> 2b901905c51a30f2ce2812606eaa2bc859199a5e
   // Enable standalone output for Docker
   output: 'standalone',
 };

@@ -47,6 +47,10 @@ function isSuspiciousRequest(request: NextRequest): boolean {
 export function middleware(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for") ||
              request.headers.get("x-real-ip") ||
+<<<<<<< HEAD
+=======
+             request.ip ||
+>>>>>>> 2b901905c51a30f2ce2812606eaa2bc859199a5e
              "unknown";
 
   // Basic rate limiting
@@ -85,4 +89,8 @@ export const config = {
      */
     "/((?!api|_next/static|_next/image|favicon.ico|public/).*)",
   ],
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> 2b901905c51a30f2ce2812606eaa2bc859199a5e

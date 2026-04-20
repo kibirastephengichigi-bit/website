@@ -1,10 +1,19 @@
 [
   {
+<<<<<<< HEAD
     "token": "ZxA9PFNh1dVTEqvJwz0i_AeUDPFGL41lZLUpLbT06xZbRY4D00nFHIFEl0HWWOpa",
     "username": "admin",
     "ipAddress": "127.0.0.1",
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
     "createdAt": "2026-04-19T12:56:15.118590+00:00",
     "expiresAt": "2026-04-19T20:56:15.118549+00:00"
+=======
+    "token": "bWe6YR7EoIJw3zkN89P8B28-v98t7AjNB1O08VF1LEDREN4Oaqbg6T6BLvA2CZJp",
+    "username": "admin",
+    "ipAddress": "127.0.0.1",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+    "createdAt": "2026-04-17T12:39:23.342045+00:00",
+    "expiresAt": "2026-04-17T20:39:23.342033+00:00"
+>>>>>>> 2b901905c51a30f2ce2812606eaa2bc859199a5e
   }
 ]

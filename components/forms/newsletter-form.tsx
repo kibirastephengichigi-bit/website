@@ -97,6 +97,10 @@ export function NewsletterForm() {
       {/* Honeypot field for bot detection */}
       <input
         type="text"
+<<<<<<< HEAD
+=======
+        name="website"
+>>>>>>> 2b901905c51a30f2ce2812606eaa2bc859199a5e
         style={{ display: "none" }}
         tabIndex={-1}
         autoComplete="off"

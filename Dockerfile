@@ -10,7 +10,11 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json* ./
 # Install dependencies
+<<<<<<< HEAD
 RUN npm ci && npm cache clean --force
+=======
+RUN npm ci --only=production && npm cache clean --force
+>>>>>>> 2b901905c51a30f2ce2812606eaa2bc859199a5e
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -58,4 +62,8 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Start the application
+<<<<<<< HEAD
 CMD ["node", "server.js"]
+=======
+CMD ["node", "server.js"]
+>>>>>>> 2b901905c51a30f2ce2812606eaa2bc859199a5e

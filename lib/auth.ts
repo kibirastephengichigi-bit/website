@@ -1,0 +1,86 @@
+import type { DefaultSession, NextAuthConfig } from "next-auth";
+import Google from "next-auth/providers/google";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import NextAuth from "next-auth";
+
+import { db, hasDatabaseUrl } from "@/lib/db";
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      role: string;
+    } & DefaultSession["user"];
+  }
+}
+
+// Only include Google provider if credentials are properly configured
+const providers = [];
+
+// Add Google provider only if credentials are set and not placeholder values
+if (
+  process.env.GOOGLE_CLIENT_ID &&
+  process.env.GOOGLE_CLIENT_SECRET &&
+  process.env.GOOGLE_CLIENT_ID !== "your-google-client-id-here" &&
+  process.env.GOOGLE_CLIENT_SECRET !== "your-google-client-secret-here" &&
+  process.env.GOOGLE_CLIENT_ID.length > 10 &&
+  process.env.GOOGLE_CLIENT_SECRET.length > 10
+) {
+  providers.push(
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    })
+  );
+}
+
+const authConfig: NextAuthConfig = {
+  adapter: hasDatabaseUrl && db ? PrismaAdapter(db) : undefined,
+  session: { strategy: "database" },
+  pages: {
+    signIn: "/signin",
+    error: "/signin", // Redirect errors to signin page
+  },
+  providers,
+  callbacks: {
+    async session({ session, user }) {
+      if (session.user && user) {
+        session.user.id = user.id;
+        session.user.role = user.role || "USER";
+        session.user.name = user.name;
+        session.user.email = user.email;
+        session.user.image = user.image;
+      }
+      return session;
+    },
+    async signIn({ user, account, profile }) {
+      // Only allow sign in with verified email
+      if (!user.email) {
+        return false;
+      }
+
+      // Additional validation can be added here
+      return true;
+    },
+  },
+  events: {
+    async createUser({ user }) {
+      if (!db) return;
+      await db.userPreference.upsert({
+        where: { userId: user.id },
+        update: {},
+        create: {
+          userId: user.id,
+        },
+      });
+    },
+  },
+  // Add security headers
+  headers: {
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+  },
+};
+
+export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
