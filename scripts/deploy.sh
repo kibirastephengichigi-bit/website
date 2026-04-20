@@ -2,7 +2,8 @@
 
 set -Eeuo pipefail
 
-APP_DIR="${APP_DIR:?APP_DIR is required}"
+DEFAULT_APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+APP_DIR="${APP_DIR:-${1:-$DEFAULT_APP_DIR}}"
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 FRONTEND_SERVICE="${FRONTEND_SERVICE:-devmain-frontend.service}"
 BACKEND_SERVICE="${BACKEND_SERVICE:-devmain-backend.service}"
@@ -14,6 +15,12 @@ cd "$APP_DIR"
 
 if [ ! -d .git ]; then
   echo "Expected a git checkout in $APP_DIR."
+  exit 1
+fi
+
+if ! systemctl list-unit-files "$FRONTEND_SERVICE" >/dev/null 2>&1 || ! systemctl list-unit-files "$BACKEND_SERVICE" >/dev/null 2>&1; then
+  echo "Systemd service files are not installed yet."
+  echo "Run: APP_DIR=$APP_DIR ./scripts/install-systemd.sh"
   exit 1
 fi
 

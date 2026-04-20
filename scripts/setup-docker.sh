@@ -37,7 +37,11 @@ install_docker() {
 
   if have_command apt-get; then
     run_root apt-get update
-    run_root apt-get install -y docker.io docker-compose-plugin
+    if run_root apt-get install -y docker.io docker-compose-plugin; then
+      return
+    fi
+    log "docker-compose-plugin is unavailable in apt. Falling back to docker-compose."
+    run_root apt-get install -y docker.io docker-compose
     return
   fi
 
@@ -136,11 +140,19 @@ ensure_compose() {
     return
   fi
 
+  if have_command docker-compose; then
+    return
+  fi
+
   log "Docker Compose plugin is missing. Trying to install it."
 
   if have_command apt-get; then
     run_root apt-get update
-    run_root apt-get install -y docker-compose-plugin
+    if run_root apt-get install -y docker-compose-plugin; then
+      return
+    fi
+    log "docker-compose-plugin is unavailable in apt. Falling back to docker-compose."
+    run_root apt-get install -y docker-compose
     return
   fi
 
@@ -235,7 +247,11 @@ run_stack() {
 
   log "Starting the website stack from $PROJECT_ROOT"
   cd "$PROJECT_ROOT"
-  docker compose up -d --build
+  if docker compose version >/dev/null 2>&1; then
+    docker compose up -d --build
+  else
+    docker-compose up -d --build
+  fi
   log "Website should be available at http://localhost:3001"
 }
 
