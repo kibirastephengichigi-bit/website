@@ -7,6 +7,10 @@ yarn-error.log*
 .next
 out
 
+# Allow standalone output for Docker runtime builds
+!.next/standalone
+!.next/static
+
 # Production builds
 build
 dist
