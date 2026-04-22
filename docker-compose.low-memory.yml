@@ -25,6 +25,11 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       # Memory optimization
       - NODE_OPTIONS=--max-old-space-size=512
+    command: >
+      sh -c "
+        npx prisma generate &&
+        npm run start
+      "
     depends_on:
       db:
         condition: service_healthy

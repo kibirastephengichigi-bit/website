@@ -23,6 +23,11 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - JWT_SECRET=${JWT_SECRET}
+    command: >
+      sh -c "
+        npx prisma generate &&
+        npm run start
+      "
     depends_on:
       db:
         condition: service_healthy
