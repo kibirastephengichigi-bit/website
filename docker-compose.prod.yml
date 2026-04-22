@@ -25,7 +25,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
     command: >
       sh -c "
-        npm install -g prisma@6.6.0 &&
+        npm install prisma@6.6.0 &&
         npx prisma generate &&
         npm run start
       "
