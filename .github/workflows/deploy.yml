@@ -62,9 +62,25 @@ jobs:
           SERVER_USER: ${{ secrets.SERVER_USER }}
           SERVER_APP_DIR: ${{ secrets.SERVER_APP_DIR }}
           DEPLOY_BRANCH: ${{ github.ref_name }}
-          FRONTEND_SERVICE: ${{ secrets.FRONTEND_SERVICE }}
-          BACKEND_SERVICE: ${{ secrets.BACKEND_SERVICE }}
+          NODE_ENV: production
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: |
           ssh -p "${SERVER_PORT:-22}" "${SERVER_USER}@${SERVER_HOST}" \
-            "APP_DIR='${SERVER_APP_DIR}' DEPLOY_BRANCH='${DEPLOY_BRANCH}' FRONTEND_SERVICE='${FRONTEND_SERVICE:-devmain-frontend.service}' BACKEND_SERVICE='${BACKEND_SERVICE:-devmain-backend.service}' bash -s" \
-            < scripts/deploy.sh
+            "APP_DIR='${SERVER_APP_DIR}' DEPLOY_BRANCH='${DEPLOY_BRANCH}' NODE_ENV='${NODE_ENV}' DATABASE_URL='${DATABASE_URL}' NEXTAUTH_SECRET='${NEXTAUTH_SECRET}' NEXTAUTH_URL='${NEXTAUTH_URL}' DB_PASSWORD='${DB_PASSWORD}' ADMIN_USERNAME='${ADMIN_USERNAME}' ADMIN_PASSWORD='${ADMIN_PASSWORD}' bash -s" \
+            < scripts/docker-deploy.sh
+
+      - name: Verify deployment
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_APP_DIR: ${{ secrets.SERVER_APP_DIR }}
+        run: |
+          echo "Checking Docker container status..."
+          ssh -p "${SERVER_PORT:-22}" "${SERVER_USER}@${SERVER_HOST}" \
+            "cd '${SERVER_APP_DIR}' && docker-compose -f docker-compose.prod.yml ps && echo 'Checking container health...' && docker-compose -f docker-compose.prod.yml exec app curl -f http://localhost:3000/api/health && docker-compose -f docker-compose.prod.yml exec admin-backend curl -f http://localhost:8000/api/health && echo 'All containers are running successfully'"
