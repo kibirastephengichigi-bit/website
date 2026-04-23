@@ -62,7 +62,7 @@ jobs:
         run: |
           ssh-keyscan -p "${SERVER_PORT:-22}" -H "$SERVER_HOST" >> ~/.ssh/known_hosts
 
-      # ✅ Deploy to server
+      # ✅ Deploy to server with enhanced timeout handling
       - name: Run production deploy
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
