@@ -128,9 +128,46 @@ deploy_with_docker() {
   git_sync
 
   log "Installing Node dependencies for build..."
-  if ! npm ci; then
-    error "Failed to install Node dependencies"
-    exit 1
+  # Set npm configuration for faster installs
+  export npm_config_cache=/tmp/npm-cache
+  export npm_config_prefer_offline=true
+  export npm_config_audit=false
+  export npm_config_fund=false
+  
+  # Clean npm cache first
+  log "Cleaning npm cache..."
+  npm cache clean --force || true
+  
+  # Try npm ci with retry logic
+  local max_retries=3
+  local retry_count=0
+  local install_success=false
+  
+  while [ $retry_count -lt $max_retries ] && [ "$install_success" = false ]; do
+    log "Attempting npm ci (attempt $((retry_count + 1))/$max_retries)..."
+    
+    if timeout 300 npm ci --prefer-offline --no-audit --no-fund; then
+      log "Dependencies installed successfully with npm ci"
+      install_success=true
+    else
+      retry_count=$((retry_count + 1))
+      if [ $retry_count -lt $max_retries ]; then
+        log "npm ci failed, retrying in 10 seconds..."
+        sleep 10
+      fi
+    fi
+  done
+  
+  # Fallback to npm install if npm ci failed
+  if [ "$install_success" = false ]; then
+    log "npm ci failed, trying npm install as fallback..."
+    if timeout 300 npm install --prefer-offline --no-audit --no-fund; then
+      log "Dependencies installed successfully with npm install"
+      install_success=true
+    else
+      error "Failed to install Node dependencies with both npm ci and npm install"
+      exit 1
+    fi
   fi
 
   log "Generating Prisma client..."
