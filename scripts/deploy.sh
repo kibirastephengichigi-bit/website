@@ -127,6 +127,24 @@ deploy_with_docker() {
 
   git_sync
 
+  log "Installing Node dependencies for build..."
+  if ! npm ci; then
+    error "Failed to install Node dependencies"
+    exit 1
+  fi
+
+  log "Generating Prisma client..."
+  if ! npx prisma generate; then
+    error "Failed to generate Prisma client"
+    exit 1
+  fi
+
+  log "Building Next.js application..."
+  if ! NODE_ENV="$NODE_ENV" npm run build; then
+    error "Failed to build Next.js application"
+    exit 1
+  fi
+
   log "Building and starting Docker stack..."
   if ! $compose_cmd -f docker-compose.yml up -d --build; then
     error "Docker build/start failed"
