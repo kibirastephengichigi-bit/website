@@ -40,18 +40,21 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: validate
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/hero-section-fix'
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # ✅ Setup SSH key (base64 method — fixes libcrypto issue)
+      # ✅ Setup SSH key (alternative method)
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SERVER_SSH_KEY_BASE64 }}" | base64 -d > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.SERVER_SSH_KEY_BASE64 }}" | base64 -d > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          chmod 700 ~/.ssh
+          # Test the key format
+          ssh-keygen -l -f ~/.ssh/deploy_key || echo "Key format check failed"
 
       # ✅ Add server to known hosts
       - name: Add server to known hosts
@@ -80,7 +83,7 @@ jobs:
           FRONTEND_SERVICE: ${{ secrets.FRONTEND_SERVICE }}
           BACKEND_SERVICE: ${{ secrets.BACKEND_SERVICE }}
         run: |
-          ssh -i ~/.ssh/id_ed25519 -p "${SERVER_PORT:-22}" "${SERVER_USER}@${SERVER_HOST}" \
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -p "${SERVER_PORT:-22}" "${SERVER_USER}@${SERVER_HOST}" \
             "APP_DIR='${SERVER_APP_DIR}' \
              DEPLOY_BRANCH='${DEPLOY_BRANCH}' \
              NODE_ENV='${NODE_ENV}' \
