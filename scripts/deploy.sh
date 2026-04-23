@@ -127,7 +127,7 @@ deploy_with_docker() {
 
   git_sync
 
-  log "Installing Node dependencies for build..."
+  log "Installing Node dependencies for build (v2.0)..."
   # Set npm configuration for faster installs and network resilience
   export npm_config_cache=/tmp/npm-cache
   export npm_config_prefer_offline=true
