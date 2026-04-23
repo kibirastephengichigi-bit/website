@@ -1,24 +1,120 @@
 # CI/CD Deployment Guide
 
-This project now includes a GitHub Actions workflow that deploys the app to your server whenever code is pushed to the `main` branch.
+This project includes automated deployment scripts for running the application using systemd services or Docker Compose on a production server.
 
-## What the workflow does
+## Quick Server Setup (Recommended)
+
+The fastest way to get started is to use the comprehensive server setup script:
+
+```bash
+# On your Debian server:
+curl -fsSL https://raw.githubusercontent.com/kibirastephengichigi-bit/website/main/scripts/server-setup.sh | bash -s -- \
+  --repo-url https://github.com/kibirastephengichigi-bit/website.git \
+  --app-dir ~/website \
+  --domain devmain.co.ke \
+  --user codecrafter \
+  --install-nginx \
+  --install-docker \
+  --start-services
+```
+
+This single command will:
+- ✅ Install Node.js, Python 3, Git, and build tools
+- ✅ Clone your repository
+- ✅ Install Node dependencies and build the Next.js app
+- ✅ Install Docker and Docker Compose (optional)
+- ✅ Configure and start Nginx reverse proxy (optional)
+- ✅ Install systemd services
+- ✅ Create a production `.env` file (which you must edit)
+- ✅ Start all services
+
+### Usage
+
+```bash
+bash server-setup.sh [options]
+
+Options:
+  --repo-url <url>         Git repository URL (required)
+  --app-dir <path>         Installation directory (default: ~/website)
+  --domain <domain>        Domain name (default: devmain.co.ke)
+  --user <username>        Service user (default: current user)
+  --install-nginx          Install and configure Nginx
+  --install-docker         Install Docker and Docker Compose
+  --start-services         Start systemd services after installation
+```
+
+### Example
+
+```bash
+bash scripts/server-setup.sh \
+  --repo-url https://github.com/kibirastephengichigi-bit/website.git \
+  --app-dir /home/codecrafter/work/website \
+  --domain devmain.co.ke \
+  --user codecrafter \
+  --install-nginx \
+  --install-docker \
+  --start-services
+```
+
+---
+
+---
+
+## What the GitHub Actions workflow does
 
 1. Installs dependencies in GitHub Actions
 2. Generates the Prisma client
 3. Builds the Next.js app to catch broken pushes
 4. Connects to the production server over SSH
 5. Pulls the latest `main` branch on the server
-6. Installs Node dependencies and rebuilds the Next.js app
+6. Deploys using either Docker Compose or systemd services (auto-detected)
 7. Runs Prisma migrations when `DATABASE_URL` is available
-8. Restarts the frontend and backend `systemd` services
+8. Service management is automatic based on deployment mode
 
-## Files added
+## Managing systemd Services
 
-- `.github/workflows/deploy.yml`
-- `scripts/deploy.sh`
+After installation, manage your services with these commands:
 
-## Server preparation
+```bash
+# View service status
+sudo systemctl status devmain-frontend.service
+sudo systemctl status devmain-backend.service
+
+# View service logs
+sudo journalctl -u devmain-frontend.service -f
+sudo journalctl -u devmain-backend.service -f
+
+# Restart services
+sudo systemctl restart devmain-frontend.service
+sudo systemctl restart devmain-backend.service
+
+# Stop services
+sudo systemctl stop devmain-frontend.service
+sudo systemctl stop devmain-backend.service
+
+# Start services
+sudo systemctl start devmain-frontend.service
+sudo systemctl start devmain-backend.service
+```
+
+## Verify Installation
+
+Check that services are running:
+
+```bash
+docker ps  # If using Docker Compose
+# or
+ps aux | grep npm  # If using systemd
+curl -I http://localhost:3001  # Test app is responding
+curl -I http://devmain.co.ke  # Test Nginx proxy
+```
+
+---
+
+## Alternative: Manual Server Preparation
+
+If you prefer not to use the automated setup script, you can manually configure your server:
+
 
 On the production server, clone the same GitHub repository into a permanent app directory, for example:
 
@@ -76,6 +172,8 @@ Add these GitHub Actions secrets in your repository settings:
 - `SERVER_APP_DIR`: the absolute path of the checked out app on the server, for example `/home/codecrafter/work/website`
 - `FRONTEND_SERVICE`: usually `devmain-frontend.service`
 - `BACKEND_SERVICE`: usually `devmain-backend.service`
+
+Optionally, if your server runs Docker Compose, the workflow now deploys using the `docker-compose.yml` stack by default on the target server. Ensure Docker and Docker Compose are installed and your project contains `docker-compose.yml`.
 
 ## Recommended production checklist
 

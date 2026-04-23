@@ -62,9 +62,10 @@ jobs:
           SERVER_USER: ${{ secrets.SERVER_USER }}
           SERVER_APP_DIR: ${{ secrets.SERVER_APP_DIR }}
           DEPLOY_BRANCH: ${{ github.ref_name }}
+          DEPLOY_MODE: docker
           FRONTEND_SERVICE: ${{ secrets.FRONTEND_SERVICE }}
           BACKEND_SERVICE: ${{ secrets.BACKEND_SERVICE }}
         run: |
           ssh -p "${SERVER_PORT:-22}" "${SERVER_USER}@${SERVER_HOST}" \
-            "APP_DIR='${SERVER_APP_DIR}' DEPLOY_BRANCH='${DEPLOY_BRANCH}' FRONTEND_SERVICE='${FRONTEND_SERVICE:-devmain-frontend.service}' BACKEND_SERVICE='${BACKEND_SERVICE:-devmain-backend.service}' bash -s" \
+            "APP_DIR='${SERVER_APP_DIR}' DEPLOY_BRANCH='${DEPLOY_BRANCH}' DEPLOY_MODE='${DEPLOY_MODE}' FRONTEND_SERVICE='${FRONTEND_SERVICE:-devmain-frontend.service}' BACKEND_SERVICE='${BACKEND_SERVICE:-devmain-backend.service}' bash -s" \
             < scripts/deploy.sh
