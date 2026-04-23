@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Menu, Facebook, Twitter, Instagram, Linkedin, Github } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -14,6 +14,7 @@ const links = [
   { href: "/about", label: "About" },
   { href: "/services", label: "Services" },
   { href: "/research", label: "Research" },
+  { href: "/scholars-workbench", label: "Scholars Workbench" },
   { href: "/blog", label: "Insights" },
   { href: "/contact", label: "Contact" },
 ];
@@ -62,6 +63,11 @@ export function SiteHeader() {
                 </Button>
               );
             })}
+            <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0" title="Scholars Workbench">
+              <a href="https://github.com/Cyberverse-cent0/Schoolars-work-bench.git" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
+                <Github className="h-4 w-4" />
+              </a>
+            </Button>
           </div>
           <ThemeToggle />
           {isSignedIn ? (
@@ -115,6 +121,11 @@ export function SiteHeader() {
                     </Button>
                   );
                 })}
+                <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0" title="Scholars Workbench">
+                  <a href="https://github.com/Cyberverse-cent0/Schoolars-work-bench.git" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
+                    <Github className="h-4 w-4" />
+                  </a>
+                </Button>
               </div>
               <ThemeToggle />
               {isSignedIn ? (
