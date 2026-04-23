@@ -48,6 +48,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Copy Prisma files
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 USER nextjs
 
@@ -58,4 +59,5 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Start the application
+CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
 CMD ["node", "server.js"]
