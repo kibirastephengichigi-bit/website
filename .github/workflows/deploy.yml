@@ -8,13 +8,14 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Check out repository
@@ -23,7 +24,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -39,6 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: validate
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/hero-section-fix'
+    timeout-minutes: 30
 
     steps:
       - name: Check out repository
