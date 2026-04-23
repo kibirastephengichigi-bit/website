@@ -128,11 +128,15 @@ deploy_with_docker() {
   git_sync
 
   log "Installing Node dependencies for build..."
-  # Set npm configuration for faster installs
+  # Set npm configuration for faster installs and network resilience
   export npm_config_cache=/tmp/npm-cache
   export npm_config_prefer_offline=true
   export npm_config_audit=false
   export npm_config_fund=false
+  export npm_config_timeout=600000  # 10 minutes
+  export npm_config_fetch_timeout=600000
+  export npm_config_fetch_retry_mintimeout=20000
+  export npm_config_fetch_retry_maxtimeout=120000
   
   # Clean npm cache first
   log "Cleaning npm cache..."
@@ -146,7 +150,7 @@ deploy_with_docker() {
   while [ $retry_count -lt $max_retries ] && [ "$install_success" = false ]; do
     log "Attempting npm ci (attempt $((retry_count + 1))/$max_retries)..."
     
-    if timeout 300 npm ci --prefer-offline --no-audit --no-fund; then
+    if timeout 600 npm ci --prefer-offline --no-audit --no-fund --timeout=600000; then
       log "Dependencies installed successfully with npm ci"
       install_success=true
     else
@@ -161,7 +165,7 @@ deploy_with_docker() {
   # Fallback to npm install if npm ci failed
   if [ "$install_success" = false ]; then
     log "npm ci failed, trying npm install as fallback..."
-    if timeout 300 npm install --prefer-offline --no-audit --no-fund; then
+    if timeout 600 npm install --prefer-offline --no-audit --no-fund --timeout=600000; then
       log "Dependencies installed successfully with npm install"
       install_success=true
     else
