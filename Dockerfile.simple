@@ -1,0 +1,25 @@
+# Simple Dockerfile using existing build
+FROM node:20-alpine
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
+
+# Copy the already built standalone application
+COPY --chown=node:node .next/standalone ./
+COPY --chown=node:node .next/static ./.next/static
+COPY --chown=node:node public ./public
+
+# Create non-root user
+RUN addgroup -S node && adduser -S node -G node
+
+USER node
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]
