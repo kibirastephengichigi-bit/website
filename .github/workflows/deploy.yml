@@ -10,6 +10,9 @@ concurrency:
   group: production-deploy
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -42,19 +45,22 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Start SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+      # ✅ Setup SSH key (base64 method — fixes libcrypto issue)
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY_BASE64 }}" | base64 -d > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
 
+      # ✅ Add server to known hosts
       - name: Add server to known hosts
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_PORT: ${{ secrets.SERVER_PORT }}
         run: |
-          mkdir -p ~/.ssh
           ssh-keyscan -p "${SERVER_PORT:-22}" -H "$SERVER_HOST" >> ~/.ssh/known_hosts
 
+      # ✅ Deploy to server
       - name: Run production deploy
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
@@ -66,6 +72,10 @@ jobs:
           FRONTEND_SERVICE: ${{ secrets.FRONTEND_SERVICE }}
           BACKEND_SERVICE: ${{ secrets.BACKEND_SERVICE }}
         run: |
-          ssh -p "${SERVER_PORT:-22}" "${SERVER_USER}@${SERVER_HOST}" \
-            "APP_DIR='${SERVER_APP_DIR}' DEPLOY_BRANCH='${DEPLOY_BRANCH}' DEPLOY_MODE='${DEPLOY_MODE}' FRONTEND_SERVICE='${FRONTEND_SERVICE:-devmain-frontend.service}' BACKEND_SERVICE='${BACKEND_SERVICE:-devmain-backend.service}' bash -s" \
-            < scripts/deploy.sh
+          ssh -i ~/.ssh/id_ed25519 -p "${SERVER_PORT:-22}" "${SERVER_USER}@${SERVER_HOST}" \
+            "APP_DIR='${SERVER_APP_DIR}' \
+             DEPLOY_BRANCH='${DEPLOY_BRANCH}' \
+             DEPLOY_MODE='${DEPLOY_MODE}' \
+             FRONTEND_SERVICE='${FRONTEND_SERVICE:-devmain-frontend.service}' \
+             BACKEND_SERVICE='${BACKEND_SERVICE:-devmain-backend.service}' \
+             bash -s" < scripts/deploy.sh
