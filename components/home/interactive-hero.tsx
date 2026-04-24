@@ -34,17 +34,49 @@ export function InteractiveHeroSection() {
               </div>
             </div>
 
-            {/* Main headline */}
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-              <h1 className="font-display text-4xl leading-[0.95] bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent sm:text-5xl lg:text-6xl xl:text-7xl font-bold">
-                {siteContent.hero.headline}
-              </h1>
+            {/* First Section - Headline with Image */}
+            <div className="grid gap-8 lg:gap-12 lg:grid-cols-[1.2fr_1fr] lg:items-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+              <div className="space-y-4">
+                <h1 className="font-display text-4xl leading-[0.95] bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent sm:text-5xl lg:text-6xl xl:text-7xl font-bold">
+                  {siteContent.hero.headline}
+                </h1>
+              </div>
               
-              <p className="max-w-3xl text-lg leading-8 text-slate-700 lg:text-xl font-medium">
+              {/* Image beside headline */}
+              <div className="relative order-first lg:order-last">
+                <div className="relative">
+                  {/* Background glow effect */}
+                  <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-teal-600/20 rounded-[32px] blur-2xl opacity-60" />
+                  
+                  {/* Main image */}
+                  <div className="relative aspect-[4/3] lg:aspect-[3/4] rounded-[24px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="text-center p-8">
+                        <div className="w-24 h-24 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg">
+                          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                            <div className="w-6 h-6 bg-emerald-500 rounded-full"></div>
+                          </div>
+                        </div>
+                        <p className="text-white/90 font-semibold">Dr. Stephen Asatsa</p>
+                        <p className="text-white/70 text-sm">Professional Psychology</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Spacer between sections */}
+            <div className="h-8 lg:h-12"></div>
+
+            {/* Second Section - Description */}
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+              <p className="max-w-4xl text-lg leading-8 text-slate-700 lg:text-xl font-medium">
                 Dr. Stephen Asatsa is a senior Lecturer and Head of Department of Psychology at the Catholic University of Eastern Africa with extensive experience in academic strategy and research. Proven track record as a Lecturer of Psychology, excelling in teaching, research, and student mentorship. He is an experienced Consultant Psychologist registered and licensed by the Kenya Counselors and Psychologists Board and co-founder of BeautifulMind Consultants, a Kenyan mental health social enterprise.
               </p>
               
-              <div className="max-w-3xl text-base leading-7 text-slate-600 space-y-2">
+              <div className="max-w-4xl text-base leading-7 text-slate-600 space-y-3">
                 <p>• <strong>Research Advocacy:</strong> Strong advocate for indigenization of psychological practice and decolonization of psychology</p>
                 <p>• <strong>Global Impact:</strong> Serves on governing councils and editorial boards for international organizations</p>
                 <p>• <strong>Research Focus:</strong> Indigenous knowledge systems, Thanatology, Cultural evolution, and behavioral development</p>

@@ -1,66 +1,74 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Shield, Lock, Mail, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { LogIn, Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-// Hardcoded admin credentials
-const ADMIN_EMAIL = "admin@stephenasatsa.com";
-const ADMIN_PASSWORD = "ChangeMe123!";
-
-export default function AdminSignInPage() {
+export default function SignInPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/account";
+
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+    setLoading(true);
 
     try {
-      // Call Python backend API
-      const response = await fetch("http://localhost:8000/api/admin/login", {
+      const response = await fetch("http://localhost:8000/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: email,
-          password: password
+          email: formData.email.trim(),
+          password: formData.password
         })
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Store JWT token and admin session
-        localStorage.setItem("adminToken", data.access_token);
-        localStorage.setItem("adminSession", JSON.stringify({
-          email: ADMIN_EMAIL,
+        // Store token and user info
+        localStorage.setItem("authToken", data.access_token);
+        localStorage.setItem("userSession", JSON.stringify({
+          email: data.user.email,
+          name: data.user.name,
+          role: data.user.role,
           timestamp: Date.now(),
           token: data.access_token
         }));
         
-        // Redirect to account page or admin dashboard
-        router.push("/account");
+        router.push(callbackUrl);
       } else {
-        setError(data.detail || "Invalid email or password. Please try again.");
+        setError(data.detail || "Invalid email or password");
       }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Signin error:", error);
       setError("Unable to connect to server. Please try again.");
     }
     
     setLoading(false);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
   };
 
   return (
@@ -69,10 +77,10 @@ export default function AdminSignInPage() {
         {/* Logo and Title Section */}
         <div className="text-center mb-8">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-            <Shield className="w-8 h-8 text-white" />
+            <LogIn className="w-8 h-8 text-white" />
           </div>
-          <h1 className="font-display text-3xl font-bold text-foreground mb-2">Admin Sign In</h1>
-          <p className="text-muted-foreground">Sign in to manage the website</p>
+          <h1 className="font-display text-3xl font-bold text-foreground mb-2">Sign In</h1>
+          <p className="text-muted-foreground">Welcome back to Stephen Asatsa website</p>
         </div>
 
         {/* Sign In Form */}
@@ -86,10 +94,11 @@ export default function AdminSignInPage() {
               </label>
               <Input
                 id="email"
+                name="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@stephenasatsa.com"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="your@email.com"
                 className="h-11 border-border/70 focus:border-primary/50"
                 required
               />
@@ -104,9 +113,10 @@ export default function AdminSignInPage() {
               <div className="relative">
                 <Input
                   id="password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={formData.password}
+                  onChange={handleChange}
                   placeholder="Enter your password"
                   className="h-11 pr-10 border-border/70 focus:border-primary/50"
                   required
@@ -145,40 +155,37 @@ export default function AdminSignInPage() {
                   </>
                 ) : (
                   <>
-                    <Shield className="w-4 h-4" />
-                    Sign In to Admin
+                    <LogIn className="w-4 h-4" />
+                    Sign In
                   </>
                 )}
               </span>
             </Button>
           </form>
 
-          {/* Security Notice */}
-          <div className="mt-6 p-4 rounded-xl bg-blue-50/80 border border-blue-200/50">
-            <div className="flex items-start gap-3">
-              <Shield className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <h3 className="text-sm font-semibold text-blue-900 mb-1">Security Notice</h3>
-                <p className="text-xs text-blue-700 leading-relaxed">
-                  This admin account provides full access to website management features. 
-                  Only sign in if you are authorized to manage the site content.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Credentials Hint */}
-          <div className="mt-4 p-3 rounded-lg bg-amber-50/80 border border-amber-200/50">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-xs text-amber-700">
-                  Use email: <code className="bg-amber-100 px-1 rounded">{ADMIN_EMAIL}</code> and password: <code className="bg-amber-100 px-1 rounded">{ADMIN_PASSWORD}</code>
-                </p>
-              </div>
-            </div>
+          {/* Sign Up Link */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Link 
+                href="/signup" 
+                className="text-primary hover:text-primary/80 font-medium transition-colors"
+              >
+                Sign up here
+              </Link>
+            </p>
           </div>
         </Card>
+
+        {/* Admin Sign In Link */}
+        <div className="mt-4 text-center">
+          <Link 
+            href="/admin-signup" 
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-2"
+          >
+            Admin sign in →
+          </Link>
+        </div>
 
         {/* Back to Site */}
         <div className="mt-6 text-center">
