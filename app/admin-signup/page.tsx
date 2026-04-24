@@ -3,15 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Shield, Lock, Mail, Eye, EyeOff, AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-
-// Hardcoded admin credentials
-const ADMIN_EMAIL = "admin@stephenasatsa.com";
-const ADMIN_PASSWORD = "ChangeMe123!";
 
 export default function AdminSignInPage() {
   const router = useRouter();
@@ -20,6 +16,33 @@ export default function AdminSignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [backendStatus, setBackendStatus] = useState<string>("");
+
+  // Test backend connection
+  const testBackendConnection = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setBackendStatus("Backend connected: " + data.message);
+      } else {
+        setBackendStatus("Backend responded with error: " + response.status);
+      }
+    } catch (error) {
+      setBackendStatus("Backend connection failed: " + (error instanceof Error ? error.message : "Unknown error"));
+    }
+  };
+
+  // Test connection on component mount
+  useEffect(() => {
+    testBackendConnection();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,25 +62,36 @@ export default function AdminSignInPage() {
         })
       });
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.detail || `Server error: ${response.status}`);
+        return;
+      }
+
       const data = await response.json();
 
-      if (response.ok) {
-        // Store JWT token and admin session
-        localStorage.setItem("adminToken", data.access_token);
-        localStorage.setItem("adminSession", JSON.stringify({
-          email: ADMIN_EMAIL,
-          timestamp: Date.now(),
-          token: data.access_token
-        }));
-        
-        // Redirect to account page or admin dashboard
-        router.push("/account");
-      } else {
-        setError(data.detail || "Invalid email or password. Please try again.");
-      }
+      // Store JWT token and admin session
+      localStorage.setItem("authToken", data.access_token);
+      localStorage.setItem("userSession", JSON.stringify({
+        email: data.user?.email || email,
+        name: data.user?.name || "Administrator",
+        role: data.user?.role || "admin",
+        timestamp: Date.now(),
+        token: data.access_token
+      }));
+      
+      // Redirect to account page or admin dashboard
+      router.push("/account");
     } catch (error) {
       console.error("Login error:", error);
-      setError("Unable to connect to server. Please try again.");
+      
+      if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
+        setError("Cannot connect to the backend server. Please ensure the Python backend is running on http://localhost:8000");
+      } else if (error instanceof TypeError && error.message.includes("NetworkError")) {
+        setError("Network error. Please check your connection and ensure the backend server is running.");
+      } else {
+        setError(`Login error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }
     
     setLoading(false);
@@ -66,13 +100,27 @@ export default function AdminSignInPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+        {/* Backend Status */}
+        {backendStatus && (
+          <div className={`mb-4 p-3 rounded-lg text-sm ${
+            backendStatus.includes("Backend connected") 
+              ? "bg-green-50 text-green-700 border border-green-200" 
+              : "bg-red-50 text-red-700 border border-red-200"
+          }`}>
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              <span>{backendStatus}</span>
+            </div>
+          </div>
+        )}
+
         {/* Logo and Title Section */}
         <div className="text-center mb-8">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
             <Shield className="w-8 h-8 text-white" />
           </div>
           <h1 className="font-display text-3xl font-bold text-foreground mb-2">Admin Sign In</h1>
-          <p className="text-muted-foreground">Sign in to manage the website</p>
+          <p className="text-muted-foreground">Access the admin dashboard</p>
         </div>
 
         {/* Sign In Form */}
@@ -89,7 +137,7 @@ export default function AdminSignInPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@stephenasatsa.com"
+                placeholder="Enter your email address"
                 className="h-11 border-border/70 focus:border-primary/50"
                 required
               />
@@ -152,32 +200,6 @@ export default function AdminSignInPage() {
               </span>
             </Button>
           </form>
-
-          {/* Security Notice */}
-          <div className="mt-6 p-4 rounded-xl bg-blue-50/80 border border-blue-200/50">
-            <div className="flex items-start gap-3">
-              <Shield className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <h3 className="text-sm font-semibold text-blue-900 mb-1">Security Notice</h3>
-                <p className="text-xs text-blue-700 leading-relaxed">
-                  This admin account provides full access to website management features. 
-                  Only sign in if you are authorized to manage the site content.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Credentials Hint */}
-          <div className="mt-4 p-3 rounded-lg bg-amber-50/80 border border-amber-200/50">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-xs text-amber-700">
-                  Use email: <code className="bg-amber-100 px-1 rounded">{ADMIN_EMAIL}</code> and password: <code className="bg-amber-100 px-1 rounded">{ADMIN_PASSWORD}</code>
-                </p>
-              </div>
-            </div>
-          </div>
         </Card>
 
         {/* Back to Site */}

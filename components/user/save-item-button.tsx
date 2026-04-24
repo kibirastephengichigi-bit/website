@@ -1,12 +1,19 @@
 "use client";
 
 import { BookmarkPlus, Loader2, LogIn } from "lucide-react";
-import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 
 type SaveType = "blog" | "research";
+
+interface UserSession {
+  email: string;
+  name?: string;
+  role: string;
+  timestamp: number;
+  token: string;
+}
 
 export function SaveItemButton({
   type,
@@ -23,16 +30,34 @@ export function SaveItemButton({
   image?: string;
   isSignedIn?: boolean;
 }) {
-  const { data: session, status } = useSession({
-    required: false,
-    onUnauthenticated() {
-      // Handle unauthenticated state silently
-      return;
-    },
-  });
+  const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
-  const canSave = isSignedIn ?? Boolean(session?.user);
+
+  useEffect(() => {
+    // Check for user session in localStorage
+    const session = localStorage.getItem("userSession");
+    if (session) {
+      try {
+        const parsedSession = JSON.parse(session);
+        // Check if session is not older than 24 hours
+        const sessionAge = Date.now() - parsedSession.timestamp;
+        if (sessionAge < 24 * 60 * 60 * 1000) {
+          setUserSession(parsedSession);
+        } else {
+          // Session expired, remove it
+          localStorage.removeItem("userSession");
+          localStorage.removeItem("authToken");
+        }
+      } catch (error) {
+        // Invalid session, remove it
+        localStorage.removeItem("userSession");
+        localStorage.removeItem("authToken");
+      }
+    }
+  }, []);
+
+  const canSave = isSignedIn ?? Boolean(userSession);
 
   async function handleSave() {
     if (!canSave) {
@@ -42,7 +67,12 @@ export function SaveItemButton({
 
     setLoading(true);
     try {
-      const response = await fetch("/api/user/saved-items", {
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        throw new Error("Authentication token not found");
+      }
+
+      const response = await fetch(`http://localhost:8000/api/auth/saved-items?token=${authToken}`, {
         method: saved ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, key: itemKey, title, href, image }),

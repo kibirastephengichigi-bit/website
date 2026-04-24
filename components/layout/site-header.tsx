@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Menu, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
-import { signOut, useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { siteContent } from "@/lib/content/site-content";
@@ -14,20 +14,56 @@ const links = [
   { href: "/services", label: "Services" },
   { href: "/research", label: "Research" },
   { href: "/blog", label: "Insights" },
+  { href: "/gallery", label: "Gallery" },
   { href: "/contact", label: "Contact" },
 ];
 
+interface UserSession {
+  email: string;
+  name?: string;
+  role: string;
+  timestamp: number;
+  token: string;
+}
+
 export function SiteHeader() {
-  const { data: session, status } = useSession({
-    required: false,
-    onUnauthenticated() {
-      return;
-    },
-  });
-  const isSignedIn = Boolean(session?.user);
+  const [userSession, setUserSession] = useState<UserSession | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check for user session in localStorage
+    const session = localStorage.getItem("userSession");
+    if (session) {
+      try {
+        const parsedSession = JSON.parse(session);
+        // Check if session is not older than 24 hours
+        const sessionAge = Date.now() - parsedSession.timestamp;
+        if (sessionAge < 24 * 60 * 60 * 1000) {
+          setUserSession(parsedSession);
+        } else {
+          // Session expired, remove it
+          localStorage.removeItem("userSession");
+          localStorage.removeItem("authToken");
+        }
+      } catch (error) {
+        // Invalid session, remove it
+        localStorage.removeItem("userSession");
+        localStorage.removeItem("authToken");
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  const isSignedIn = Boolean(userSession);
 
   function handleSignOut() {
-    void signOut({ callbackUrl: "/" });
+    // Clear local storage
+    localStorage.removeItem("userSession");
+    localStorage.removeItem("authToken");
+    setUserSession(null);
+    
+    // Redirect to home page
+    window.location.href = "/";
   }
 
   return (

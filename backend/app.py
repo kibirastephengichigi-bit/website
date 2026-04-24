@@ -9,7 +9,7 @@ import re
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3001", "http://localhost:3000"])
 
-# Admin credentials
+# Admin credentials (stored in variables for easy updating)
 ADMIN_EMAIL = "admin@stephenasatsa.com"
 ADMIN_PASSWORD = "ChangeMe123!"
 
@@ -17,6 +17,9 @@ ADMIN_PASSWORD = "ChangeMe123!"
 tokens = {}
 users = {}
 user_profiles = {}
+admin_credentials_history = []  # Track credential changes
+gallery_photos = {}  # Store gallery photos
+next_photo_id = 1
 
 def hash_password(password: str) -> str:
     """Hash password using SHA-256"""
@@ -388,6 +391,334 @@ def get_content_list():
             {"id": 2, "title": "Publications", "slug": "/publications", "last_updated": "2024-01-11"},
         ]
     })
+
+@app.route("/api/admin/credentials", methods=["GET"])
+def get_admin_credentials():
+    """Get current admin credentials (without password)"""
+    token = request.args.get("token")
+    token_data = verify_token(token)
+    
+    if not token_data or token_data["role"] != "admin":
+        return jsonify({"detail": "Invalid token"}), 401
+    
+    return jsonify({
+        "email": ADMIN_EMAIL,
+        "has_password": bool(ADMIN_PASSWORD),
+        "password_length": len(ADMIN_PASSWORD) if ADMIN_PASSWORD else 0,
+        "history": admin_credentials_history[-5:] if admin_credentials_history else []
+    })
+
+@app.route("/api/admin/credentials", methods=["PUT"])
+def update_admin_credentials():
+    """Update admin credentials"""
+    global ADMIN_EMAIL, ADMIN_PASSWORD
+    
+    token = request.args.get("token")
+    token_data = verify_token(token)
+    
+    if not token_data or token_data["role"] != "admin":
+        return jsonify({"detail": "Invalid token"}), 401
+    
+    try:
+        data = request.get_json()
+        current_password = data.get("current_password")
+        new_email = data.get("email")
+        new_password = data.get("password")
+        
+        # Verify current password
+        if not current_password or current_password != ADMIN_PASSWORD:
+            return jsonify({"detail": "Current password is incorrect"}), 401
+        
+        # Validate new email if provided
+        if new_email and not is_valid_email(new_email):
+            return jsonify({"detail": "Invalid email format"}), 400
+        
+        # Validate new password if provided
+        if new_password and not is_valid_password(new_password):
+            return jsonify({"detail": "Password must be at least 8 characters with uppercase, lowercase, and numbers"}), 400
+        
+        # Store old credentials in history
+        admin_credentials_history.append({
+            "timestamp": datetime.now().isoformat(),
+            "old_email": ADMIN_EMAIL,
+            "new_email": new_email or ADMIN_EMAIL,
+            "changed_by": token_data["email"]
+        })
+        
+        # Update credentials
+        old_email = ADMIN_EMAIL
+        
+        if new_email:
+            ADMIN_EMAIL = new_email
+        
+        if new_password:
+            ADMIN_PASSWORD = new_password
+        
+        # Update all existing admin tokens to use new email
+        for token_key, token_data in tokens.items():
+            if token_data.get("role") == "admin" and token_data.get("email") == old_email:
+                token_data["email"] = ADMIN_EMAIL
+        
+        return jsonify({
+            "message": "Credentials updated successfully",
+            "email": ADMIN_EMAIL,
+            "updated_at": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({"detail": "Invalid request"}), 400
+
+@app.route("/api/admin/credentials/validate", methods=["POST"])
+def validate_current_password():
+    """Validate current admin password"""
+    token = request.args.get("token")
+    token_data = verify_token(token)
+    
+    if not token_data or token_data["role"] != "admin":
+        return jsonify({"detail": "Invalid token"}), 401
+    
+    try:
+        data = request.get_json()
+        password = data.get("password")
+        
+        if password == ADMIN_PASSWORD:
+            return jsonify({"valid": True})
+        else:
+            return jsonify({"valid": False})
+            
+    except Exception as e:
+        return jsonify({"detail": "Invalid request"}), 400
+
+# Gallery Management Endpoints
+@app.route("/api/gallery/photos", methods=["GET"])
+def get_gallery_photos():
+    """Get all gallery photos"""
+    try:
+        photos_list = []
+        for photo_id, photo_data in gallery_photos.items():
+            photos_list.append({
+                "id": photo_id,
+                "title": photo_data["title"],
+                "description": photo_data["description"],
+                "image_url": photo_data["image_url"],
+                "thumbnail_url": photo_data["thumbnail_url"],
+                "upload_date": photo_data["upload_date"],
+                "file_size": photo_data["file_size"],
+                "dimensions": photo_data["dimensions"],
+                "category": photo_data.get("category"),
+                "tags": photo_data.get("tags", [])
+            })
+        
+        # Sort by upload date (newest first)
+        photos_list.sort(key=lambda x: x["upload_date"], reverse=True)
+        
+        return jsonify({
+            "photos": photos_list,
+            "total": len(photos_list)
+        })
+    except Exception as e:
+        return jsonify({"detail": "Failed to fetch photos"}), 500
+
+@app.route("/api/admin/gallery/photos", methods=["POST"])
+def upload_gallery_photo():
+    """Upload a new photo to the gallery"""
+    token = request.args.get("token")
+    token_data = verify_token(token)
+    
+    if not token_data or token_data["role"] != "admin":
+        return jsonify({"detail": "Invalid token"}), 401
+    
+    try:
+        # Check if file is present
+        if 'file' not in request.files:
+            return jsonify({"detail": "No file provided"}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"detail": "No file selected"}), 400
+        
+        # Get form data
+        title = request.form.get('title', 'Untitled Photo')
+        description = request.form.get('description', '')
+        category = request.form.get('category', '')
+        tags = request.form.get('tags', '').split(',') if request.form.get('tags') else []
+        
+        # Validate file type
+        allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+        if not ('.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
+            return jsonify({"detail": "Invalid file type. Allowed types: jpg, jpeg, png, gif, webp"}), 400
+        
+        # Create uploads directory if it doesn't exist
+        import os
+        upload_dir = os.path.join(os.getcwd(), 'uploads', 'gallery')
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        # Generate unique filename
+        global next_photo_id
+        photo_id = str(next_photo_id)
+        next_photo_id += 1
+        
+        file_extension = file.filename.rsplit('.', 1)[1].lower()
+        filename = f"photo_{photo_id}_{int(datetime.now().timestamp())}.{file_extension}"
+        
+        # Save file
+        file_path = os.path.join(upload_dir, filename)
+        file.save(file_path)
+        
+        # Get file info
+        file_size = os.path.getsize(file_path)
+        
+        # For now, we'll use a placeholder for dimensions (in production, use PIL)
+        dimensions = {"width": 1920, "height": 1080}  # Default dimensions
+        
+        # Create URLs (in production, these would be actual URLs)
+        image_url = f"http://localhost:8000/uploads/gallery/{filename}"
+        thumbnail_url = f"http://localhost:8000/uploads/gallery/{filename}"  # Same for now
+        
+        # Store photo data
+        gallery_photos[photo_id] = {
+            "title": title,
+            "description": description,
+            "image_url": image_url,
+            "thumbnail_url": thumbnail_url,
+            "upload_date": datetime.now().isoformat(),
+            "file_size": file_size,
+            "dimensions": dimensions,
+            "category": category,
+            "tags": [tag.strip() for tag in tags if tag.strip()],
+            "filename": filename,
+            "uploaded_by": token_data["email"]
+        }
+        
+        return jsonify({
+            "message": "Photo uploaded successfully",
+            "photo": {
+                "id": photo_id,
+                "title": title,
+                "description": description,
+                "image_url": image_url,
+                "thumbnail_url": thumbnail_url,
+                "upload_date": gallery_photos[photo_id]["upload_date"],
+                "file_size": file_size,
+                "dimensions": dimensions,
+                "category": category,
+                "tags": gallery_photos[photo_id]["tags"]
+            }
+        }), 201
+        
+    except Exception as e:
+        return jsonify({"detail": f"Upload failed: {str(e)}"}), 500
+
+@app.route("/api/admin/gallery/photos/<photo_id>", methods=["PUT"])
+def update_gallery_photo(photo_id):
+    """Update photo details"""
+    token = request.args.get("token")
+    token_data = verify_token(token)
+    
+    if not token_data or token_data["role"] != "admin":
+        return jsonify({"detail": "Invalid token"}), 401
+    
+    try:
+        if photo_id not in gallery_photos:
+            return jsonify({"detail": "Photo not found"}), 404
+        
+        data = request.get_json()
+        
+        # Update allowed fields
+        if "title" in data:
+            gallery_photos[photo_id]["title"] = data["title"]
+        if "description" in data:
+            gallery_photos[photo_id]["description"] = data["description"]
+        if "category" in data:
+            gallery_photos[photo_id]["category"] = data["category"]
+        if "tags" in data:
+            gallery_photos[photo_id]["tags"] = data["tags"]
+        
+        return jsonify({
+            "message": "Photo updated successfully",
+            "photo": gallery_photos[photo_id]
+        })
+        
+    except Exception as e:
+        return jsonify({"detail": "Update failed"}), 500
+
+@app.route("/api/admin/gallery/photos/<photo_id>", methods=["DELETE"])
+def delete_gallery_photo(photo_id):
+    """Delete a photo from the gallery"""
+    token = request.args.get("token")
+    token_data = verify_token(token)
+    
+    if not token_data or token_data["role"] != "admin":
+        return jsonify({"detail": "Invalid token"}), 401
+    
+    try:
+        if photo_id not in gallery_photos:
+            return jsonify({"detail": "Photo not found"}), 404
+        
+        # Delete file from filesystem
+        import os
+        photo_data = gallery_photos[photo_id]
+        if "filename" in photo_data:
+            file_path = os.path.join(os.getcwd(), 'uploads', 'gallery', photo_data["filename"])
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        
+        # Remove from storage
+        del gallery_photos[photo_id]
+        
+        return jsonify({"message": "Photo deleted successfully"})
+        
+    except Exception as e:
+        return jsonify({"detail": "Deletion failed"}), 500
+
+@app.route("/api/admin/gallery/photos", methods=["GET"])
+def get_admin_gallery_photos():
+    """Get all gallery photos for admin management"""
+    token = request.args.get("token")
+    token_data = verify_token(token)
+    
+    if not token_data or token_data["role"] != "admin":
+        return jsonify({"detail": "Invalid token"}), 401
+    
+    try:
+        photos_list = []
+        for photo_id, photo_data in gallery_photos.items():
+            photos_list.append({
+                "id": photo_id,
+                "title": photo_data["title"],
+                "description": photo_data["description"],
+                "image_url": photo_data["image_url"],
+                "thumbnail_url": photo_data["thumbnail_url"],
+                "upload_date": photo_data["upload_date"],
+                "file_size": photo_data["file_size"],
+                "dimensions": photo_data["dimensions"],
+                "category": photo_data.get("category"),
+                "tags": photo_data.get("tags", []),
+                "uploaded_by": photo_data.get("uploaded_by"),
+                "filename": photo_data.get("filename")
+            })
+        
+        # Sort by upload date (newest first)
+        photos_list.sort(key=lambda x: x["upload_date"], reverse=True)
+        
+        return jsonify({
+            "photos": photos_list,
+            "total": len(photos_list)
+        })
+    except Exception as e:
+        return jsonify({"detail": "Failed to fetch photos"}), 500
+
+# Serve uploaded files
+@app.route("/uploads/gallery/<filename>")
+def serve_gallery_file(filename):
+    """Serve uploaded gallery files"""
+    try:
+        import os
+        from flask import send_from_directory
+        upload_dir = os.path.join(os.getcwd(), 'uploads', 'gallery')
+        return send_from_directory(upload_dir, filename)
+    except Exception as e:
+        return jsonify({"detail": "File not found"}), 404
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
