@@ -220,7 +220,6 @@ export default function AdminSignInPage() {
                         </button>
                       </div>
                     </div>
-                  )}
 
                   {/* Submit Button */}
                   <Button
