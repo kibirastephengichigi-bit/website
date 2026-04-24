@@ -58,26 +58,26 @@ export default function AdminSignInPage() {
         },
         body: JSON.stringify({
           username: username,
-          password: password
+          password: password,
+          otp: "" // Empty OTP since TOTP is not configured by default
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        setError(errorData.detail || `Server error: ${response.status}`);
+        setError(errorData.error || `Server error: ${response.status}`);
         return;
       }
 
       const data = await response.json();
 
-      // Store JWT token and admin session
-      localStorage.setItem("authToken", data.access_token);
+      // Store user session data (backend uses cookie-based auth)
       localStorage.setItem("userSession", JSON.stringify({
         username: data.user?.username || username,
-        name: data.user?.name || "Administrator",
+        displayName: data.user?.displayName || "Website Administrator",
         role: data.user?.role || "admin",
-        timestamp: Date.now(),
-        token: data.access_token
+        authenticated: data.authenticated,
+        timestamp: Date.now()
       }));
       
       // Redirect to account page or admin dashboard

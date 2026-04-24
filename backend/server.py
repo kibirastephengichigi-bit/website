@@ -8,9 +8,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.parse import urlparse
 
-from . import config, storage
-from .database import db
-from .security import verify_password, verify_totp, generate_session_token
+import config, storage
+from database import db
+from security import verify_password, verify_totp, generate_session_token
 
 
 SESSION_COOKIE_NAME = "admin_session"
@@ -33,10 +33,18 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
 
   def _write_cors_headers(self) -> None:
     origin = self.headers.get("Origin")
-    if origin == config.DEFAULT_ALLOWED_ORIGIN:
+    # Allow localhost origins for development
+    if origin and (origin == config.DEFAULT_ALLOWED_ORIGIN or 
+                  origin.startswith("http://localhost:") or 
+                  origin.startswith("http://127.0.0.1:")):
       self.send_header("Access-Control-Allow-Origin", origin)
       self.send_header("Vary", "Origin")
       self.send_header("Access-Control-Allow-Credentials", "true")
+      self.send_header("Access-Control-Allow-Headers", "Content-Type")
+      self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
+    elif not origin:
+      # Allow requests without Origin header (like curl)
+      self.send_header("Access-Control-Allow-Origin", "*")
       self.send_header("Access-Control-Allow-Headers", "Content-Type")
       self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
 
@@ -101,6 +109,30 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
 
     if path == "/api/health":
       self._json_response(HTTPStatus.OK, {"status": "ok"})
+      return
+
+    if path == "/api/gallery/photos":
+      # Return media items that are images for the gallery (public endpoint)
+      media_items = storage.list_media()
+      # Filter for image files only and format for gallery
+      photos = []
+      for item in media_items:
+        if item.get("content_type", "").startswith("image/"):
+          photos.append({
+            "id": item["id"],
+            "title": item.get("filename", "Untitled"),
+            "description": "",
+            "image_url": f"/uploads/admin/{item['filename']}",
+            "thumbnail_url": f"/uploads/admin/{item['filename']}",
+            "upload_date": item.get("uploaded_at", ""),
+            "file_size": item.get("file_size", 0),
+            "dimensions": {"width": 1200, "height": 900},  # Default dimensions
+            "category": "gallery",
+            "tags": [],
+            "uploaded_by": item.get("uploaded_by", "admin"),
+            "filename": item.get("filename", "")
+          })
+      self._json_response(HTTPStatus.OK, {"photos": photos})
       return
 
     if path == "/api/auth/me":

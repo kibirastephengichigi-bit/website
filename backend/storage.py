@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from . import config
-from .security import generate_session_token, hash_password
+import config
+from security import generate_session_token, hash_password
 
 
 def utc_now() -> datetime:

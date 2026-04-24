@@ -5,8 +5,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from . import config
-from .security import hash_password, verify_password
+import config
+from security import hash_password, verify_password
 
 
 class UserDatabase:

@@ -86,29 +86,34 @@ export default function AccountPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const authToken = localStorage.getItem("authToken");
       const userSession = localStorage.getItem("userSession");
       
-      if (!authToken || !userSession) {
+      if (!userSession) {
         router.push("/admin-signup?callbackUrl=/account");
         setLoading(false);
         return;
       }
 
       try {
-        // Verify token with Python backend
-        const response = await fetch(`http://localhost:8000/api/auth/me?token=${authToken}`, {
+        // Verify session with Python backend (cookie-based auth)
+        const response = await fetch("http://localhost:8000/api/auth/me", {
           headers: {
             "Content-Type": "application/json",
-          }
+          },
+          credentials: "include" // Include cookies for session auth
         });
 
         if (response.ok) {
           const userData = await response.json();
-          setUser(userData);
+          if (userData.authenticated) {
+            setUser(userData.user);
+          } else {
+            // Session invalid, remove stored session
+            localStorage.removeItem("userSession");
+            router.push("/admin-signup?callbackUrl=/account");
+          }
         } else {
-          // Token invalid, remove session
-          localStorage.removeItem("authToken");
+          // Session invalid, remove stored session
           localStorage.removeItem("userSession");
           router.push("/admin-signup?callbackUrl=/account");
         }
@@ -121,12 +126,10 @@ export default function AccountPage() {
           if (sessionAge < 24 * 60 * 60 * 1000) { // 24 hours
             setUser(session);
           } else {
-            localStorage.removeItem("authToken");
             localStorage.removeItem("userSession");
             router.push("/admin-signup?callbackUrl=/account");
           }
         } catch (sessionError) {
-          localStorage.removeItem("authToken");
           localStorage.removeItem("userSession");
           router.push("/admin-signup?callbackUrl=/account");
         }
@@ -139,35 +142,40 @@ export default function AccountPage() {
   }, [router]);
 
   const handleLogout = async () => {
-    const authToken = localStorage.getItem("authToken");
-    
-    // Call Python backend logout endpoint
-    if (authToken) {
-      try {
-        await fetch(`http://localhost:8000/api/auth/logout?token=${authToken}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          }
-        });
-      } catch (error) {
-        console.error("Logout error:", error);
-      }
+    try {
+      // Call Python backend logout endpoint (cookie-based)
+      await fetch("http://localhost:8000/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include" // Include cookies for session auth
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
     }
     
     // Clear local storage
-    localStorage.removeItem("authToken");
     localStorage.removeItem("userSession");
     router.push("/admin-signup");
   };
 
+  // Helper function for authenticated requests
+  const authenticatedFetch = async (url: string, options: RequestInit = {}) => {
+    return fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+      credentials: "include" // Include cookies for session auth
+    });
+  };
+
   // Credentials management functions
   const fetchCurrentCredentials = async () => {
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) return;
-
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/credentials?token=${authToken}`);
+      const response = await authenticatedFetch("http://localhost:8000/api/admin/credentials");
       if (response.ok) {
         const data = await response.json();
         setCurrentCredentials(data);
@@ -228,19 +236,9 @@ export default function AccountPage() {
       }
     }
 
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) {
-      setCredentialsError("Authentication token not found");
-      setCredentialsLoading(false);
-      return;
-    }
-
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/credentials/validate?token=${authToken}`, {
+      const response = await authenticatedFetch("http://localhost:8000/api/admin/credentials/validate", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           current_password: credentialsData.current_password,
           email: credentialsData.email || undefined,
@@ -298,11 +296,8 @@ export default function AccountPage() {
 
   // Gallery management functions
   const fetchGalleryPhotos = async () => {
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) return;
-
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/gallery/photos?token=${authToken}`);
+      const response = await authenticatedFetch("http://localhost:8000/api/admin/gallery/photos");
       if (response.ok) {
         const data = await response.json();
         setGalleryPhotos(data.photos || []);
@@ -324,13 +319,6 @@ export default function AccountPage() {
       return;
     }
 
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) {
-      setGalleryError("Authentication token not found");
-      setGalleryLoading(false);
-      return;
-    }
-
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
@@ -339,9 +327,10 @@ export default function AccountPage() {
       formData.append('category', uploadData.category);
       formData.append('tags', uploadData.tags);
 
-      const response = await fetch(`http://localhost:8000/api/admin/gallery/photos?token=${authToken}`, {
+      const response = await fetch("http://localhost:8000/api/admin/gallery/photos", {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: "include" // Include cookies for session auth
       });
 
       const data = await response.json();
@@ -364,13 +353,9 @@ export default function AccountPage() {
   };
 
   const handlePhotoUpdate = async (photoId: string, updateData: Partial<GalleryPhoto>) => {
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) return;
-
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/gallery/photos/${photoId}?token=${authToken}`, {
+      const response = await authenticatedFetch(`http://localhost:8000/api/admin/gallery/photos/${photoId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData)
       });
 
@@ -391,11 +376,8 @@ export default function AccountPage() {
   const handlePhotoDelete = async (photoId: string) => {
     if (!confirm("Are you sure you want to delete this photo?")) return;
 
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) return;
-
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/gallery/photos/${photoId}?token=${authToken}`, {
+      const response = await authenticatedFetch(`http://localhost:8000/api/admin/gallery/photos/${photoId}`, {
         method: 'DELETE'
       });
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import "@/app/globals.css";
 
-import { SiteFooter } from "@/components/layout/site-footer";
+import { ConditionalFooter } from "@/components/layout/conditional-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { AppProviders } from "@/components/providers/app-providers";
 import { CookieBanner } from "@/components/privacy/cookie-banner";
@@ -30,7 +30,7 @@ export default function RootLayout({
             <div className="absolute inset-0 -z-10 bg-grid [background-size:20px_20px] opacity-[0.35]" />
             <SiteHeader />
             <main className="flex-1">{children}</main>
-            <SiteFooter />
+            <ConditionalFooter />
             <CookieBanner />
           </div>
         </AppProviders>

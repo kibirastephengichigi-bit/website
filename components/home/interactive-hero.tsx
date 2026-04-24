@@ -50,7 +50,6 @@ export function InteractiveHeroSection() {
                   
                   {/* Main image */}
                   <div className="relative aspect-[4/3] lg:aspect-[3/4] rounded-[24px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="text-center p-8">
                         <div className="w-24 h-24 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg">
@@ -275,8 +274,6 @@ export function InteractiveHeroSection() {
                   />
                 </div>
                 
-                {/* Overlay gradient for better text readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
               </div>
               
               {/* Floating badges */}

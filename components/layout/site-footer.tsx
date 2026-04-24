@@ -11,9 +11,7 @@ export function SiteFooter() {
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat'
     }}>
-      {/* Semi-transparent overlay for text readability */}
-      <div className="absolute inset-0 bg-black/40"></div>
-      
+            
       <div className="container-shell grid gap-10 py-14 md:grid-cols-3 relative z-10">
         <div className="space-y-4">
           <p className="font-display text-3xl">Dr. Stephen Asatsa</p>
