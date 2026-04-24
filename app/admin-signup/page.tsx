@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 
 export default function AdminSignInPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ export default function AdminSignInPage() {
   // Test backend connection
   const testBackendConnection = async () => {
     try {
-      const response = await fetch("http://localhost:6354/", {
+      const response = await fetch("http://localhost:8000/api/health", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -30,7 +30,7 @@ export default function AdminSignInPage() {
       
       if (response.ok) {
         const data = await response.json();
-        setBackendStatus("Backend connected: " + data.message);
+        setBackendStatus("Backend connected: " + data.status);
       } else {
         setBackendStatus("Backend responded with error: " + response.status);
       }
@@ -51,13 +51,13 @@ export default function AdminSignInPage() {
 
     try {
       // Call Python backend API
-      const response = await fetch("http://localhost:6354/api/admin/login", {
+      const response = await fetch("http://localhost:8000/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: email,
+          username: username,
           password: password
         })
       });
@@ -73,7 +73,7 @@ export default function AdminSignInPage() {
       // Store JWT token and admin session
       localStorage.setItem("authToken", data.access_token);
       localStorage.setItem("userSession", JSON.stringify({
-        email: data.user?.email || email,
+        username: data.user?.username || username,
         name: data.user?.name || "Administrator",
         role: data.user?.role || "admin",
         timestamp: Date.now(),
@@ -126,18 +126,18 @@ export default function AdminSignInPage() {
         {/* Sign In Form */}
         <Card className="p-8 shadow-xl border-border/50 bg-white/90 backdrop-blur-sm">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Field */}
+            {/* Username Field */}
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                Email Address
+              <label htmlFor="username" className="text-sm font-medium text-foreground flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                Username
               </label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email address"
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter admin username"
                 className="h-11 border-border/70 focus:border-primary/50"
                 required
               />

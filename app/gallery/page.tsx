@@ -35,7 +35,7 @@ export default function GalleryPage() {
 
   const fetchGalleryPhotos = async () => {
     try {
-      const response = await fetch("http://localhost:6354/api/gallery/photos");
+      const response = await fetch("http://localhost:8000/api/gallery/photos");
       if (response.ok) {
         const data = await response.json();
         setPhotos(data.photos || []);

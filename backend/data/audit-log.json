@@ -1,5 +1,45 @@
 [
   {
+    "id": "af45c8ea-fcdc-4ec8-b8d3-af797d65743b",
+    "action": "auth.login",
+    "actor": "admin",
+    "summary": "Admin login succeeded",
+    "metadata": {
+      "ipAddress": "127.0.0.1"
+    },
+    "createdAt": "2026-04-24T09:26:47.225292+00:00"
+  },
+  {
+    "id": "d94d669c-692d-4187-983e-982a8aa0d1c6",
+    "action": "auth.login",
+    "actor": "admin",
+    "summary": "Admin login succeeded",
+    "metadata": {
+      "ipAddress": "127.0.0.1"
+    },
+    "createdAt": "2026-04-24T09:26:22.623887+00:00"
+  },
+  {
+    "id": "48843551-7f0c-4ccd-8283-8b4f39f2c74d",
+    "action": "auth.login",
+    "actor": "admin",
+    "summary": "Admin login succeeded",
+    "metadata": {
+      "ipAddress": "127.0.0.1"
+    },
+    "createdAt": "2026-04-24T09:23:31.672274+00:00"
+  },
+  {
+    "id": "d6261c40-21ae-4a1a-bfbf-cd9f6c7c107b",
+    "action": "auth.login",
+    "actor": "admin",
+    "summary": "Admin login succeeded",
+    "metadata": {
+      "ipAddress": "127.0.0.1"
+    },
+    "createdAt": "2026-04-24T09:17:21.095269+00:00"
+  },
+  {
     "id": "df4941ed-5273-45c0-a1fe-8ba3c28c5f69",
     "action": "content.updated",
     "actor": "admin",

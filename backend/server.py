@@ -9,7 +9,8 @@ from typing import Any
 from urllib.parse import urlparse
 
 from . import config, storage
-from .security import verify_password, verify_totp
+from .database import db
+from .security import verify_password, verify_totp, generate_session_token
 
 
 SESSION_COOKIE_NAME = "admin_session"
@@ -65,16 +66,13 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
     token = self._get_session_token()
     if not token:
       return None
-    session = storage.get_session(token)
+    session = db.get_session(token)
     if not session:
       return None
-    user = storage.get_admin_user(session["username"])
-    if not user:
-      return None
     return {
-      "username": user["username"],
-      "displayName": user.get("displayName") or user["username"],
-      "role": user.get("role", "super_admin"),
+      "username": session["username"],
+      "displayName": session["display_name"],
+      "role": session["role"],
       "session": session,
     }
 
@@ -145,7 +143,12 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
       return
 
     if path == "/api/audit":
-      self._json_response(HTTPStatus.OK, {"events": storage.list_audit_events(40)})
+      events = db.list_audit_events(40)
+      # Convert datetime objects to strings for JSON serialization
+      for event in events:
+        if "created_at" in event and hasattr(event["created_at"], "isoformat"):
+          event["created_at"] = event["created_at"].isoformat()
+      self._json_response(HTTPStatus.OK, {"events": events})
       return
 
     self._json_response(HTTPStatus.NOT_FOUND, {"error": "Route not found"})
@@ -164,8 +167,8 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
       password = str(payload.get("password", ""))
       otp = str(payload.get("otp", "")).strip()
 
-      user = storage.get_admin_user(username)
-      if not user or not verify_password(password, user.get("passwordHash", "")):
+      user = db.verify_user_credentials(username, password)
+      if not user:
         self._json_response(HTTPStatus.UNAUTHORIZED, {"error": "Invalid username or password"})
         return
 
@@ -173,28 +176,29 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
         self._json_response(HTTPStatus.UNAUTHORIZED, {"error": "Invalid one-time authentication code"})
         return
 
-      session = storage.create_session(
-        username=username,
+      session_token = generate_session_token()
+      session_created = db.create_session(
+        user_id=user["id"],
+        token=session_token,
         ip_address=self.client_address[0],
         user_agent=self.headers.get("User-Agent", "unknown"),
+        expires_hours=config.DEFAULT_SESSION_HOURS,
       )
-      storage.append_audit_event(
-        action="auth.login",
-        actor=username,
-        summary="Admin login succeeded",
-        metadata={"ipAddress": self.client_address[0]},
-      )
+      
+      if not session_created:
+        self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "Failed to create session"})
+        return
 
       self.send_response(HTTPStatus.OK)
-      self._set_session_cookie(session["token"], max_age=config.DEFAULT_SESSION_HOURS * 60 * 60)
+      self._set_session_cookie(session_token, max_age=config.DEFAULT_SESSION_HOURS * 60 * 60)
       self.send_header("Content-Type", "application/json; charset=utf-8")
       body = json.dumps(
         {
           "authenticated": True,
           "user": {
-            "username": username,
-            "displayName": user.get("displayName") or username,
-            "role": user.get("role", "super_admin"),
+            "username": user["username"],
+            "displayName": user["display_name"],
+            "role": user["role"],
             "mfaConfigured": bool(config.DEFAULT_ADMIN_TOTP_SECRET),
           },
         }
@@ -211,11 +215,12 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
     if path == "/api/auth/logout":
       token = self._get_session_token()
       if token:
-        storage.destroy_session(token)
-      storage.append_audit_event(
+        db.destroy_session(token)
+      db.append_audit_event(
         action="auth.logout",
         actor=user["username"],
         summary="Admin logout completed",
+        user_id=user["session"]["user_id"] if user.get("session") else None,
       )
       self.send_response(HTTPStatus.OK)
       self._set_session_cookie("", max_age=0)

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_BASE = process.env.ADMIN_BACKEND_URL || "http://localhost:6354/api";
+const BACKEND_BASE = process.env.ADMIN_BACKEND_URL || "http://localhost:8000/api";
 
 export async function proxyAdminRequest(request: NextRequest, endpoint: string) {
   const target = `${BACKEND_BASE}/${endpoint}`;

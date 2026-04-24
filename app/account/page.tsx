@@ -97,7 +97,7 @@ export default function AccountPage() {
 
       try {
         // Verify token with Python backend
-        const response = await fetch(`http://localhost:6354/api/auth/me?token=${authToken}`, {
+        const response = await fetch(`http://localhost:8000/api/auth/me?token=${authToken}`, {
           headers: {
             "Content-Type": "application/json",
           }
@@ -144,7 +144,7 @@ export default function AccountPage() {
     // Call Python backend logout endpoint
     if (authToken) {
       try {
-        await fetch(`http://localhost:6354/api/auth/logout?token=${authToken}`, {
+        await fetch(`http://localhost:8000/api/auth/logout?token=${authToken}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -167,7 +167,7 @@ export default function AccountPage() {
     if (!authToken) return;
 
     try {
-      const response = await fetch(`http://localhost:6354/api/admin/credentials?token=${authToken}`);
+      const response = await fetch(`http://localhost:8000/api/admin/credentials?token=${authToken}`);
       if (response.ok) {
         const data = await response.json();
         setCurrentCredentials(data);
@@ -236,7 +236,7 @@ export default function AccountPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:6354/api/admin/credentials/validate?token=${authToken}`, {
+      const response = await fetch(`http://localhost:8000/api/admin/credentials/validate?token=${authToken}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -302,7 +302,7 @@ export default function AccountPage() {
     if (!authToken) return;
 
     try {
-      const response = await fetch(`http://localhost:6354/api/admin/gallery/photos?token=${authToken}`);
+      const response = await fetch(`http://localhost:8000/api/admin/gallery/photos?token=${authToken}`);
       if (response.ok) {
         const data = await response.json();
         setGalleryPhotos(data.photos || []);
@@ -339,7 +339,7 @@ export default function AccountPage() {
       formData.append('category', uploadData.category);
       formData.append('tags', uploadData.tags);
 
-      const response = await fetch(`http://localhost:6354/api/admin/gallery/photos?token=${authToken}`, {
+      const response = await fetch(`http://localhost:8000/api/admin/gallery/photos?token=${authToken}`, {
         method: 'POST',
         body: formData
       });
@@ -368,7 +368,7 @@ export default function AccountPage() {
     if (!authToken) return;
 
     try {
-      const response = await fetch(`http://localhost:6354/api/admin/gallery/photos/${photoId}?token=${authToken}`, {
+      const response = await fetch(`http://localhost:8000/api/admin/gallery/photos/${photoId}?token=${authToken}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData)
@@ -395,7 +395,7 @@ export default function AccountPage() {
     if (!authToken) return;
 
     try {
-      const response = await fetch(`http://localhost:6354/api/admin/gallery/photos/${photoId}?token=${authToken}`, {
+      const response = await fetch(`http://localhost:8000/api/admin/gallery/photos/${photoId}?token=${authToken}`, {
         method: 'DELETE'
       });
 

@@ -72,7 +72,7 @@ export function SaveItemButton({
         throw new Error("Authentication token not found");
       }
 
-      const response = await fetch(`http://localhost:6354/api/auth/saved-items?token=${authToken}`, {
+      const response = await fetch(`http://localhost:8000/api/auth/saved-items?token=${authToken}`, {
         method: saved ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, key: itemKey, title, href, image }),
