@@ -31,7 +31,12 @@ import { blogContentBySlug as seedBlogContent, blogPosts as seedBlogPosts } from
 import { siteContent as seedSiteContent, type SiteContent } from "@/lib/content/site-content";
 import type { BlogPostSummary } from "@/types";
 
-type Panel = "overview" | "content" | "research" | "blog" | "media" | "security";
+type Panel = "overview" | "content" | "research" | "blog" | "media" | "security" | 
+  "testimonials" | "images" | "videos" | "documents" | "uploads" | 
+  "admin-users" | "permissions" | "sessions" | "traffic" | "content-performance" | 
+  "reports" | "meta-tags" | "sitemap" | "analytics-tracking" | "theme" | 
+  "navigation" | "footer" | "backup" | "cache" | "logs" | "contact-forms" | 
+  "newsletter" | "notifications";
 
 type DashboardPayload = {
   welcome: {
@@ -164,11 +169,44 @@ function SectionCard({
   );
 }
 
-export function AdminWorkbench() {
-  const [activePanel, setActivePanel] = useState<Panel>("overview");
-  const [user, setUser] = useState<AuthUser | null>(null);
+interface AdminWorkbenchProps {
+  user?: {
+    username: string;
+    displayName: string;
+    role: string;
+  };
+  activePanel: Panel;
+  onPanelChange: (panel: string) => void;
+}
+
+export function AdminWorkbench({ user: externalUser, activePanel: externalActivePanel, onPanelChange: externalOnPanelChange }: AdminWorkbenchProps) {
+  const [activePanel, setActivePanel] = useState<Panel>(externalActivePanel || "overview");
+  const [user, setUser] = useState<AuthUser | null>(externalUser ? {
+    username: externalUser.username,
+    displayName: externalUser.displayName,
+    role: externalUser.role,
+    mfaConfigured: false
+  } : null);
   const [dashboard, setDashboard] = useState<DashboardPayload | null>(null);
   const [siteContent, setSiteContent] = useState<SiteContent>(seedSiteContent);
+
+  // Sync external props with internal state
+  useEffect(() => {
+    if (externalActivePanel) {
+      setActivePanel(externalActivePanel);
+    }
+  }, [externalActivePanel]);
+
+  useEffect(() => {
+    if (externalUser) {
+      setUser({
+        username: externalUser.username,
+        displayName: externalUser.displayName,
+        role: externalUser.role,
+        mfaConfigured: false
+      });
+    }
+  }, [externalUser]);
   const [blogData, setBlogData] = useState<BlogData>({
     blogPosts: seedBlogPosts,
     blogContentBySlug: seedBlogContent,
@@ -690,18 +728,32 @@ export function AdminWorkbench() {
                   </Card>
                   <Card className="p-5">
                     <p className="text-sm font-semibold">Security and audit</p>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Login, save, and upload activity appears in the audit timeline so admin changes stay traceable.
-                    </p>
-                  </Card>
-                </div>
-              </SectionCard>
 
-              {activePanel === "overview" ? (
-                <>
+                  <SectionCard
+                    title="System Information"
+                    description="Current system runtime and configuration details."
+                  >
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                      <Card className="p-5">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Session Timeout</p>
+                        <p className="mt-3 font-display text-2xl">10 min</p>
+                      </Card>
+                      
+                      <Card className="p-5">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Database</p>
+                        <p className="mt-3 font-display text-lg">SQLite</p>
+                      </Card>
+                      
+                      <Card className="p-5">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Debug Mode</p>
+                        <p className="mt-3 font-display text-lg">Enabled</p>
+                      </Card>
+                    </div>
+                  </SectionCard>
+
                   <SectionCard
                     title="Operational overview"
-                    description="A quick sense of current publishing volume, media readiness, and recent admin activity."
+                    description="Current publishing volume, media readiness, and recent admin activity."
                   >
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                       {dashboard?.metrics.map((metric) => (
@@ -713,7 +765,7 @@ export function AdminWorkbench() {
                     </div>
                   </SectionCard>
 
-                  <SectionCard title="Quick actions" description="Jump straight into the tasks that matter most day to day.">
+                  <SectionCard title="Quick actions" description="Jump straight into tasks that matter most day to day.">
                     <div className="flex flex-wrap gap-3">
                       {dashboard?.quickActions.map((action) => (
                         <Button key={action.id} variant="outline" onClick={() => startTransition(() => setActivePanel(action.section))}>

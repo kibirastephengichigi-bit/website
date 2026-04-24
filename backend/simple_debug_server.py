@@ -32,7 +32,7 @@ SESSION_COOKIE_NAME = "admin_session"
 DEFAULT_ADMIN_USERNAME = "admin"
 DEFAULT_ADMIN_PASSWORD = "change-me-now"
 DEFAULT_ADMIN_NAME = "Website Administrator"
-DEFAULT_SESSION_HOURS = 8
+DEFAULT_SESSION_HOURS = 0.167  # 10 minutes (10/60 = 0.167 hours) for inactive admins
 
 # Password hashing constants
 PBKDF2_ITERATIONS = 240_000

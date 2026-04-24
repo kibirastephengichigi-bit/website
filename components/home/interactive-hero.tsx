@@ -51,14 +51,12 @@ export function InteractiveHeroSection() {
                   {/* Main image */}
                   <div className="relative aspect-[4/3] lg:aspect-[3/4] rounded-[24px] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
                     <div className="w-full h-full flex items-center justify-center">
-                      <div className="text-center p-8">
-                        <div className="w-24 h-24 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg">
-                          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                            <div className="w-6 h-6 bg-emerald-500 rounded-full"></div>
-                          </div>
+                      <div className="text-center p-8 text-slate-400">
+                        <div className="w-24 h-24 bg-slate-300 rounded-full mx-auto mb-4 flex items-center justify-center">
+                          <div className="w-12 h-12 bg-slate-400 rounded-full"></div>
                         </div>
-                        <p className="text-white/90 font-semibold">Dr. Stephen Asatsa</p>
-                        <p className="text-white/70 text-sm">Professional Psychology</p>
+                        <p className="font-semibold">Profile Image</p>
+                        <p className="text-sm">Placeholder</p>
                       </div>
                     </div>
                   </div>
@@ -127,6 +125,82 @@ export function InteractiveHeroSection() {
                     {siteContent.hero.secondaryCta.label}
                   </Link>
                 </Button>
+              </div>
+            </div>
+
+            {/* Professional Profile Card */}
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
+              <div className="relative group rounded-[32px] border border-slate-200/50 bg-gradient-to-br from-white via-slate-50 to-white p-8 shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:shadow-[0_30px_60px_rgba(0,0,0,0.12)] transition-all duration-500 overflow-hidden">
+                {/* Animated background gradient */}
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                
+                <div className="relative z-10">
+                  <div className="flex flex-col lg:flex-row items-center gap-8">
+                    {/* Profile Avatar */}
+                    <div className="relative flex-shrink-0">
+                      {/* Glow effect */}
+                      <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-teal-600/20 rounded-full blur-2xl opacity-60 group-hover:opacity-80 transition-opacity duration-300" />
+                      
+                      {/* Avatar container */}
+                      <div className="relative w-32 h-32 lg:w-40 lg:h-40 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-all duration-300 group-hover:scale-105">
+                        {/* Inner circles */}
+                        <div className="w-20 h-20 lg:w-24 lg:h-24 bg-white/90 rounded-full flex items-center justify-center backdrop-blur-sm">
+                          <div className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full shadow-inner" />
+                        </div>
+                        
+                        {/* Floating badge */}
+                        <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                          <div className="w-4 h-4 bg-white rounded-full" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Profile Content */}
+                    <div className="flex-1 text-center lg:text-left space-y-4">
+                      <div>
+                        <h2 className="font-display text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-900 via-emerald-700 to-slate-900 bg-clip-text text-transparent mb-2">
+                          Dr. Stephen Asatsa
+                        </h2>
+                        <p className="text-lg lg:text-xl text-emerald-600 font-semibold mb-1">
+                          Professional Psychology
+                        </p>
+                        <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium">
+                            Licensed Psychologist
+                          </span>
+                          <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
+                            Senior Lecturer
+                          </span>
+                          <span className="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-sm font-medium">
+                            Research Leader
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="max-w-2xl">
+                        <p className="text-slate-600 leading-relaxed">
+                          Expert in psychological services, research leadership, and mentorship with extensive experience in academic strategy and clinical practice.
+                        </p>
+                      </div>
+                      
+                      {/* Quick stats */}
+                      <div className="grid grid-cols-3 gap-4 pt-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-emerald-600">15+</div>
+                          <div className="text-sm text-slate-600">Years Experience</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-600">1000+</div>
+                          <div className="text-sm text-slate-600">Clients Helped</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-purple-600">50+</div>
+                          <div className="text-sm text-slate-600">Publications</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 

@@ -1,13 +1,20 @@
-import { AdminWorkbench } from "@/components/admin/admin-workbench";
+import { AdminLayout } from "@/components/admin/admin-layout";
 import { createMetadata } from "@/lib/site";
 
 export const metadata = createMetadata(
-  "Admin Control Room",
-  "Secure admin workspace for editing site content, managing blog posts, and uploading media with the Python backend.",
+  "Admin Dashboard",
+  "Main admin dashboard with individual pages for content, media, SEO, analytics, and settings.",
   "/admin",
 );
 
 export default function AdminPage() {
-  return <AdminWorkbench />;
+  return (
+    <AdminLayout 
+      user={{
+        username: "admin",
+        displayName: "Website Administrator", 
+        role: "super_admin"
+      }}
+    />
+  );
 }
-
