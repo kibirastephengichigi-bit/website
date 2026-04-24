@@ -221,32 +221,52 @@ export default function AdminSignInPage() {
                       </div>
                     </div>
 
-                  {/* Submit Button */}
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl"
-                  >
-                    <span className="flex items-center gap-2">
-                      {loading ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                          Signing in...
-                        </>
-                      ) : (
-                        <>
-                          <LogIn className="w-4 h-4" />
-                          Sign In
-                        </>
-                      )}
-                    </span>
-                  </Button>
-                </form>
+                    {/* Error Message */}
+                    {error && (
+                      <div className="rounded-xl border border-red-400/30 bg-red-500/10 backdrop-blur-sm p-4">
+                        <div className="flex items-center gap-3">
+                          <AlertCircle className="w-5 h-5 text-red-400" />
+                          <span className="text-sm text-red-100">{error}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Submit Button */}
+                    <Button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl"
+                    >
+                      <span className="flex items-center gap-2">
+                        {loading ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            Signing in...
+                          </>
+                        ) : (
+                          <>
+                            <LogIn className="w-4 h-4" />
+                            Sign In
+                          </>
+                        )}
+                      </span>
+                    </Button>
+                  </form>
+
+                  {/* Back to Site */}
+                  <div className="text-center pt-4 border-t border-white/10">
+                    <Link 
+                      href="/" 
+                      className="text-sm text-white/70 hover:text-white/90 transition-colors inline-flex items-center gap-2"
+                    >
+                      ← Back to main site
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
     </div>
-  </div>
-);
+  );  
+}
