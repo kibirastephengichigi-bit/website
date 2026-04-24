@@ -248,5 +248,4 @@ export default function AdminSignInPage() {
         </div>
       </div>
     </div>
-  </div>
 );
