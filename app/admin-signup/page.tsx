@@ -209,7 +209,15 @@ export default function AdminSignInPage() {
                         />
                         <button
                           type="button"
-                        <span className="text-sm text-red-100">{error}</span>
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/90 transition-colors"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-5 h-5" />
+                          ) : (
+                            <Eye className="w-5 h-5" />
+                          )}
+                        </button>
                       </div>
                     </div>
                   )}
