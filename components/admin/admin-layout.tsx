@@ -1,14 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu } from "lucide-react";
+import { Menu, Images, Settings } from "lucide-react";
 
 import { AdminSidebar } from "./admin-sidebar";
 import { AdminWorkbench } from "./admin-workbench";
+import { AdminContentEditor } from "./admin-content-editor";
+import { AdminSEOTools } from "./admin-seo-tools";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 // Import Panel type from admin-workbench to ensure consistency
-type Panel = "overview" | "content" | "research" | "blog" | "media" | "security" | 
+type Panel = "overview" | "content" | "research" | "blog" | "media" | "seo" | "security" | 
   "testimonials" | "images" | "videos" | "documents" | "uploads" | 
   "admin-users" | "permissions" | "sessions" | "traffic" | "content-performance" | 
   "reports" | "meta-tags" | "sitemap" | "analytics-tracking" | "theme" | 
@@ -163,7 +166,8 @@ export function AdminLayout({ user }: AdminLayoutProps) {
                   initialContent={{
                     title: 'Welcome Content',
                     content: '<p>Start creating your content here...</p>',
-                    status: 'draft'
+                    status: 'draft',
+                    lastModified: new Date().toISOString()
                   }}
                   onSave={(content) => {/* Save to backend */}}
                   onPreview={(content) => {/* Show preview */}}
@@ -178,7 +182,8 @@ export function AdminLayout({ user }: AdminLayoutProps) {
                   initialContent={{
                     title: 'New Blog Post',
                     content: '<p>Start writing your blog post here...</p>',
-                    status: 'draft'
+                    status: 'draft',
+                    lastModified: new Date().toISOString()
                   }}
                   onSave={(content) => {/* Save to backend */}}
                   onPreview={(content) => {/* Show preview */}}
@@ -193,7 +198,8 @@ export function AdminLayout({ user }: AdminLayoutProps) {
                   initialContent={{
                     title: 'Research Content',
                     content: '<p>Start creating your research content here...</p>',
-                    status: 'draft'
+                    status: 'draft',
+                    lastModified: new Date().toISOString()
                   }}
                   onSave={(content) => {/* Save to backend */}}
                   onPreview={(content) => {/* Show preview */}}
@@ -227,7 +233,8 @@ export function AdminLayout({ user }: AdminLayoutProps) {
                   initialContent={{
                     title: 'Testimonial Content',
                     content: '<p>Start creating your testimonials here...</p>',
-                    status: 'draft'
+                    status: 'draft',
+                    lastModified: new Date().toISOString()
                   }}
                   onSave={(content) => {/* Save to backend */}}
                   onPreview={(content) => {/* Show preview */}}
