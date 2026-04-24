@@ -1,0 +1,19 @@
+[Unit]
+Description=Stephen Asatsa Website Backend API (Python)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/home/codecrafter/Documents/combined/website/backend
+Environment=PATH=/home/codecrafter/Documents/combined/website/backend/venv/bin
+EnvironmentFile=/home/codecrafter/Documents/combined/website/backend/.env
+ExecStart=/home/codecrafter/Documents/combined/website/backend/venv/bin/python server.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/codecrafter/Documents/combined/website/backend/logs/app.log
+StandardError=append:/home/codecrafter/Documents/combined/website/backend/logs/error.log
+
+[Install]
+WantedBy=multi-user.target
