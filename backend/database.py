@@ -63,6 +63,56 @@ class UserDatabase:
                 )
             """)
             
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS content (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    type TEXT NOT NULL DEFAULT 'page',
+                    status TEXT NOT NULL DEFAULT 'draft',
+                    category TEXT,
+                    tags TEXT,
+                    seo_title TEXT,
+                    seo_description TEXT,
+                    author_id INTEGER,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    published_at TIMESTAMP,
+                    metadata TEXT,
+                    FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE SET NULL
+                )
+            """)
+            
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS media (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    filename TEXT NOT NULL,
+                    original_filename TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    size INTEGER NOT NULL,
+                    url TEXT NOT NULL,
+                    thumbnail_url TEXT,
+                    uploaded_by INTEGER,
+                    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    tags TEXT,
+                    metadata TEXT,
+                    FOREIGN KEY (uploaded_by) REFERENCES users (id) ON DELETE SET NULL
+                )
+            """)
+            
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS home_page_content (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    section TEXT NOT NULL,
+                    field TEXT NOT NULL,
+                    value TEXT,
+                    updated_by INTEGER,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE SET NULL,
+                    UNIQUE(section, field)
+                )
+            """)
+            
             # Create indexes for better performance
             conn.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)")
@@ -70,6 +120,16 @@ class UserDatabase:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON user_sessions(user_id)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_user_id ON audit_log(user_id)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_log(created_at)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_content_type ON content(type)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_content_status ON content(status)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_content_author ON content(author_id)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_content_created ON content(created_at)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_media_type ON media(type)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_media_uploaded_by ON media(uploaded_by)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_media_uploaded ON media(uploaded_at)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_home_page_section ON home_page_content(section)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_home_page_updated_by ON home_page_content(updated_by)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_home_page_updated_at ON home_page_content(updated_at)")
             
             conn.commit()
     
@@ -253,6 +313,347 @@ class UserDatabase:
             """)
             conn.commit()
             return cursor.rowcount
+    
+    def create_content(self, title: str, content: str, content_type: str = 'page', 
+                      status: str = 'draft', category: str | None = None, 
+                      tags: List[str] | None = None, seo_title: str | None = None,
+                      seo_description: str | None = None, author_id: int | None = None,
+                      metadata: Dict[str, Any] | None = None) -> Dict[str, Any]:
+        """Create new content"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute("""
+                INSERT INTO content (title, content, type, status, category, tags, 
+                                   seo_title, seo_description, author_id, metadata)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (title, content, content_type, status, category, 
+                  json.dumps(tags) if tags else None, seo_title, seo_description, 
+                  author_id, json.dumps(metadata) if metadata else None))
+            
+            content_id = cursor.lastrowid
+            conn.commit()
+            
+            # Return created content
+            content_data = self.get_content_by_id(content_id)
+            if content_data:
+                self.append_audit_event(
+                    action="content.created",
+                    actor=f"user_{author_id}",
+                    summary=f"Content '{title}' created",
+                    user_id=author_id
+                )
+            
+            return content_data or {}
+    
+    def get_content_by_id(self, content_id: int) -> Optional[Dict[str, Any]]:
+        """Get content by ID"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            content = conn.execute("""
+                SELECT c.*, u.username as author_name, u.display_name as author_display_name
+                FROM content c
+                LEFT JOIN users u ON c.author_id = u.id
+                WHERE c.id = ?
+            """, (content_id,)).fetchone()
+            
+            if content:
+                content_dict = dict(content)
+                # Parse JSON fields
+                if content_dict.get('tags'):
+                    content_dict['tags'] = json.loads(content_dict['tags'])
+                if content_dict.get('metadata'):
+                    content_dict['metadata'] = json.loads(content_dict['metadata'])
+                return content_dict
+            
+            return None
+    
+    def list_content(self, content_type: str | None = None, status: str | None = None,
+                    limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+        """List content with optional filters"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            
+            query = """
+                SELECT c.*, u.username as author_name, u.display_name as author_display_name
+                FROM content c
+                LEFT JOIN users u ON c.author_id = u.id
+            """
+            params = []
+            conditions = []
+            
+            if content_type:
+                conditions.append("c.type = ?")
+                params.append(content_type)
+            
+            if status:
+                conditions.append("c.status = ?")
+                params.append(status)
+            
+            if conditions:
+                query += " WHERE " + " AND ".join(conditions)
+            
+            query += " ORDER BY c.updated_at DESC LIMIT ? OFFSET ?"
+            params.extend([limit, offset])
+            
+            contents = conn.execute(query, params).fetchall()
+            
+            result = []
+            for content in contents:
+                content_dict = dict(content)
+                # Parse JSON fields
+                if content_dict.get('tags'):
+                    content_dict['tags'] = json.loads(content_dict['tags'])
+                if content_dict.get('metadata'):
+                    content_dict['metadata'] = json.loads(content_dict['metadata'])
+                result.append(content_dict)
+            
+            return result
+    
+    def update_content(self, content_id: int, **kwargs) -> bool:
+        """Update content"""
+        with sqlite3.connect(self.db_path) as conn:
+            # Build update query dynamically
+            update_fields = []
+            params = []
+            
+            allowed_fields = ['title', 'content', 'type', 'status', 'category', 'tags', 
+                            'seo_title', 'seo_description', 'metadata']
+            
+            for field, value in kwargs.items():
+                if field in allowed_fields:
+                    if field in ['tags', 'metadata'] and value:
+                        value = json.dumps(value)
+                    update_fields.append(f"{field} = ?")
+                    params.append(value)
+            
+            if not update_fields:
+                return False
+            
+            update_fields.append("updated_at = CURRENT_TIMESTAMP")
+            params.append(content_id)
+            
+            query = f"UPDATE content SET {', '.join(update_fields)} WHERE id = ?"
+            cursor = conn.execute(query, params)
+            conn.commit()
+            
+            if cursor.rowcount > 0:
+                # Get content for audit log
+                content = self.get_content_by_id(content_id)
+                if content:
+                    self.append_audit_event(
+                        action="content.updated",
+                        actor=f"user_{content.get('author_id')}",
+                        summary=f"Content '{content.get('title')}' updated",
+                        user_id=content.get('author_id')
+                    )
+                return True
+            
+            return False
+    
+    def delete_content(self, content_id: int) -> bool:
+        """Delete content"""
+        with sqlite3.connect(self.db_path) as conn:
+            # Get content for audit log
+            content = self.get_content_by_id(content_id)
+            
+            cursor = conn.execute("DELETE FROM content WHERE id = ?", (content_id,))
+            conn.commit()
+            
+            if cursor.rowcount > 0 and content:
+                self.append_audit_event(
+                    action="content.deleted",
+                    actor=f"user_{content.get('author_id')}",
+                    summary=f"Content '{content.get('title')}' deleted",
+                    user_id=content.get('author_id')
+                )
+                return True
+            
+            return False
+    
+    def create_media(self, filename: str, original_filename: str, media_type: str,
+                    size: int, url: str, thumbnail_url: str | None = None,
+                    uploaded_by: int | None = None, tags: List[str] | None = None,
+                    metadata: Dict[str, Any] | None = None) -> Dict[str, Any]:
+        """Create new media record"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute("""
+                INSERT INTO media (filename, original_filename, type, size, url, 
+                                 thumbnail_url, uploaded_by, tags, metadata)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (filename, original_filename, media_type, size, url, thumbnail_url,
+                  uploaded_by, json.dumps(tags) if tags else None,
+                  json.dumps(metadata) if metadata else None))
+            
+            media_id = cursor.lastrowid
+            conn.commit()
+            
+            # Return created media
+            media_data = self.get_media_by_id(media_id)
+            if media_data:
+                self.append_audit_event(
+                    action="media.uploaded",
+                    actor=f"user_{uploaded_by}",
+                    summary=f"Media '{original_filename}' uploaded",
+                    user_id=uploaded_by
+                )
+            
+            return media_data or {}
+    
+    def get_media_by_id(self, media_id: int) -> Optional[Dict[str, Any]]:
+        """Get media by ID"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            media = conn.execute("""
+                SELECT m.*, u.username as uploaded_by_name, u.display_name as uploaded_by_display_name
+                FROM media m
+                LEFT JOIN users u ON m.uploaded_by = u.id
+                WHERE m.id = ?
+            """, (media_id,)).fetchone()
+            
+            if media:
+                media_dict = dict(media)
+                # Parse JSON fields
+                if media_dict.get('tags'):
+                    media_dict['tags'] = json.loads(media_dict['tags'])
+                if media_dict.get('metadata'):
+                    media_dict['metadata'] = json.loads(media_dict['metadata'])
+                return media_dict
+            
+            return None
+    
+    def list_media(self, media_type: str | None = None, limit: int = 50, 
+                  offset: int = 0) -> List[Dict[str, Any]]:
+        """List media with optional filters"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            
+            query = """
+                SELECT m.*, u.username as uploaded_by_name, u.display_name as uploaded_by_display_name
+                FROM media m
+                LEFT JOIN users u ON m.uploaded_by = u.id
+            """
+            params = []
+            
+            if media_type:
+                query += " WHERE m.type = ?"
+                params.append(media_type)
+            
+            query += " ORDER BY m.uploaded_at DESC LIMIT ? OFFSET ?"
+            params.extend([limit, offset])
+            
+            media_items = conn.execute(query, params).fetchall()
+            
+            result = []
+            for media in media_items:
+                media_dict = dict(media)
+                # Parse JSON fields
+                if media_dict.get('tags'):
+                    media_dict['tags'] = json.loads(media_dict['tags'])
+                if media_dict.get('metadata'):
+                    media_dict['metadata'] = json.loads(media_dict['metadata'])
+                result.append(media_dict)
+            
+            return result
+    
+    def delete_media(self, media_id: int) -> bool:
+        """Delete media"""
+        with sqlite3.connect(self.db_path) as conn:
+            # Get media for audit log
+            media = self.get_media_by_id(media_id)
+            
+            cursor = conn.execute("DELETE FROM media WHERE id = ?", (media_id,))
+            conn.commit()
+            
+            if cursor.rowcount > 0 and media:
+                self.append_audit_event(
+                    action="media.deleted",
+                    actor=f"user_{media.get('uploaded_by')}",
+                    summary=f"Media '{media.get('original_filename')}' deleted",
+                    user_id=media.get('uploaded_by')
+                )
+                return True
+            
+            return False
+    
+    def update_home_page_content(self, section: str, field: str, value: str, 
+                                updated_by: int | None = None) -> bool:
+        """Update home page content"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute("""
+                INSERT OR REPLACE INTO home_page_content (section, field, value, updated_by, updated_at)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """, (section, field, value, updated_by))
+            conn.commit()
+            
+            if cursor.rowcount > 0:
+                # Log the update
+                self.append_audit_event(
+                    action="home_page.updated",
+                    actor=f"user_{updated_by}",
+                    summary=f"Home page content updated: {section}.{field}",
+                    user_id=updated_by
+                )
+                return True
+            
+            return False
+    
+    def get_home_page_content(self, section: str | None = None) -> Dict[str, Any]:
+        """Get home page content, optionally filtered by section"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            
+            query = "SELECT * FROM home_page_content"
+            params = []
+            
+            if section:
+                query += " WHERE section = ?"
+                params.append(section)
+            
+            query += " ORDER BY section, field"
+            
+            rows = conn.execute(query, params).fetchall()
+            
+            # Organize results by section and field
+            result = {}
+            for row in rows:
+                section_name = row['section']
+                field_name = row['field']
+                value = row['value']
+                
+                if section_name not in result:
+                    result[section_name] = {}
+                
+                result[section_name][field_name] = value
+            
+            return result
+    
+    def get_home_page_field(self, section: str, field: str) -> Optional[str]:
+        """Get a specific home page content field"""
+        with sqlite3.connect(self.db_path) as conn:
+            row = conn.execute("""
+                SELECT value FROM home_page_content 
+                WHERE section = ? AND field = ?
+            """, (section, field)).fetchone()
+            
+            return row[0] if row else None
+    
+    def delete_home_page_content(self, section: str, field: str | None = None) -> bool:
+        """Delete home page content, optionally by field"""
+        with sqlite3.connect(self.db_path) as conn:
+            if field:
+                cursor = conn.execute("""
+                    DELETE FROM home_page_content 
+                    WHERE section = ? AND field = ?
+                """, (section, field))
+            else:
+                cursor = conn.execute("""
+                    DELETE FROM home_page_content 
+                    WHERE section = ?
+                """, (section,))
+            
+            conn.commit()
+            return cursor.rowcount > 0
 
 
 # Global database instance

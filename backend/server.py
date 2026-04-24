@@ -91,6 +91,12 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
       return None
     return user
 
+  def _get_query_param(self, name: str, default: str | None = None) -> str | None:
+    """Get a query parameter from the URL"""
+    parsed = urlparse(self.path)
+    query_params = dict(qc.split('=') for qc in parsed.query.split('&') if qc)
+    return query_params.get(name, default)
+
   def _set_session_cookie(self, token: str, *, max_age: int) -> None:
     cookie = SimpleCookie()
     cookie[SESSION_COOKIE_NAME] = token
@@ -303,6 +309,234 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
       )
       self._json_response(HTTPStatus.CREATED, {"item": item})
       return
+
+    # Content Management API endpoints
+    if path == "/api/content":
+      if self.command == "GET":
+        # List content
+        content_type = self._get_query_param("type")
+        status = self._get_query_param("status")
+        limit = int(self._get_query_param("limit", "50"))
+        offset = int(self._get_query_param("offset", "0"))
+        
+        content_list = db.list_content(
+          content_type=content_type if content_type else None,
+          status=status if status else None,
+          limit=limit,
+          offset=offset
+        )
+        self._json_response(HTTPStatus.OK, {"content": content_list})
+        return
+        
+      elif self.command == "POST":
+        # Create content
+        try:
+          payload = self._read_json_body()
+          required_fields = ["title", "content"]
+          if not all(field in payload for field in required_fields):
+            self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Missing required fields"})
+            return
+          
+          content_data = db.create_content(
+            title=payload["title"],
+            content=payload["content"],
+            content_type=payload.get("type", "page"),
+            status=payload.get("status", "draft"),
+            category=payload.get("category"),
+            tags=payload.get("tags"),
+            seo_title=payload.get("seo_title"),
+            seo_description=payload.get("seo_description"),
+            author_id=user["id"],
+            metadata=payload.get("metadata")
+          )
+          self._json_response(HTTPStatus.CREATED, {"content": content_data})
+          return
+        except Exception as e:
+          self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(e)})
+          return
+        
+      elif self.command == "PUT":
+        # Update content
+        try:
+          content_id = self._get_query_param("id")
+          if not content_id:
+            self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Content ID required"})
+            return
+          
+          payload = self._read_json_body()
+          success = db.update_content(int(content_id), **payload)
+          
+          if success:
+            updated_content = db.get_content_by_id(int(content_id))
+            self._json_response(HTTPStatus.OK, {"content": updated_content})
+          else:
+            self._json_response(HTTPStatus.NOT_FOUND, {"error": "Content not found"})
+          return
+        except Exception as e:
+          self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(e)})
+          return
+        
+      elif self.command == "DELETE":
+        # Delete content
+        content_id = self._get_query_param("id")
+        if not content_id:
+          self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Content ID required"})
+          return
+        
+        success = db.delete_content(int(content_id))
+        if success:
+          self._json_response(HTTPStatus.OK, {"deleted": True})
+        else:
+          self._json_response(HTTPStatus.NOT_FOUND, {"error": "Content not found"})
+        return
+
+    # Media Management API endpoints
+    if path == "/api/media":
+      if self.command == "GET":
+        # List media
+        media_type = self._get_query_param("type")
+        limit = int(self._get_query_param("limit", "50"))
+        offset = int(self._get_query_param("offset", "0"))
+        
+        media_list = db.list_media(
+          media_type=media_type if media_type else None,
+          limit=limit,
+          offset=offset
+        )
+        self._json_response(HTTPStatus.OK, {"media": media_list})
+        return
+        
+      elif self.command == "POST":
+        # Create media record
+        try:
+          payload = self._read_json_body()
+          required_fields = ["filename", "original_filename", "type", "size", "url"]
+          if not all(field in payload for field in required_fields):
+            self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Missing required fields"})
+            return
+          
+          media_data = db.create_media(
+            filename=payload["filename"],
+            original_filename=payload["original_filename"],
+            media_type=payload["type"],
+            size=payload["size"],
+            url=payload["url"],
+            thumbnail_url=payload.get("thumbnail_url"),
+            uploaded_by=user["id"],
+            tags=payload.get("tags"),
+            metadata=payload.get("metadata")
+          )
+          self._json_response(HTTPStatus.CREATED, {"media": media_data})
+          return
+        except Exception as e:
+          self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(e)})
+          return
+        
+      elif self.command == "DELETE":
+        # Delete media
+        media_id = self._get_query_param("id")
+        if not media_id:
+          self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Media ID required"})
+          return
+        
+        success = db.delete_media(int(media_id))
+        if success:
+          self._json_response(HTTPStatus.OK, {"deleted": True})
+        else:
+          self._json_response(HTTPStatus.NOT_FOUND, {"error": "Media not found"})
+        return
+
+    # Content by ID endpoint
+    if path.startswith("/api/content/") and self.command == "GET":
+      try:
+        content_id = int(path.split("/")[-1])
+        content = db.get_content_by_id(content_id)
+        if content:
+          self._json_response(HTTPStatus.OK, {"content": content})
+        else:
+          self._json_response(HTTPStatus.NOT_FOUND, {"error": "Content not found"})
+        return
+      except ValueError:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Invalid content ID"})
+        return
+
+    # Home Page Content API endpoints
+    if path == "/api/home-page-content":
+      if self.command == "GET":
+        # Get home page content
+        section = self._get_query_param("section")
+        content_data = db.get_home_page_content(section if section else None)
+        self._json_response(HTTPStatus.OK, {"content": content_data})
+        return
+        
+      elif self.command == "POST":
+        # Update home page content
+        try:
+          payload = self._read_json_body()
+          required_fields = ["section", "field", "value"]
+          if not all(field in payload for field in required_fields):
+            self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Missing required fields"})
+            return
+          
+          success = db.update_home_page_content(
+            section=payload["section"],
+            field=payload["field"],
+            value=payload["value"],
+            updated_by=user["id"]
+          )
+          
+          if success:
+            self._json_response(HTTPStatus.OK, {"updated": True})
+          else:
+            self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "Failed to update content"})
+          return
+        except Exception as e:
+          self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(e)})
+          return
+        
+      elif self.command == "DELETE":
+        # Delete home page content
+        section = self._get_query_param("section")
+        field = self._get_query_param("field")
+        
+        if not section:
+          self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Section parameter required"})
+          return
+        
+        success = db.delete_home_page_content(section, field if field else None)
+        if success:
+          self._json_response(HTTPStatus.OK, {"deleted": True})
+        else:
+          self._json_response(HTTPStatus.NOT_FOUND, {"error": "Content not found"})
+        return
+
+    # Home page content by section endpoint
+    if path.startswith("/api/home-page-content/") and self.command == "GET":
+      try:
+        section = path.split("/")[-1]
+        content_data = db.get_home_page_content(section)
+        if content_data:
+          self._json_response(HTTPStatus.OK, {"content": content_data})
+        else:
+          self._json_response(HTTPStatus.NOT_FOUND, {"error": "Section not found"})
+        return
+      except Exception as e:
+        self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(e)})
+        return
+
+    # Media by ID endpoint
+    if path.startswith("/api/media/") and self.command == "GET":
+      try:
+        media_id = int(path.split("/")[-1])
+        media = db.get_media_by_id(media_id)
+        if media:
+          self._json_response(HTTPStatus.OK, {"media": media})
+        else:
+          self._json_response(HTTPStatus.NOT_FOUND, {"error": "Media not found"})
+        return
+      except ValueError:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Invalid media ID"})
+        return
 
     self._json_response(HTTPStatus.NOT_FOUND, {"error": "Route not found"})
 

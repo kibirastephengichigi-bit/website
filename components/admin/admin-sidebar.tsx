@@ -98,6 +98,13 @@ const sidebarItems: SidebarItem[] = [
     icon: Edit3,
     children: [
       {
+        id: "home-page",
+        label: "Home Page",
+        icon: Home,
+        href: "/admin/content/home",
+        description: "Edit home page content, hero section, and basic information"
+      },
+      {
         id: "content-overview",
         label: "Content Overview",
         icon: Sparkles,

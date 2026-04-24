@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Menu, Images, Settings } from "lucide-react";
 
-import { AdminSidebar } from "./admin-sidebar";
+import { AdminSidebarEnhanced } from "./admin-sidebar-enhanced";
 import { AdminWorkbench } from "./admin-workbench";
 import { AdminContentEditor } from "./admin-content-editor";
 import { AdminSEOTools } from "./admin-seo-tools";
@@ -137,7 +137,7 @@ export function AdminLayout({ user }: AdminLayoutProps) {
       {/* Main content area */}
       <div className="flex pt-14 lg:pt-0">
         {/* Sidebar */}
-        <AdminSidebar
+        <AdminSidebarEnhanced
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
           activePanel={activePanel}
