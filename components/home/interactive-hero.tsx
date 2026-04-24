@@ -12,88 +12,134 @@ export function InteractiveHeroSection() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(180,140,92,0.10),transparent_28%)]" />
 
       <div className="container-shell relative z-10 py-16 sm:py-20 lg:py-24">
-        <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-          <div className="relative">
-            <div className="overflow-hidden rounded-[28px] border border-stone-200 bg-white p-3 shadow-[0_22px_60px_rgba(63,39,24,0.10)]">
-              <Image
-                src="/assets/people/hero.webp"
-                alt="Dr. Stephen Asatsa"
-                width={900}
-                height={1200}
-                sizes="(max-width: 1024px) 100vw, 42vw"
-                className="h-[420px] w-full rounded-[22px] object-cover object-top sm:h-[520px] lg:h-[600px]"
-                priority
-              />
-            </div>
-          </div>
-
-          <div className="space-y-6 lg:max-w-3xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-accent">
-              {siteContent.hero.eyebrow}
-            </p>
-
-            <div className="flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              <span className="rounded-full border border-border bg-white/80 px-3 py-2">Licensed Psychologist</span>
-              <span className="rounded-full border border-border bg-white/80 px-3 py-2">Senior Lecturer</span>
-              <span className="rounded-full border border-border bg-white/80 px-3 py-2">Research Leader</span>
+        <div className="grid gap-12 lg:gap-16 lg:grid-cols-[1fr_1.2fr] lg:items-center">
+          {/* Content First - Better for mobile and SEO */}
+          <div className="space-y-8 lg:space-y-10 order-2 lg:order-1">
+            {/* Eyebrow and badges */}
+            <div className="space-y-4">
+              <p className="text-sm font-bold uppercase tracking-[0.3em] text-accent animate-in fade-in slide-in-from-bottom-4 duration-700">
+                {siteContent.hero.eyebrow}
+              </p>
+              
+              <div className="flex flex-wrap gap-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+                <span className="inline-flex items-center rounded-full border border-accent/20 bg-accent/5 px-4 py-2 text-xs font-semibold text-accent backdrop-blur-sm">
+                  Licensed Psychologist
+                </span>
+                <span className="inline-flex items-center rounded-full border border-accent/20 bg-accent/5 px-4 py-2 text-xs font-semibold text-accent backdrop-blur-sm">
+                  Senior Lecturer
+                </span>
+                <span className="inline-flex items-center rounded-full border border-accent/20 bg-accent/5 px-4 py-2 text-xs font-semibold text-accent backdrop-blur-sm">
+                  Research Leader
+                </span>
+              </div>
             </div>
 
-            <h1 className="font-display text-5xl leading-[0.95] text-foreground sm:text-6xl lg:text-7xl">
-              {siteContent.hero.headline}
-            </h1>
-
-            <p className="max-w-2xl text-lg leading-8 text-muted-foreground">
-              {siteContent.hero.subheadline}
-            </p>
-
-            <div className="flex flex-wrap gap-4 pt-2">
-              <Button asChild size="lg">
-                <a href={siteContent.contact.bookingUrl} target="_blank" rel="noopener noreferrer">
-                  <CalendarDays className="mr-2 h-4 w-4" />
-                  {siteContent.hero.primaryCta.label}
-                </a>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <a href={siteContent.hero.publicationsCta.href} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  {siteContent.hero.publicationsCta.label}
-                </a>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link href="#who-we-are">Explore Profile</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link href={siteContent.hero.secondaryCta.href}>
-                  <Download className="mr-2 h-4 w-4" />
-                  {siteContent.hero.secondaryCta.label}
-                </Link>
-              </Button>
+            {/* Main headline */}
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+              <h1 className="font-display text-4xl leading-[0.95] text-foreground sm:text-5xl lg:text-6xl xl:text-7xl font-bold">
+                {siteContent.hero.headline}
+              </h1>
+              
+              <p className="max-w-2xl text-lg leading-8 text-muted-foreground lg:text-xl">
+                {siteContent.hero.subheadline}
+              </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-[24px] border border-border/80 bg-white/85 p-5 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent/10 text-accent">
-                    <BadgeCheck className="h-5 w-5" />
+            {/* Call to action buttons */}
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+              <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+                <Button 
+                  asChild 
+                  size="lg" 
+                  className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg hover:shadow-emerald-500/25 transition-all duration-300 hover:scale-105"
+                >
+                  <a href={siteContent.contact.bookingUrl} target="_blank" rel="noopener noreferrer">
+                    <CalendarDays className="mr-2 h-5 w-5" />
+                    {siteContent.hero.primaryCta.label}
+                  </a>
+                </Button>
+                
+                <Button asChild size="lg" variant="outline" className="border-2 border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white">
+                  <a href={siteContent.hero.publicationsCta.href} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-2 h-5 w-5" />
+                    {siteContent.hero.publicationsCta.label}
+                  </a>
+                </Button>
+              </div>
+              
+              <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+                <Button asChild size="lg" variant="outline" className="border-2 border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white">
+                  <Link href="#who-we-are">Explore Profile</Link>
+                </Button>
+                
+                <Button asChild size="lg" variant="outline" className="border-2 border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white">
+                  <Link href={siteContent.hero.secondaryCta.href}>
+                    <Download className="mr-2 h-5 w-5" />
+                    {siteContent.hero.secondaryCta.label}
+                  </Link>
+                </Button>
+              </div>
+            </div>
+
+            {/* Trust indicators */}
+            <div className="grid gap-4 sm:grid-cols-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
+              <div className="rounded-[24px] border border-white/20 bg-white/10 backdrop-blur-sm p-6 shadow-lg">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400">
+                    <BadgeCheck className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Trusted Credentials</p>
-                    <p className="text-sm text-muted-foreground">CUEA leadership, licensed practice, international research profile.</p>
+                    <p className="text-sm font-semibold text-white">Trusted Credentials</p>
+                    <p className="text-sm text-white/80">CUEA leadership, licensed practice, international research.</p>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-[24px] border border-border/80 bg-white/85 p-5 shadow-sm">
+              <div className="rounded-[24px] border border-white/20 bg-white/10 backdrop-blur-sm p-6 shadow-lg">
                 <div className="space-y-3 text-sm">
-                  <a href={`tel:${siteContent.contact.phones[0].replace(/\s+/g, "")}`} className="flex items-center gap-3 text-foreground transition hover:text-accent">
-                    <PhoneCall className="h-4 w-4" />
+                  <a href={`tel:${siteContent.contact.phones[0].replace(/\s+/g, "")}`} className="flex items-center gap-3 text-white hover:text-emerald-400 transition-colors">
+                    <PhoneCall className="h-5 w-5" />
                     <span>{siteContent.contact.phones[0]}</span>
                   </a>
-                  <a href={`mailto:${siteConfig.email}`} className="flex items-center gap-3 text-foreground transition hover:text-accent">
-                    <Mail className="h-4 w-4" />
+                  <a href={`mailto:${siteConfig.email}`} className="flex items-center gap-3 text-white hover:text-emerald-400 transition-colors">
+                    <Mail className="h-5 w-5" />
                     <span>{siteConfig.email}</span>
                   </a>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Image Second - Better visual hierarchy */}
+          <div className="relative order-1 lg:order-2 animate-in fade-in slide-in-from-right-4 duration-700 delay-200">
+            <div className="relative">
+              {/* Background glow effect */}
+              <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-teal-600/20 rounded-[32px] blur-2xl opacity-60" />
+              
+              {/* Main image container */}
+              <div className="relative overflow-hidden rounded-[32px] border border-white/20 bg-white/10 backdrop-blur-sm shadow-[0_25px_50px_rgba(16,185,129,0.15)]">
+                <div className="aspect-[3/4] lg:aspect-[4/5]">
+                  <Image
+                    src="/assets/people/hero.webp"
+                    alt="Dr. Stephen Asatsa"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
+                    className="object-cover object-top"
+                    priority
+                  />
+                </div>
+                
+                {/* Overlay gradient for better text readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+              </div>
+              
+              {/* Floating badges */}
+              <div className="absolute -top-4 -right-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 p-3 shadow-lg animate-bounce">
+                <BadgeCheck className="h-6 w-6 text-white" />
+              </div>
+              
+              <div className="absolute -bottom-4 -left-4 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 p-3 shadow-lg animate-pulse">
+                <PhoneCall className="h-6 w-6 text-white" />
               </div>
             </div>
           </div>

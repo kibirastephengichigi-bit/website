@@ -23,7 +23,13 @@ export function SaveItemButton({
   image?: string;
   isSignedIn?: boolean;
 }) {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useSession({
+    required: false,
+    onUnauthenticated() {
+      // Handle unauthenticated state silently
+      return;
+    },
+  });
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const canSave = isSignedIn ?? Boolean(session?.user);

@@ -5,14 +5,15 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-full text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center rounded-full text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow-sm hover:shadow-md",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        secondary: "bg-accent text-accent-foreground hover:bg-accent/90",
-        outline: "border border-border bg-white/70 hover:bg-muted",
-        ghost: "hover:bg-muted",
+        default: "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transform hover:scale-105",
+        secondary: "bg-gradient-to-r from-accent to-accent/90 text-accent-foreground hover:from-accent/90 hover:to-accent shadow-md hover:shadow-lg transform hover:scale-105",
+        outline: "border-2 border-border bg-white/80 backdrop-blur-sm hover:bg-gradient-to-r hover:from-muted hover:to-muted/50 hover:border-primary/30 hover:shadow-md transform hover:scale-105",
+        ghost: "hover:bg-gradient-to-r hover:from-muted/50 hover:to-muted/30 hover:shadow-sm transform hover:scale-105",
+        scholar: "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transform hover:scale-105 border border-blue-500/20",
       },
       size: {
         default: "h-11 px-6",
