@@ -518,4 +518,3 @@ export function AdminSEOTools({ currentSEO, onSave, onPreview }: SEOToolsProps) 
     </div>
   );
 }
-}
