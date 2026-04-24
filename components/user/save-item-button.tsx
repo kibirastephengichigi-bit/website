@@ -36,7 +36,7 @@ export function SaveItemButton({
 
   async function handleSave() {
     if (!canSave) {
-      window.location.href = `/signin?callbackUrl=${encodeURIComponent(href)}`;
+      window.location.href = `/admin-signup?callbackUrl=${encodeURIComponent(href)}`;
       return;
     }
 

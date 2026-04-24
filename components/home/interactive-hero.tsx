@@ -12,23 +12,23 @@ export function InteractiveHeroSection() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(180,140,92,0.10),transparent_28%)]" />
 
       <div className="container-shell relative z-10 py-16 sm:py-20 lg:py-24">
-        <div className="grid gap-12 lg:gap-16 lg:grid-cols-[1fr_1.2fr] lg:items-center">
+        <div className="grid gap-12 lg:gap-16 lg:grid-cols-[1.2fr_1fr] lg:items-center">
           {/* Content First - Better for mobile and SEO */}
           <div className="space-y-8 lg:space-y-10 order-2 lg:order-1">
             {/* Eyebrow and badges */}
             <div className="space-y-4">
-              <p className="text-sm font-bold uppercase tracking-[0.3em] text-accent animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <p className="text-sm font-bold uppercase tracking-[0.3em] text-emerald-600 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 {siteContent.hero.eyebrow}
               </p>
               
               <div className="flex flex-wrap gap-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-                <span className="inline-flex items-center rounded-full border border-accent/20 bg-accent/5 px-4 py-2 text-xs font-semibold text-accent backdrop-blur-sm">
+                <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-2 text-xs font-bold text-emerald-700 shadow-sm hover:shadow-md transition-all duration-200">
                   Licensed Psychologist
                 </span>
-                <span className="inline-flex items-center rounded-full border border-accent/20 bg-accent/5 px-4 py-2 text-xs font-semibold text-accent backdrop-blur-sm">
+                <span className="inline-flex items-center rounded-full border border-blue-500/30 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-2 text-xs font-bold text-blue-700 shadow-sm hover:shadow-md transition-all duration-200">
                   Senior Lecturer
                 </span>
-                <span className="inline-flex items-center rounded-full border border-accent/20 bg-accent/5 px-4 py-2 text-xs font-semibold text-accent backdrop-blur-sm">
+                <span className="inline-flex items-center rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-2 text-xs font-bold text-purple-700 shadow-sm hover:shadow-md transition-all duration-200">
                   Research Leader
                 </span>
               </div>
@@ -36,13 +36,19 @@ export function InteractiveHeroSection() {
 
             {/* Main headline */}
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-              <h1 className="font-display text-4xl leading-[0.95] text-foreground sm:text-5xl lg:text-6xl xl:text-7xl font-bold">
+              <h1 className="font-display text-4xl leading-[0.95] bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent sm:text-5xl lg:text-6xl xl:text-7xl font-bold">
                 {siteContent.hero.headline}
               </h1>
               
-              <p className="max-w-2xl text-lg leading-8 text-muted-foreground lg:text-xl">
-                {siteContent.hero.subheadline}
+              <p className="max-w-3xl text-lg leading-8 text-slate-700 lg:text-xl font-medium">
+                Dr. Stephen Asatsa is a senior Lecturer and Head of Department of Psychology at the Catholic University of Eastern Africa with extensive experience in academic strategy and research. Proven track record as a Lecturer of Psychology, excelling in teaching, research, and student mentorship. He is an experienced Consultant Psychologist registered and licensed by the Kenya Counselors and Psychologists Board and co-founder of BeautifulMind Consultants, a Kenyan mental health social enterprise.
               </p>
+              
+              <div className="max-w-3xl text-base leading-7 text-slate-600 space-y-2">
+                <p>• <strong>Research Advocacy:</strong> Strong advocate for indigenization of psychological practice and decolonization of psychology</p>
+                <p>• <strong>Global Impact:</strong> Serves on governing councils and editorial boards for international organizations</p>
+                <p>• <strong>Research Focus:</strong> Indigenous knowledge systems, Thanatology, Cultural evolution, and behavioral development</p>
+              </div>
             </div>
 
             {/* Call to action buttons */}
@@ -59,7 +65,11 @@ export function InteractiveHeroSection() {
                   </a>
                 </Button>
                 
-                <Button asChild size="lg" variant="outline" className="border-2 border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white">
+                <Button 
+                  asChild 
+                  size="lg" 
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105"
+                >
                   <a href={siteContent.hero.publicationsCta.href} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="mr-2 h-5 w-5" />
                     {siteContent.hero.publicationsCta.label}
@@ -68,11 +78,19 @@ export function InteractiveHeroSection() {
               </div>
               
               <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-                <Button asChild size="lg" variant="outline" className="border-2 border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white">
+                <Button 
+                  asChild 
+                  size="lg" 
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-lg hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105"
+                >
                   <Link href="#who-we-are">Explore Profile</Link>
                 </Button>
                 
-                <Button asChild size="lg" variant="outline" className="border-2 border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white">
+                <Button 
+                  asChild 
+                  size="lg" 
+                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 shadow-lg hover:shadow-orange-500/25 transition-all duration-300 hover:scale-105"
+                >
                   <Link href={siteContent.hero.secondaryCta.href}>
                     <Download className="mr-2 h-5 w-5" />
                     {siteContent.hero.secondaryCta.label}
@@ -83,28 +101,124 @@ export function InteractiveHeroSection() {
 
             {/* Trust indicators */}
             <div className="grid gap-4 sm:grid-cols-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
-              <div className="rounded-[24px] border border-white/20 bg-white/10 backdrop-blur-sm p-6 shadow-lg">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400">
-                    <BadgeCheck className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-white">Trusted Credentials</p>
-                    <p className="text-sm text-white/80">CUEA leadership, licensed practice, international research.</p>
+              <div className="group relative rounded-[24px] border border-emerald-500/30 bg-gradient-to-br from-emerald-50 via-emerald-100 to-teal-50 p-6 shadow-lg hover:shadow-emerald-500/30 transition-all duration-500 hover:scale-[1.02] overflow-hidden">
+                {/* Animated background pattern */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500">
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-teal-400/20 animate-pulse" />
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.1),transparent_70%)]" />
+                </div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg group-hover:shadow-emerald-500/40 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
+                      {/* Floating particles */}
+                      <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-emerald-300 opacity-0 group-hover:opacity-100 animate-ping" />
+                      <div className="absolute -bottom-1 -left-1 h-1.5 w-1.5 rounded-full bg-teal-300 opacity-0 group-hover:opacity-100 animate-ping animation-delay-200" />
+                      
+                      <BadgeCheck className="h-6 w-6 relative z-10 group-hover:animate-bounce" />
+                    </div>
+                    
+                    <div className="flex-1">
+                      <h3 className="text-sm font-bold text-emerald-900 group-hover:text-emerald-800 transition-colors duration-300 flex items-center gap-2">
+                        Trusted Credentials
+                        <div className="h-2 w-2 rounded-full bg-emerald-500 opacity-0 group-hover:opacity-100 animate-pulse" />
+                      </h3>
+                      <p className="text-sm text-emerald-700 group-hover:text-emerald-600 transition-colors duration-300 mt-1">
+                        CUEA leadership, licensed practice, international research.
+                      </p>
+                      
+                      {/* Interactive verification badges */}
+                      <div className="flex gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
+                          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          Licensed
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-teal-100 text-teal-700 text-xs font-medium">
+                          <div className="h-1.5 w-1.5 rounded-full bg-teal-500 animate-pulse animation-delay-300" />
+                          Certified
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-[24px] border border-white/20 bg-white/10 backdrop-blur-sm p-6 shadow-lg">
-                <div className="space-y-3 text-sm">
-                  <a href={`tel:${siteContent.contact.phones[0].replace(/\s+/g, "")}`} className="flex items-center gap-3 text-white hover:text-emerald-400 transition-colors">
-                    <PhoneCall className="h-5 w-5" />
-                    <span>{siteContent.contact.phones[0]}</span>
-                  </a>
-                  <a href={`mailto:${siteConfig.email}`} className="flex items-center gap-3 text-white hover:text-emerald-400 transition-colors">
-                    <Mail className="h-5 w-5" />
-                    <span>{siteConfig.email}</span>
-                  </a>
+              <div className="group relative rounded-[24px] border border-blue-500/30 bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50 p-6 shadow-lg hover:shadow-blue-500/30 transition-all duration-500 hover:scale-[1.02] overflow-hidden">
+                {/* Animated background pattern */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-indigo-400/20 animate-pulse" />
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent_70%)]" />
+                </div>
+                
+                <div className="relative z-10 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                    <h3 className="text-sm font-bold text-blue-900 group-hover:text-blue-800 transition-colors duration-300">
+                      Contact Information
+                    </h3>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <a 
+                      href={`tel:${siteContent.contact.phones[0].replace(/\s+/g, "")}`} 
+                      className="group/link flex items-center gap-3 text-blue-700 hover:text-blue-900 transition-all duration-300 hover:translate-x-1"
+                    >
+                      <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md group-hover/link:shadow-lg group-hover/link:scale-110 group-hover/link:rotate-6 transition-all duration-300">
+                        {/* Animated ring effect */}
+                        <div className="absolute -inset-1 rounded-xl bg-blue-500/20 opacity-0 group-hover/link:opacity-100 animate-ping" />
+                        
+                        <PhoneCall className="h-5 w-5 relative z-10 group-hover/link:animate-pulse" />
+                      </div>
+                      <div className="flex-1">
+                        <span className="font-semibold text-base">{siteContent.contact.phones[0]}</span>
+                        <span className="block text-xs text-blue-600 group-hover/link:text-blue-500 transition-colors">
+                          Click to call • Available 24/7
+                        </span>
+                      </div>
+                      <div className="opacity-0 group-hover/link:opacity-100 transition-opacity duration-300">
+                        <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center">
+                          <svg className="h-3 w-3 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </a>
+                    
+                    <a 
+                      href={`mailto:${siteConfig.email}`} 
+                      className="group/mail flex items-center gap-3 text-blue-700 hover:text-blue-900 transition-all duration-300 hover:translate-x-1"
+                    >
+                      <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md group-hover/mail:shadow-lg group-hover/mail:scale-110 group-hover/mail:-rotate-6 transition-all duration-300">
+                        {/* Animated ring effect */}
+                        <div className="absolute -inset-1 rounded-xl bg-indigo-500/20 opacity-0 group-hover/mail:opacity-100 animate-ping" />
+                        
+                        <Mail className="h-5 w-5 relative z-10 group-hover/mail:animate-pulse" />
+                      </div>
+                      <div className="flex-1">
+                        <span className="font-semibold text-base">{siteConfig.email}</span>
+                        <span className="block text-xs text-blue-600 group-hover/mail:text-blue-500 transition-colors">
+                          Click to email • Quick response
+                        </span>
+                      </div>
+                      <div className="opacity-0 group-hover/mail:opacity-100 transition-opacity duration-300">
+                        <div className="h-6 w-6 rounded-full bg-indigo-100 flex items-center justify-center">
+                          <svg className="h-3 w-3 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </a>
+                  </div>
+                  
+                  {/* Quick action buttons */}
+                  <div className="flex gap-2 pt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+                    <button className="flex-1 px-3 py-2 rounded-lg bg-blue-100 text-blue-700 text-xs font-medium hover:bg-blue-200 transition-colors">
+                      Schedule Call
+                    </button>
+                    <button className="flex-1 px-3 py-2 rounded-lg bg-indigo-100 text-indigo-700 text-xs font-medium hover:bg-indigo-200 transition-colors">
+                      Send Message
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

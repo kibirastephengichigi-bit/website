@@ -95,7 +95,7 @@ export function SiteHeader() {
             </a>
           </Button>
 
-          {/* Admin Sign Up (only when not signed in) */}
+          {/* Admin Sign In (only when not signed in) */}
           {!isSignedIn && (
             <Button 
               asChild 
@@ -103,7 +103,7 @@ export function SiteHeader() {
               variant="outline"
               className="border-purple-500/30 text-purple-700 hover:bg-purple-50"
             >
-              <Link href="/admin-signup">Admin</Link>
+              <Link href="/admin-signup">Admin Sign In</Link>
             </Button>
           )}
 
@@ -150,7 +150,7 @@ export function SiteHeader() {
                       variant="outline"
                       className="w-full border-purple-500/30 text-purple-700"
                     >
-                      <Link href="/admin-signup">Admin Sign Up</Link>
+                      <Link href="/admin-signup">Admin Sign In</Link>
                     </Button>
                   )}
                 </div>

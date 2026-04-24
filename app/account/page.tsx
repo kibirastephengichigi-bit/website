@@ -14,7 +14,7 @@ export default async function AccountPage() {
   const session = await auth();
 
   if (!session?.user || !db) {
-    redirect("/signin?callbackUrl=/account");
+    redirect("/admin-signup?callbackUrl=/account");
   }
 
   const user = await db.user.findUnique({
@@ -23,7 +23,7 @@ export default async function AccountPage() {
   });
 
   if (!user) {
-    redirect("/signin?callbackUrl=/account");
+    redirect("/admin-signup?callbackUrl=/account");
   }
 
   const preferences =

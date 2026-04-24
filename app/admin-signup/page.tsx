@@ -1,15 +1,15 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { Shield, UserPlus, Lock, Mail, Eye, EyeOff } from "lucide-react";
+import { Shield, Lock, Mail, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { createMetadata } from "@/lib/site";
 
-export const metadata = createMetadata("Admin Sign Up", "Create admin account for Stephen Asatsa website management.", "/admin-signup");
+export const metadata = createMetadata("Admin Sign In", "Sign in to manage Stephen Asatsa website.", "/admin-signup");
 
-export default function AdminSignUpPage() {
+export default function AdminSignInPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -18,28 +18,13 @@ export default function AdminSignUpPage() {
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
             <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 className="font-display text-3xl font-bold text-foreground mb-2">Admin Sign Up</h1>
-          <p className="text-muted-foreground">Create an admin account to manage the website</p>
+          <h1 className="font-display text-3xl font-bold text-foreground mb-2">Admin Sign In</h1>
+          <p className="text-muted-foreground">Sign in to manage the website</p>
         </div>
 
-        {/* Sign Up Form */}
+        {/* Sign In Form */}
         <Card className="p-8 shadow-xl border-border/50 bg-white/90 backdrop-blur-sm">
           <form className="space-y-6">
-            {/* Name Field */}
-            <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium text-foreground flex items-center gap-2">
-                <UserPlus className="w-4 h-4" />
-                Full Name
-              </label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Enter your full name"
-                className="h-11 border-border/70 focus:border-primary/50"
-                required
-              />
-            </div>
-
             {/* Email Field */}
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -65,7 +50,7 @@ export default function AdminSignUpPage() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Create a strong password"
+                  placeholder="Enter your password"
                   className="h-11 pr-10 border-border/70 focus:border-primary/50"
                   required
                 />
@@ -74,29 +59,6 @@ export default function AdminSignUpPage() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <Eye className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Confirm Password Field */}
-            <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Lock className="w-4 h-4" />
-                Confirm Password
-              </label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Confirm your password"
-                  className="h-11 pr-10 border-border/70 focus:border-primary/50"
-                  required
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <EyeOff className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -126,7 +88,7 @@ export default function AdminSignUpPage() {
             >
               <span className="flex items-center gap-2">
                 <Shield className="w-4 h-4" />
-                Create Admin Account
+                Sign In to Admin
               </span>
             </Button>
           </form>
@@ -139,21 +101,21 @@ export default function AdminSignUpPage() {
                 <h3 className="text-sm font-semibold text-blue-900 mb-1">Security Notice</h3>
                 <p className="text-xs text-blue-700 leading-relaxed">
                   This admin account provides full access to website management features. 
-                  Only create this account if you are authorized to manage the site content.
+                  Only sign in if you are authorized to manage the site content.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Sign In Link */}
+          {/* Forgot Password */}
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              Already have an admin account?{" "}
+              Forgot your password?{" "}
               <Link 
-                href="/signin" 
+                href="/admin-reset" 
                 className="text-primary hover:text-primary/80 font-medium transition-colors"
               >
-                Sign in here
+                Reset here
               </Link>
             </p>
           </div>
