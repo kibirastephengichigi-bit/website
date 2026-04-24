@@ -21,7 +21,7 @@ export default function AdminSignInPage() {
   // Test backend connection
   const testBackendConnection = async () => {
     try {
-      const response = await fetch("http://localhost:8000/", {
+      const response = await fetch("http://localhost:6354/", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -51,7 +51,7 @@ export default function AdminSignInPage() {
 
     try {
       // Call Python backend API
-      const response = await fetch("http://localhost:8000/api/admin/login", {
+      const response = await fetch("http://localhost:6354/api/admin/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
