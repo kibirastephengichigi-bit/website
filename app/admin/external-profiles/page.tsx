@@ -25,7 +25,8 @@ import {
   Globe,
   ExternalLink,
   Github,
-  Youtube
+  Youtube,
+  Info
 } from "lucide-react";
 import { api } from "@/components/api/client";
 
@@ -281,6 +282,18 @@ export default function ExternalProfilesPage() {
           Add Profile
         </Button>
       </div>
+
+      <Card className="bg-blue-50 border-blue-200 p-4">
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+          <div>
+            <h3 className="font-semibold text-blue-900">Where this appears</h3>
+            <p className="text-sm text-blue-700 mt-1">
+              External profiles appear on the about page, displaying social media links and external platform profiles with icons and metrics.
+            </p>
+          </div>
+        </div>
+      </Card>
 
       <Card className="p-6">
         <div className="relative">

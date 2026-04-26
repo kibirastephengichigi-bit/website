@@ -249,34 +249,6 @@ export default function AdminDashboard() {
           path: '/admin/seo',
           lastUpdated: new Date().toISOString(),
           helpText: 'Manage SEO metadata, meta tags, sitemaps, and search engine optimization settings.'
-        },
-        {
-          id: 'settings',
-          title: 'Site Settings',
-          description: 'Configure website settings, appearance, and technical configurations.',
-          icon: Settings,
-          status: 'available',
-          path: '/admin/settings',
-          lastUpdated: new Date().toISOString(),
-          helpText: 'Configure global website settings including site name, contact information, and technical preferences.'
-        },
-        {
-          id: 'security',
-          title: 'Security Center',
-          description: 'Advanced security settings, backup management, and system monitoring.',
-          icon: ShieldCheck,
-          status: 'coming-soon',
-          path: '/admin/security',
-          helpText: 'Manage security settings, view audit logs, and configure access controls.'
-        },
-        {
-          id: 'api',
-          title: 'API Management',
-          description: 'Manage API keys, webhooks, and third-party integrations.',
-          icon: Database,
-          status: 'coming-soon',
-          path: '/admin/api',
-          helpText: 'Configure API keys, webhooks, and third-party service integrations.'
         }
       ];
 

@@ -48,36 +48,10 @@ import {
   Folder,
   Tag,
   Calendar,
-  MessageSquare,
-  Star,
-  Heart,
-  Bookmark,
-  Share2,
-  Copy,
-  Trash2,
-  Plus,
-  Minus,
-  Filter,
-  Grid,
-  List,
-  MoreVertical,
-  Check,
-  AlertCircle,
-  Info,
-  Zap,
-  Target,
   BookOpen,
-  GraduationCap,
-  Briefcase,
-  Handshake,
-  Megaphone,
-  Command,
-  Newspaper,
-  GitBranch,
-  Link as LinkIcon,
-  Building2,
-  Medal,
-  Network
+  PenTool,
+  ExternalLink,
+  Briefcase
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -168,6 +142,35 @@ const sidebarItems: SidebarItem[] = [
     ]
   },
   {
+    id: "blog",
+    label: "Blog & Documentation",
+    icon: BookOpen,
+    children: [
+      {
+        id: "blog-posts",
+        label: "Blog Posts",
+        icon: PenTool,
+        href: "/admin/blog",
+        description: "Create, edit, and manage blog posts"
+      },
+      {
+        id: "blog-preview",
+        label: "Preview Blog",
+        icon: ExternalLink,
+        href: "/blog",
+        description: "Preview the blog page on the live site",
+        target: "_blank"
+      },
+      {
+        id: "documentation",
+        label: "Documentation",
+        icon: FileText,
+        href: "/admin/documentation",
+        description: "Edit and manage documentation pages"
+      }
+    ]
+  },
+  {
     id: "media",
     label: "Media Library",
     icon: Images,
@@ -192,6 +195,13 @@ const sidebarItems: SidebarItem[] = [
         icon: ShieldCheck,
         href: "/admin/users",
         description: "Manage admin accounts and permissions"
+      },
+      {
+        id: "account-settings",
+        label: "Account Settings",
+        icon: Lock,
+        href: "/admin/account-settings",
+        description: "Change your username and password"
       }
     ]
   },

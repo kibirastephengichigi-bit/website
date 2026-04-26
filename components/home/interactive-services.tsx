@@ -1,3 +1,5 @@
+"use client";
+
 import { siteContent } from "@/lib/content/site-content";
 import { Card } from "@/components/ui/card";
 import { Brain, Users, BookOpen, GraduationCap, Building, Calendar } from "lucide-react";

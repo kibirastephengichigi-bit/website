@@ -11,6 +11,7 @@ import { ResultsMetrics } from "@/components/sections/results-metrics";
 import { GallerySection } from "@/components/sections/gallery-section";
 import { NewsletterSection } from "@/components/sections/newsletter-section";
 import { ProfessionalAffiliations } from "@/components/sections/professional-affiliations";
+import { CollaboratorsSection } from "@/components/sections/collaborators-section";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { createMetadata } from "@/lib/site";
@@ -29,6 +30,7 @@ export default function HomePage() {
       <InteractiveServicesSection />
       <ScrollZoomResearchSection />
       <ProfessionalAffiliations />
+      <CollaboratorsSection />
       <TestimonialsCarousel />
       <ResultsMetrics />
       <GallerySection />

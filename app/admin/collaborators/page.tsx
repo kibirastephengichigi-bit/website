@@ -309,35 +309,36 @@ export default function CollaboratorsPage() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-slate-900">Live Preview</h3>
-                <div className="p-6 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border border-slate-200">
+                <h3 className="text-lg font-semibold text-slate-900">Live Preview (Home Page)</h3>
+                <Card className="p-6 bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300">
                   <div className="space-y-4">
                     <div className="flex items-start gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
-                        <Users className="h-6 w-6" />
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg flex-shrink-0">
+                        <Users className="h-7 w-7" />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-bold text-lg text-slate-900">
-                            {selectedItem.name || 'Collaborator Name'}
-                          </h3>
-                          {selectedItem.role && (
-                            <Badge variant="outline" className="text-xs">{selectedItem.role}</Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-slate-600 mb-2">{selectedItem.title || 'Title'}</p>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-lg text-slate-900 leading-tight">
+                          {selectedItem.name || 'Collaborator Name'}
+                        </h3>
+                        <p className="text-sm text-slate-600 mt-1">{selectedItem.title || 'Title'}</p>
+                        {selectedItem.role && (
+                          <span className="inline-block mt-2 px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            {selectedItem.role}
+                          </span>
+                        )}
                       </div>
                     </div>
+
                     <div className="relative pl-6 border-l-2 border-blue-200">
                       <Quote className="absolute -left-3 top-0 h-6 w-6 text-blue-400" />
-                      <p className="text-slate-700 italic">
-                        {selectedItem.testimonial || 'Testimonial will appear here...'}
+                      <p className="text-slate-700 italic leading-relaxed">
+                        &ldquo;{selectedItem.testimonial || 'Testimonial will appear here...'}&rdquo;
                       </p>
                     </div>
                   </div>
-                </div>
+                </Card>
                 <p className="text-xs text-slate-500">
-                  This is how the collaborator testimonial will appear on the about page.
+                  This is how the collaborator testimonial will appear on the home page.
                 </p>
               </div>
             </div>

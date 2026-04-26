@@ -1484,6 +1484,61 @@ class UserDatabase:
                 return True
             return False
 
+    def update_user_username(self, user_id: int, new_username: str) -> bool:
+        """Update user's username"""
+        with sqlite3.connect(self.db_path) as conn:
+            # Check if new username already exists
+            existing = conn.execute(
+                "SELECT id FROM users WHERE username = ? AND id != ?",
+                (new_username, user_id)
+            ).fetchone()
+
+            if existing:
+                return False
+
+            cursor = conn.execute(
+                "UPDATE users SET username = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                (new_username, user_id)
+            )
+            conn.commit()
+
+            if cursor.rowcount > 0:
+                user = self.get_user_by_id(user_id)
+                if user:
+                    self.append_audit_event(
+                        action="user.username_updated",
+                        actor=user.get("username", "unknown"),
+                        summary=f"Username updated for user {user.get('username')}",
+                        user_id=user_id
+                    )
+                return True
+            return False
+
+    def update_user_password(self, user_id: int, new_password: str) -> bool:
+        """Update user's password"""
+        from security import hash_password
+
+        password_hash = hash_password(new_password)
+
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute(
+                "UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                (password_hash, user_id)
+            )
+            conn.commit()
+
+            if cursor.rowcount > 0:
+                user = self.get_user_by_id(user_id)
+                if user:
+                    self.append_audit_event(
+                        action="user.password_updated",
+                        actor=user.get("username", "unknown"),
+                        summary=f"Password updated for user {user.get('username')}",
+                        user_id=user_id
+                    )
+                return True
+            return False
+
 
 # Global database instance
 db = UserDatabase()

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,11 @@ import {
   X,
   Eye,
   EyeOff,
-  Sparkles
+  Sparkles,
+  Info,
+  MoreVertical,
+  Copy,
+  Check
 } from "lucide-react";
 import { api } from "@/components/api/client";
 
@@ -34,9 +39,36 @@ interface HeroContent {
 }
 
 export default function HeroAdminPage() {
+  const router = useRouter();
+
+  // Check authentication on mount
+  useEffect(() => {
+    const session = localStorage.getItem('userSession');
+    if (!session) {
+      router.push('/admin-signup');
+      return;
+    }
+    try {
+      const parsed = JSON.parse(session);
+      const sessionAge = Date.now() - parsed.timestamp;
+      if (sessionAge > 24 * 60 * 60 * 1000) {
+        localStorage.removeItem('userSession');
+        localStorage.removeItem('authToken');
+        router.push('/admin-signup');
+        return;
+      }
+    } catch {
+      localStorage.removeItem('userSession');
+      localStorage.removeItem('authToken');
+      router.push('/admin-signup');
+      return;
+    }
+  }, [router]);
+
   const [heroes, setHeroes] = useState<HeroContent[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<HeroContent | null>(null);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
 
   useEffect(() => {
     loadHeroes();
@@ -45,6 +77,12 @@ export default function HeroAdminPage() {
   const loadHeroes = async () => {
     try {
       const response = await api.get("/api/admin/hero");
+      if (!response.ok) {
+        console.error(`Failed to load hero content: ${response.status} ${response.statusText}`);
+        const text = await response.text();
+        console.error("Response body:", text);
+        return;
+      }
       const data = await response.json();
       setHeroes(data.hero || []);
     } catch (error) {
@@ -71,7 +109,7 @@ export default function HeroAdminPage() {
   };
 
   const handleCreateNew = () => {
-    setSelectedItem({
+    const newItem = {
       id: 0,
       eyebrow: "",
       headline: "",
@@ -83,7 +121,8 @@ export default function HeroAdminPage() {
       published: true,
       created_at: "",
       updated_at: ""
-    });
+    };
+    setSelectedItem(newItem);
   };
 
   const deleteHero = async (id: number) => {
@@ -104,6 +143,31 @@ export default function HeroAdminPage() {
     }
   };
 
+  const duplicateHero = async (item: HeroContent) => {
+    try {
+      const newItem = {
+        eyebrow: item.eyebrow + " (Copy)",
+        headline: item.headline,
+        description: item.description,
+        badges: item.badges,
+        background_image_url: item.background_image_url,
+        cta_text: item.cta_text,
+        cta_url: item.cta_url,
+        published: false
+      };
+      await api.post("/api/admin/hero", newItem);
+      loadHeroes();
+    } catch (error) {
+      console.error("Failed to duplicate hero content:", error);
+    }
+  };
+
+  const copyId = (id: number) => {
+    navigator.clipboard.writeText(id.toString());
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
@@ -121,6 +185,18 @@ export default function HeroAdminPage() {
         </Button>
       </div>
 
+      <Card className="bg-blue-50 border-blue-200 p-4">
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+          <div>
+            <h3 className="font-semibold text-blue-900">Where this appears</h3>
+            <p className="text-sm text-blue-700 mt-1">
+              The hero section appears at the top of the homepage, featuring the main headline, badges, description, and call-to-action buttons. Only one published hero content is displayed at a time.
+            </p>
+          </div>
+        </div>
+      </Card>
+
       <div className="space-y-4">
         {heroes.map((item) => (
           <Card key={item.id} className="p-6">
@@ -131,23 +207,31 @@ export default function HeroAdminPage() {
                   <Badge variant={item.published ? "default" : "secondary"}>
                     {item.published ? "Published" : "Draft"}
                   </Badge>
+                  <span className="text-xs text-slate-400">ID: {item.id}</span>
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">{item.headline}</h3>
                 {item.description && <p className="text-sm text-slate-600 line-clamp-2">{item.description}</p>}
               </div>
               
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => togglePublished(item)}>
+                <Button variant="outline" size="sm" onClick={() => copyId(item.id)} title="Copy ID">
+                  {copiedId === item.id ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => duplicateHero(item)} title="Duplicate">
+                  <Copy className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => togglePublished(item)} title={item.published ? "Unpublish" : "Publish"}>
                   {item.published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setSelectedItem(item)}>
+                <Button variant="outline" size="sm" onClick={() => setSelectedItem(item)} title="Edit">
                   <Edit3 className="w-4 h-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => { if (confirm('Are you sure?')) deleteHero(item.id); }}
+                  onClick={() => { if (confirm('Are you sure you want to delete this hero content?')) deleteHero(item.id); }}
                   className="text-red-600 hover:text-red-700"
+                  title="Delete"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -159,7 +243,7 @@ export default function HeroAdminPage() {
 
       {selectedItem && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-slate-900">
                 {selectedItem.id === 0 ? 'Add Hero Content' : 'Edit Hero Content'}
@@ -169,7 +253,8 @@ export default function HeroAdminPage() {
               </Button>
             </div>
             
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Eyebrow (small text above headline)</label>
                 <Input
@@ -260,6 +345,47 @@ export default function HeroAdminPage() {
                   Cancel
                 </Button>
               </div>
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-900">Live Preview</h3>
+              <Card className="relative bg-gradient-to-br from-emerald-50 to-white border border-emerald-200 p-8">
+                <div className="space-y-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-600">
+                    {selectedItem.eyebrow || "Eyebrow Text"}
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {(() => {
+                      try {
+                        const badges = JSON.parse(selectedItem.badges || "[]");
+                        return badges.map((badge: string, index: number) => (
+                          <span key={index} className="inline-flex items-center rounded-full border border-emerald-500/30 bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-2 text-xs font-bold text-emerald-700 shadow-sm">
+                            {badge}
+                          </span>
+                        ));
+                      } catch {
+                        return null;
+                      }
+                    })()}
+                  </div>
+                  
+                  <h1 className="font-display text-4xl leading-tight bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent font-bold">
+                    {selectedItem.headline || "Headline Text"}
+                  </h1>
+                  
+                  {selectedItem.description && (
+                    <p className="text-base leading-7 text-slate-600">
+                      {selectedItem.description}
+                    </p>
+                  )}
+                  
+                  <Button className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white">
+                    {selectedItem.cta_text || "CTA Button"}
+                  </Button>
+                </div>
+              </Card>
+            </div>
             </div>
           </div>
         </div>

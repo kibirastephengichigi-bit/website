@@ -1,3 +1,5 @@
+"use client";
+
 import { AnimatedStat } from "@/components/home/animated-stat";
 import { useState, useEffect } from "react";
 

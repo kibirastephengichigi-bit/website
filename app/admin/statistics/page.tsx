@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,8 @@ import {
   Award,
   Users,
   BookOpen,
-  Target
+  Target,
+  Info
 } from "lucide-react";
 import { api } from "@/components/api/client";
 
@@ -47,6 +49,32 @@ const iconMap: Record<string, any> = {
 };
 
 export default function StatisticsAdminPage() {
+  const router = useRouter();
+
+  // Check authentication on mount
+  useEffect(() => {
+    const session = localStorage.getItem('userSession');
+    if (!session) {
+      router.push('/admin-signup');
+      return;
+    }
+    try {
+      const parsed = JSON.parse(session);
+      const sessionAge = Date.now() - parsed.timestamp;
+      if (sessionAge > 24 * 60 * 60 * 1000) {
+        localStorage.removeItem('userSession');
+        localStorage.removeItem('authToken');
+        router.push('/admin-signup');
+        return;
+      }
+    } catch {
+      localStorage.removeItem('userSession');
+      localStorage.removeItem('authToken');
+      router.push('/admin-signup');
+      return;
+    }
+  }, [router]);
+
   const [statistics, setStatistics] = useState<Statistic[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,6 +87,12 @@ export default function StatisticsAdminPage() {
   const loadStatistics = async () => {
     try {
       const response = await api.get("/api/admin/statistics");
+      if (!response.ok) {
+        console.error(`Failed to load statistics: ${response.status} ${response.statusText}`);
+        const text = await response.text();
+        console.error("Response body:", text);
+        return;
+      }
       const data = await response.json();
       setStatistics(data.statistics || []);
     } catch (error) {
@@ -155,6 +189,59 @@ export default function StatisticsAdminPage() {
         </Button>
       </div>
 
+      <Card className="bg-blue-50 border-blue-200 p-4">
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+          <div>
+            <h3 className="font-semibold text-blue-900">Where this appears</h3>
+            <p className="text-sm text-blue-700 mt-1">
+              Statistics appear in the "Impact & Experience" section on the homepage, displaying key metrics like years of experience, publications, people helped, and research projects.
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="bg-slate-50 border-slate-200 p-6">
+        <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+          <Info className="w-5 h-5 text-slate-600" />
+          Admin Guide: Managing Statistics
+        </h3>
+        <div className="space-y-4 text-sm text-slate-700">
+          <div>
+            <h4 className="font-medium text-slate-900 mb-2">Adding Statistics</h4>
+            <p className="mb-2">Click the "Add Statistic" button to create a new metric. Each statistic requires:</p>
+            <ul className="list-disc list-inside space-y-1 ml-4">
+              <li><strong>Label:</strong> The descriptive name (e.g., "Years of Experience")</li>
+              <li><strong>Value:</strong> The numeric value (e.g., 15)</li>
+              <li><strong>Suffix:</strong> Optional text after the number (e.g., "+", "%", "k")</li>
+              <li><strong>Icon:</strong> Choose from available icons to represent the metric</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-medium text-slate-900 mb-2">Editing Statistics</h4>
+            <p>Click the pencil icon on any statistic card to edit its values. Changes are saved immediately when you click "Save Changes".</p>
+          </div>
+          <div>
+            <h4 className="font-medium text-slate-900 mb-2">Reordering</h4>
+            <p>Use the up and down arrows to change the display order. Statistics appear on the homepage in the order they're listed here.</p>
+          </div>
+          <div>
+            <h4 className="font-medium text-slate-900 mb-2">Publishing</h4>
+            <p>Toggle the eye icon to show or hide statistics. Only published statistics appear on the live website. Use draft status for work-in-progress metrics.</p>
+          </div>
+          <div>
+            <h4 className="font-medium text-slate-900 mb-2">Best Practices</h4>
+            <ul className="list-disc list-inside space-y-1 ml-4">
+              <li>Keep statistics accurate and up-to-date</li>
+              <li>Use consistent formatting across all metrics</li>
+              <li>Choose icons that visually represent the metric type</li>
+              <li>Limit to 4-6 key statistics for optimal impact</li>
+              <li>Update regularly to reflect current achievements</li>
+            </ul>
+          </div>
+        </div>
+      </Card>
+
       <Card className="p-6">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -220,7 +307,7 @@ export default function StatisticsAdminPage() {
 
       {selectedItem && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-slate-900">
                 {selectedItem.id === 0 ? 'Add Statistic' : 'Edit Statistic'}
@@ -230,7 +317,8 @@ export default function StatisticsAdminPage() {
               </Button>
             </div>
             
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Label</label>
                 <Input
@@ -296,6 +384,25 @@ export default function StatisticsAdminPage() {
                   Cancel
                 </Button>
               </div>
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-900">Live Preview</h3>
+              <Card className="relative bg-gradient-to-br from-blue-50 to-white border border-blue-200 p-8 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 mx-auto mb-4">
+                  {(() => {
+                    const Icon = iconMap[selectedItem.icon] || TrendingUp;
+                    return <Icon className="w-6 h-6 text-blue-600" />;
+                  })()}
+                </div>
+                <div className="mb-2 font-display text-4xl font-bold text-blue-600">
+                  {selectedItem.value}{selectedItem.suffix}
+                </div>
+                <div className="text-sm font-medium text-slate-600">
+                  {selectedItem.label || "Statistic Label"}
+                </div>
+              </Card>
+            </div>
             </div>
           </div>
         </div>

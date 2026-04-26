@@ -8,6 +8,12 @@ export async function proxyAdminRequest(request: NextRequest, endpoint: string) 
   headers.delete("host");
   headers.delete("content-length");
 
+  // Forward the session cookie from the request
+  const sessionCookie = request.cookies.get('admin_session');
+  if (sessionCookie) {
+    headers.set('Cookie', `admin_session=${sessionCookie.value}`);
+  }
+
   const init: RequestInit = {
     method: request.method,
     headers,

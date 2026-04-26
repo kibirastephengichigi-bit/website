@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,8 @@ import {
   BookOpen,
   GraduationCap,
   Building,
-  Calendar
+  Calendar,
+  Info
 } from "lucide-react";
 import { api } from "@/components/api/client";
 
@@ -64,6 +66,32 @@ const getColorClasses = (color: string) => {
 };
 
 export default function ServicesAdminPage() {
+  const router = useRouter();
+
+  // Check authentication on mount
+  useEffect(() => {
+    const session = localStorage.getItem('userSession');
+    if (!session) {
+      router.push('/admin-signup');
+      return;
+    }
+    try {
+      const parsed = JSON.parse(session);
+      const sessionAge = Date.now() - parsed.timestamp;
+      if (sessionAge > 24 * 60 * 60 * 1000) {
+        localStorage.removeItem('userSession');
+        localStorage.removeItem('authToken');
+        router.push('/admin-signup');
+        return;
+      }
+    } catch {
+      localStorage.removeItem('userSession');
+      localStorage.removeItem('authToken');
+      router.push('/admin-signup');
+      return;
+    }
+  }, [router]);
+
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -77,6 +105,12 @@ export default function ServicesAdminPage() {
   const loadServices = async () => {
     try {
       const response = await api.get("/api/admin/services");
+      if (!response.ok) {
+        console.error(`Failed to load services: ${response.status} ${response.statusText}`);
+        const text = await response.text();
+        console.error("Response body:", text);
+        return;
+      }
       const data = await response.json();
       setServices(data.services || []);
     } catch (error) {
@@ -175,6 +209,18 @@ export default function ServicesAdminPage() {
           Add Service
         </Button>
       </div>
+
+      <Card className="bg-blue-50 border-blue-200 p-4">
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+          <div>
+            <h3 className="font-semibold text-blue-900">Where this appears</h3>
+            <p className="text-sm text-blue-700 mt-1">
+              Services appear in the "Our Services" section on the homepage, displaying service cards with icons, descriptions, and bullet points for each offering.
+            </p>
+          </div>
+        </div>
+      </Card>
 
       <Card className="p-6">
         <div className="relative">
@@ -321,36 +367,41 @@ export default function ServicesAdminPage() {
               {previewData && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-slate-900">Live Preview</h3>
-                  <Card className="relative h-full border-border/70 p-6 transition-all duration-300 hover:border-accent/30 hover:shadow-lg">
+                  <Card className="relative h-full border border-slate-200 p-6 transition-all duration-300 hover:border-blue-300 hover:shadow-lg bg-gradient-to-br from-slate-50 to-white">
                     <div className="mb-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent/10 transition-colors group-hover:bg-accent/20">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 transition-colors">
                         {(() => {
                           const Icon = iconMap[previewData.icon] || Brain;
-                          return <Icon className="w-6 h-6 text-accent" />;
+                          return <Icon className="w-6 h-6 text-blue-600" />;
                         })()}
                       </div>
                     </div>
 
-                    <h3 className="font-display text-xl mb-3 group-hover:text-accent transition-colors">
+                    <h3 className="text-xl font-semibold mb-3 text-slate-900">
                       {previewData.title || "Service Title"}
                     </h3>
 
-                    <p className="text-muted-foreground mb-4 leading-relaxed">
+                    <p className="text-slate-600 mb-4 leading-relaxed">
                       {previewData.description || "Service description will appear here..."}
                     </p>
 
-                    {previewData.bullets && (
-                      <ul className="space-y-2">
-                        {JSON.parse(previewData.bullets).map((bullet: string, i: number) => (
-                          <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <div className="w-1.5 h-1.5 rounded-full bg-accent/60" />
-                            {bullet}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-accent/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                    {previewData.bullets && (() => {
+                      try {
+                        const bullets = JSON.parse(previewData.bullets);
+                        return (
+                          <ul className="space-y-2">
+                            {bullets.map((bullet: string, i: number) => (
+                              <li key={i} className="flex items-center gap-2 text-sm text-slate-600">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                {bullet}
+                              </li>
+                            ))}
+                          </ul>
+                        );
+                      } catch {
+                        return null;
+                      }
+                    })()}
                   </Card>
                 </div>
               )}

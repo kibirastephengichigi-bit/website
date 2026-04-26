@@ -1021,6 +1021,37 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
         self._json_response(HTTPStatus.NOT_FOUND, {"error": "Service not found"})
       return
 
+    if path == "/api/user/username":
+      if 'username' not in payload:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Missing username"})
+        return
+
+      success = db.update_user_username(user['id'], payload['username'])
+      if success:
+        self._json_response(HTTPStatus.OK, {"updated": True})
+      else:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Username already exists or update failed"})
+      return
+
+    if path == "/api/user/password":
+      if 'currentPassword' not in payload or 'newPassword' not in payload:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Missing currentPassword or newPassword"})
+        return
+
+      # Verify current password
+      from security import verify_password
+      if not verify_password(payload['currentPassword'], user['password_hash']):
+        self._json_response(HTTPStatus.UNAUTHORIZED, {"error": "Current password is incorrect"})
+        return
+
+      # Update password
+      success = db.update_user_password(user['id'], payload['newPassword'])
+      if success:
+        self._json_response(HTTPStatus.OK, {"updated": True})
+      else:
+        self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "Failed to update password"})
+      return
+
     self._json_response(HTTPStatus.NOT_FOUND, {"error": "Route not found"})
 
   def do_DELETE(self) -> None:
