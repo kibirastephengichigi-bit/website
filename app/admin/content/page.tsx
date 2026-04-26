@@ -30,6 +30,7 @@ import {
   X,
   Home
 } from "lucide-react";
+import { api } from "@/components/api/client";
 
 interface ContentItem {
   id: string;
@@ -63,7 +64,7 @@ export default function ContentManagementPage() {
   const loadContent = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/api/content');
+      const response = await api.get('/api/content');
       if (response.ok) {
         const data = await response.json();
         const transformedContent = data.content.map((item: any) => ({
@@ -123,13 +124,7 @@ export default function ContentManagementPage() {
         metadata: {}
       };
 
-      const response = await fetch(`http://localhost:8000/api/content?id=${item.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await api.put(`/api/content?id=${item.id}`, payload);
 
       if (response.ok) {
         await loadContent(); // Reload content
@@ -156,13 +151,7 @@ export default function ContentManagementPage() {
         metadata: {}
       };
 
-      const response = await fetch('http://localhost:8000/api/content', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await api.post('/api/content', payload);
 
       if (response.ok) {
         await loadContent(); // Reload content
@@ -177,9 +166,7 @@ export default function ContentManagementPage() {
 
   const deleteContent = async (id: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/content?id=${id}`, {
-        method: 'DELETE',
-      });
+      const response = await api.delete(`/api/content?id=${id}`);
 
       if (response.ok) {
         setContent(prev => prev.filter(item => item.id !== id));

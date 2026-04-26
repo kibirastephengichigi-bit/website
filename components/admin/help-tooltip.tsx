@@ -44,14 +44,22 @@ export function HelpTooltip({ content, title, position = "top" }: HelpTooltipPro
 
   return (
     <div className="relative inline-flex">
-      <button
+      <span
         ref={triggerRef}
         onClick={() => setIsVisible(!isVisible)}
-        className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors"
+        className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors cursor-pointer"
         aria-label="Help"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsVisible(!isVisible);
+          }
+        }}
       >
         <HelpCircle className="w-3 h-3" />
-      </button>
+      </span>
 
       {isVisible && (
         <div

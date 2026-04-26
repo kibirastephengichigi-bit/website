@@ -2,8 +2,22 @@
 
 # Service Stop Script
 # Safely stops all running services
+# Supports both nohup and PM2 deployment modes
 
 echo "🛑 Stopping Website Services..."
+
+# Check if PM2 is running and stop it first
+if command -v pm2 &> /dev/null; then
+    if pm2 list | grep -q "online"; then
+        echo "📊 PM2 processes detected. Stopping PM2 services..."
+        cd /home/codecrafter/Documents/combined
+        ./stop-pm2.sh
+        echo "✅ PM2 services stopped"
+        exit 0
+    fi
+fi
+
+echo "📝 Using nohup mode for service management..."
 
 # Load PIDs if file exists
 if [ -f service-pids.txt ]; then

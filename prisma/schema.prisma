@@ -172,3 +172,61 @@ model SavedItem {
 
   @@unique([userId, type, key])
 }
+
+model ProfessionalAffiliation {
+  id                String   @id @default(cuid())
+  name              String
+  role              String
+  shortDescription  String   @db.Text
+  detailedDescription String  @db.Text
+  url               String
+  icon              String
+  color             String
+  displayOrder      Int      @default(0)
+  published         Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model ResearchInterest {
+  id                String   @id @default(cuid())
+  title             String
+  description       String?  @db.Text
+  icon              String
+  color             String
+  displayOrder      Int      @default(0)
+  published         Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Award {
+  id                String   @id @default(cuid())
+  title             String
+  year              Int
+  description       String?  @db.Text
+  organization      String?
+  url               String?
+  imageUrl          String?
+  icon              String
+  color             String
+  displayOrder      Int      @default(0)
+  published         Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model ExternalProfile {
+  id                String   @id @default(cuid())
+  label             String
+  description       String   @db.Text
+  url               String
+  platform          String
+  icon              String
+  color             String
+  metrics           String?  // JSON string for follower count, etc.
+  displayOrder      Int      @default(0)
+  published         Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}

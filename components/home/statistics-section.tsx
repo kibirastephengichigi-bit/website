@@ -1,12 +1,28 @@
 import { AnimatedStat } from "@/components/home/animated-stat";
+import { useState, useEffect } from "react";
 
 export function StatisticsSection() {
-  const stats = [
+  const [stats, setStats] = useState<Array<{ value: number; suffix: string; label: string }>>([
     { value: 15, suffix: "+", label: "Years of Experience" },
     { value: 50, suffix: "+", label: "Publications" },
     { value: 1000, suffix: "+", label: "People Helped" },
     { value: 25, suffix: "+", label: "Research Projects" },
-  ];
+  ]);
+
+  useEffect(() => {
+    fetch("/api/statistics")
+      .then(res => res.json())
+      .then(data => {
+        if (data.statistics && data.statistics.length > 0) {
+          setStats(data.statistics.map((stat: any) => ({
+            value: stat.value,
+            suffix: stat.suffix || "",
+            label: stat.label
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <section className="py-20 bg-gradient-to-r from-accent/5 via-background to-accent/5">
@@ -19,8 +35,8 @@ export function StatisticsSection() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center">
+          {stats.map((stat, index) => (
+            <div key={index} className="text-center">
               <div className="mb-2 font-display text-4xl font-bold text-accent">
                 <AnimatedStat value={stat.value} suffix={stat.suffix} />
               </div>

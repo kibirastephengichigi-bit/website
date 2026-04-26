@@ -1,10 +1,37 @@
 import { siteContent } from "@/lib/content/site-content";
 import { Card } from "@/components/ui/card";
 import { Brain, Users, BookOpen, GraduationCap, Building, Calendar } from "lucide-react";
+import { useState, useEffect } from "react";
 
 const serviceIcons = [Brain, Users, BookOpen, GraduationCap, Building, Calendar];
 
+const iconMap: Record<string, any> = {
+  Brain,
+  Users,
+  BookOpen,
+  GraduationCap,
+  Building,
+  Calendar
+};
+
 export function InteractiveServicesSection() {
+  const [services, setServices] = useState(siteContent.services);
+
+  useEffect(() => {
+    fetch("/api/services")
+      .then(res => res.json())
+      .then(data => {
+        if (data.services && data.services.length > 0) {
+          setServices(data.services.map((s: any) => ({
+            title: s.title,
+            description: s.description,
+            bullets: s.bullets ? JSON.parse(s.bullets) : []
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <section className="py-20 bg-muted/30">
       <div className="container-shell">
@@ -16,7 +43,7 @@ export function InteractiveServicesSection() {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {siteContent.services.map((service, index) => {
+          {services.map((service, index) => {
             const Icon = serviceIcons[index] || Brain;
 
             return (
@@ -37,7 +64,7 @@ export function InteractiveServicesSection() {
                   </p>
 
                   <ul className="space-y-2">
-                    {service.bullets.map((bullet) => (
+                    {service.bullets.map((bullet: string) => (
                       <li key={bullet} className="flex items-center gap-2 text-sm text-muted-foreground">
                         <div className="w-1.5 h-1.5 rounded-full bg-accent/60" />
                         {bullet}

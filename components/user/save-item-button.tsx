@@ -4,6 +4,7 @@ import { BookmarkPlus, Loader2, LogIn } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import { api } from "@/components/api/client";
 
 type SaveType = "blog" | "research";
 
@@ -72,11 +73,10 @@ export function SaveItemButton({
         throw new Error("Authentication token not found");
       }
 
-      const response = await fetch(`http://localhost:8000/api/auth/saved-items?token=${authToken}`, {
-        method: saved ? "DELETE" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, key: itemKey, title, href, image }),
-      });
+      const response = await (saved 
+        ? api.delete(`/api/auth/saved-items?token=${authToken}`)
+        : api.post(`/api/auth/saved-items?token=${authToken}`, { type, key: itemKey, title, href, image })
+      );
 
       if (!response.ok) {
         throw new Error("Request failed");
@@ -93,7 +93,7 @@ export function SaveItemButton({
       variant={saved ? "secondary" : "outline"}
       size="sm"
       onClick={() => void handleSave()}
-      disabled={loading || status === "loading"}
+      disabled={loading}
     >
       {loading ? (
         <>

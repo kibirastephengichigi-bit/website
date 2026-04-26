@@ -17,6 +17,7 @@ import {
   Cpu,
   Globe
 } from "lucide-react";
+import { api } from "@/components/api/client";
 
 interface ServerStats {
   start_time: string;
@@ -62,7 +63,7 @@ export default function DebugDashboard() {
 
   const fetchDebugData = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/debug/stats");
+      const response = await api.get('/api/debug/stats');
       if (!response.ok) throw new Error("Failed to fetch debug data");
       
       const data = await response.json();
@@ -78,7 +79,7 @@ export default function DebugDashboard() {
 
   const fetchLogs = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/debug/logs");
+      const response = await api.get('/api/debug/logs');
       if (!response.ok) throw new Error("Failed to fetch logs");
       
       const data = await response.json();

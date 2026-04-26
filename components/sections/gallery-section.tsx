@@ -8,6 +8,7 @@ import { SectionHeading } from "@/components/layout/section-heading";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { siteContent } from "@/lib/content/site-content";
+import { api } from "@/components/api/client";
 
 interface GalleryPhoto {
   id: string;
@@ -35,7 +36,7 @@ export function GallerySection() {
 
   const fetchGalleryPhotos = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/gallery/photos");
+      const response = await api.get('/api/gallery/photos');
       if (response.ok) {
         const data = await response.json();
         setPhotos(data.photos || []);

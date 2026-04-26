@@ -110,11 +110,25 @@ const sidebarItems: SidebarItem[] = [
     icon: FileText,
     children: [
       {
-        id: "home-page",
-        label: "Home Page",
-        icon: Home,
-        href: "/admin/content/home",
-        description: "Edit home page content, hero section, and basic information"
+        id: "hero",
+        label: "Hero Section",
+        icon: Sparkles,
+        href: "/admin/hero",
+        description: "Manage hero section content, headline, and badges"
+      },
+      {
+        id: "statistics",
+        label: "Statistics",
+        icon: TrendingUp,
+        href: "/admin/statistics",
+        description: "Manage impact metrics and statistics"
+      },
+      {
+        id: "services",
+        label: "Services",
+        icon: Briefcase,
+        href: "/admin/services",
+        description: "Manage service offerings and descriptions"
       },
       {
         id: "affiliations",
@@ -143,6 +157,13 @@ const sidebarItems: SidebarItem[] = [
         icon: LinkIcon,
         href: "/admin/external-profiles",
         description: "Manage external profile links and social media"
+      },
+      {
+        id: "collaborators",
+        label: "Collaborators",
+        icon: Handshake,
+        href: "/admin/collaborators",
+        description: "Manage collaborators, colleagues, and mentees testimonials"
       }
     ]
   },

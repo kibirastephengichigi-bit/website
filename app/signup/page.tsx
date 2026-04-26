@@ -8,6 +8,7 @@ import { UserPlus, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle } from "luc
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { api } from "@/components/api/client";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -18,10 +19,20 @@ export default function SignUpPage() {
     name: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    institution: "",
+    researchInterests: "",
+    bio: "",
+    location: "",
+    academicTitle: "",
+    department: "",
+    degree: "",
+    linkedinProfile: "",
+    personalWebsite: ""
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -74,29 +85,32 @@ export default function SignUpPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/auth/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.name.trim(),
-          email: formData.email.trim(),
-          password: formData.password
-        })
+      const response = await api.post('/api/auth/signup', {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        institution: formData.institution.trim() || undefined,
+        researchInterests: formData.researchInterests.trim() || undefined,
+        bio: formData.bio.trim() || undefined,
+        location: formData.location.trim() || undefined,
+        academicTitle: formData.academicTitle.trim() || undefined,
+        department: formData.department.trim() || undefined,
+        degree: formData.degree.trim() || undefined,
+        linkedinProfile: formData.linkedinProfile.trim() || undefined,
+        personalWebsite: formData.personalWebsite.trim() || undefined
       });
 
       const data = await response.json();
 
       if (response.ok) {
         // Store token and redirect
-        localStorage.setItem("authToken", data.access_token);
+        localStorage.setItem("authToken", data.token);
         localStorage.setItem("userSession", JSON.stringify({
-          email: formData.email,
-          name: formData.name,
-          role: "user",
+          email: data.user.email,
+          name: data.user.name,
+          role: data.user.role,
           timestamp: Date.now(),
-          token: data.access_token
+          token: data.token
         }));
         
         setSuccess(true);
@@ -246,6 +260,176 @@ export default function SignUpPage() {
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+            </div>
+
+            {/* Optional Information Toggle */}
+            <div className="pt-4 border-t border-border/50">
+              <button
+                type="button"
+                onClick={() => setShowOptionalFields(!showOptionalFields)}
+                className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
+              >
+                <span>Optional Information</span>
+                {showOptionalFields ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+
+              {showOptionalFields && (
+                <div className="mt-4 space-y-4 pt-4 border-t border-border/50">
+                  {/* Institution */}
+                  <div className="space-y-2">
+                    <label htmlFor="institution" className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <Building className="w-4 h-4" />
+                      Institution
+                    </label>
+                    <Input
+                      id="institution"
+                      name="institution"
+                      type="text"
+                      value={formData.institution}
+                      onChange={handleChange}
+                      placeholder="Your institution or organization"
+                      className="h-11 border-border/70 focus:border-primary/50"
+                    />
+                  </div>
+
+                  {/* Research Interests */}
+                  <div className="space-y-2">
+                    <label htmlFor="researchInterests" className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <GraduationCap className="w-4 h-4" />
+                      Research Interests
+                    </label>
+                    <Input
+                      id="researchInterests"
+                      name="researchInterests"
+                      type="text"
+                      value={formData.researchInterests}
+                      onChange={handleChange}
+                      placeholder="e.g., Machine Learning, Bioinformatics"
+                      className="h-11 border-border/70 focus:border-primary/50"
+                    />
+                  </div>
+
+                  {/* Bio */}
+                  <div className="space-y-2">
+                    <label htmlFor="bio" className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <UserPlus className="w-4 h-4" />
+                      Bio
+                    </label>
+                    <textarea
+                      id="bio"
+                      name="bio"
+                      value={formData.bio}
+                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                      placeholder="Tell us about yourself (max 500 characters)"
+                      className="w-full min-h-[80px] px-3 py-2 text-sm border border-border/70 rounded-md focus:border-primary/50 focus:outline-none resize-none"
+                      maxLength={500}
+                    />
+                    <p className="text-xs text-muted-foreground text-right">{formData.bio.length}/500</p>
+                  </div>
+
+                  {/* Location */}
+                  <div className="space-y-2">
+                    <label htmlFor="location" className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      Location
+                    </label>
+                    <Input
+                      id="location"
+                      name="location"
+                      type="text"
+                      value={formData.location}
+                      onChange={handleChange}
+                      placeholder="City, Country"
+                      className="h-11 border-border/70 focus:border-primary/50"
+                    />
+                  </div>
+
+                  {/* Academic Title */}
+                  <div className="space-y-2">
+                    <label htmlFor="academicTitle" className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <GraduationCap className="w-4 h-4" />
+                      Academic Title
+                    </label>
+                    <Input
+                      id="academicTitle"
+                      name="academicTitle"
+                      type="text"
+                      value={formData.academicTitle}
+                      onChange={handleChange}
+                      placeholder="Dr., Prof., Mr., Mrs., etc."
+                      className="h-11 border-border/70 focus:border-primary/50"
+                    />
+                  </div>
+
+                  {/* Department */}
+                  <div className="space-y-2">
+                    <label htmlFor="department" className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <Building className="w-4 h-4" />
+                      Department
+                    </label>
+                    <Input
+                      id="department"
+                      name="department"
+                      type="text"
+                      value={formData.department}
+                      onChange={handleChange}
+                      placeholder="Your department"
+                      className="h-11 border-border/70 focus:border-primary/50"
+                    />
+                  </div>
+
+                  {/* Degree */}
+                  <div className="space-y-2">
+                    <label htmlFor="degree" className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <GraduationCap className="w-4 h-4" />
+                      Degree
+                    </label>
+                    <Input
+                      id="degree"
+                      name="degree"
+                      type="text"
+                      value={formData.degree}
+                      onChange={handleChange}
+                      placeholder="PhD, Masters, Bachelors, etc."
+                      className="h-11 border-border/70 focus:border-primary/50"
+                    />
+                  </div>
+
+                  {/* LinkedIn Profile */}
+                  <div className="space-y-2">
+                    <label htmlFor="linkedinProfile" className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <Linkedin className="w-4 h-4" />
+                      LinkedIn Profile
+                    </label>
+                    <Input
+                      id="linkedinProfile"
+                      name="linkedinProfile"
+                      type="url"
+                      value={formData.linkedinProfile}
+                      onChange={handleChange}
+                      placeholder="https://linkedin.com/in/yourprofile"
+                      className="h-11 border-border/70 focus:border-primary/50"
+                    />
+                  </div>
+
+                  {/* Personal Website */}
+                  <div className="space-y-2">
+                    <label htmlFor="personalWebsite" className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <Globe className="w-4 h-4" />
+                      Personal Website
+                    </label>
+                    <Input
+                      id="personalWebsite"
+                      name="personalWebsite"
+                      type="url"
+                      value={formData.personalWebsite}
+                      onChange={handleChange}
+                      placeholder="https://yourwebsite.com"
+                      className="h-11 border-border/70 focus:border-primary/50"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Error Message */}

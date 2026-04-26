@@ -5,6 +5,7 @@ import { Image as ImageIcon, Calendar, Eye, Camera, Grid, List } from "lucide-re
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { api } from "@/components/api/client";
 
 interface GalleryPhoto {
   id: string;
@@ -35,7 +36,7 @@ export default function GalleryPage() {
 
   const fetchGalleryPhotos = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/gallery/photos");
+      const response = await api.get('/api/gallery/photos');
       if (response.ok) {
         const data = await response.json();
         setPhotos(data.photos || []);

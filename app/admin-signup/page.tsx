@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Shield, Lock, Eye, EyeOff, AlertCircle, Zap, ShieldCheck, Activity, User, RefreshCw, LogIn } from "lucide-react";
+import { Shield, Lock, Eye, EyeOff, AlertCircle, Zap, ShieldCheck, Activity, User, RefreshCw, LogIn, CheckCircle, XCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { api } from "@/components/api/client";
 
 export default function AdminSignInPage() {
   const router = useRouter();
@@ -15,32 +16,27 @@ export default function AdminSignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [backendStatus, setBackendStatus] = useState<string>("");
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
-  // Test backend connection
-  const testBackendConnection = async () => {
-    try {
-      const response = await fetch("http://localhost:8000/api/health", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setBackendStatus("Backend connected: " + data.status);
-      } else {
-        setBackendStatus("Backend responded with error: " + response.status);
-      }
-    } catch (error) {
-      setBackendStatus("Backend connection failed: " + (error instanceof Error ? error.message : "Unknown error"));
-    }
-  };
-
-  // Test connection on component mount
+  // Check backend status
   useEffect(() => {
-    testBackendConnection();
+    const checkBackend = async () => {
+      setBackendStatus('checking');
+      try {
+        const response = await fetch('http://localhost:8000/api/health');
+        if (response.ok) {
+          setBackendStatus('online');
+        } else {
+          setBackendStatus('offline');
+        }
+      } catch {
+        setBackendStatus('offline');
+      }
+    };
+
+    checkBackend();
+    const interval = setInterval(checkBackend, 30000); // Check every 30 seconds
+    return () => clearInterval(interval);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,17 +45,11 @@ export default function AdminSignInPage() {
     setError("");
 
     try {
-      // Call Python backend API
-      const response = await fetch("http://localhost:8000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: username,
-          password: password,
-          otp: "" // Empty OTP since TOTP is not configured by default
-        })
+      // Call Python backend API via Next.js proxy
+      const response = await api.post('/api/admin/auth/login', {
+        username: username,
+        password: password,
+        otp: "" // Empty OTP since TOTP is not configured by default
       });
 
       if (!response.ok) {
@@ -85,7 +75,7 @@ export default function AdminSignInPage() {
       console.error("Login error:", error);
       
       if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
-        setError("Cannot connect to the backend server. Please ensure the Python backend is running on http://localhost:8000");
+        setError("Cannot connect to the backend server. Please ensure the Python backend is running.");
       } else if (error instanceof TypeError && error.message.includes("NetworkError")) {
         setError("Network error. Please check your connection and ensure the backend server is running.");
       } else {
@@ -148,22 +138,30 @@ export default function AdminSignInPage() {
 
           {/* Right Side - Login Form */}
           <div className="space-y-6">
+            {/* Backend Status Indicator */}
+            <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+              {backendStatus === 'checking' && (
+                <>
+                  <Activity className="w-4 h-4 text-yellow-400 animate-pulse" />
+                  <span className="text-sm text-white/90">Checking backend connection...</span>
+                </>
+              )}
+              {backendStatus === 'online' && (
+                <>
+                  <CheckCircle className="w-4 h-4 text-green-400" />
+                  <span className="text-sm text-white/90">Backend Connected</span>
+                </>
+              )}
+              {backendStatus === 'offline' && (
+                <>
+                  <XCircle className="w-4 h-4 text-red-400" />
+                  <span className="text-sm text-white/90">Backend Offline</span>
+                </>
+              )}
+            </div>
+
             {/* Login Form Container */}
             <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 space-y-6">
-              {/* Backend Status */}
-              {backendStatus && (
-                <div className={`p-4 rounded-2xl backdrop-blur-sm border ${
-                  backendStatus.includes("Backend connected") 
-                    ? "bg-green-500/20 border-green-400/30 text-green-100" 
-                    : "bg-red-500/20 border-red-400/30 text-red-100"
-                }`}>
-                  <div className="flex items-center gap-3">
-                    <AlertCircle className="w-5 h-5" />
-                    <span className="text-sm font-medium">{backendStatus}</span>
-                  </div>
-                </div>
-              )}
-
               {/* Login Form */}
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur-xl opacity-30" />

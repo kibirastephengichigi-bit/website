@@ -11,6 +11,7 @@ export async function proxyAdminRequest(request: NextRequest, endpoint: string) 
   const init: RequestInit = {
     method: request.method,
     headers,
+    credentials: 'include',
     redirect: "manual",
   };
 
@@ -18,23 +19,31 @@ export async function proxyAdminRequest(request: NextRequest, endpoint: string) 
     init.body = await request.arrayBuffer();
   }
 
-  const response = await fetch(target, init);
-  const nextResponse = new NextResponse(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-  });
+  try {
+    const response = await fetch(target, init);
+    const nextResponse = new NextResponse(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+    });
 
-  response.headers.forEach((value, key) => {
-    if (key.toLowerCase() !== "set-cookie") {
-      nextResponse.headers.set(key, value);
+    response.headers.forEach((value, key) => {
+      if (key.toLowerCase() !== "set-cookie") {
+        nextResponse.headers.set(key, value);
+      }
+    });
+
+    const setCookie = response.headers.get("set-cookie");
+    if (setCookie) {
+      nextResponse.headers.set("set-cookie", setCookie);
     }
-  });
 
-  const setCookie = response.headers.get("set-cookie");
-  if (setCookie) {
-    nextResponse.headers.set("set-cookie", setCookie);
+    return nextResponse;
+  } catch (error) {
+    console.error(`Proxy error for ${target}:`, error);
+    return new NextResponse(
+      JSON.stringify({ error: "Failed to connect to backend", message: error instanceof Error ? error.message : "Unknown error" }),
+      { status: 502, headers: { "Content-Type": "application/json" } }
+    );
   }
-
-  return nextResponse;
 }
 

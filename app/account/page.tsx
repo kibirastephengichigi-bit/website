@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LogOut, Settings, Shield, User, Heart, Bookmark, Key, Eye, EyeOff, AlertCircle, CheckCircle, Camera, Upload, Trash2, Edit, Plus, X } from "lucide-react";
+import { api } from "@/components/api/client";
 
 interface User {
   email: string;
@@ -96,12 +97,7 @@ export default function AccountPage() {
 
       try {
         // Verify session with Python backend (cookie-based auth)
-        const response = await fetch("http://localhost:8000/api/auth/me", {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include" // Include cookies for session auth
-        });
+        const response = await api.get('/api/auth/me');
 
         if (response.ok) {
           const userData = await response.json();
@@ -144,13 +140,7 @@ export default function AccountPage() {
   const handleLogout = async () => {
     try {
       // Call Python backend logout endpoint (cookie-based)
-      await fetch("http://localhost:8000/api/auth/logout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include" // Include cookies for session auth
-      });
+      await api.post('/api/auth/logout');
     } catch (error) {
       console.error("Logout error:", error);
     }
@@ -175,7 +165,7 @@ export default function AccountPage() {
   // Credentials management functions
   const fetchCurrentCredentials = async () => {
     try {
-      const response = await authenticatedFetch("http://localhost:8000/api/admin/credentials");
+      const response = await api.get('/api/admin/credentials');
       if (response.ok) {
         const data = await response.json();
         setCurrentCredentials(data);
@@ -237,13 +227,10 @@ export default function AccountPage() {
     }
 
     try {
-      const response = await authenticatedFetch("http://localhost:8000/api/admin/credentials/validate", {
-        method: "PUT",
-        body: JSON.stringify({
-          current_password: credentialsData.current_password,
-          email: credentialsData.email || undefined,
-          password: credentialsData.password || undefined
-        })
+      const response = await api.put('/api/admin/credentials/validate', {
+        current_password: credentialsData.current_password,
+        email: credentialsData.email || undefined,
+        password: credentialsData.password || undefined
       });
 
       const data = await response.json();
@@ -297,7 +284,7 @@ export default function AccountPage() {
   // Gallery management functions
   const fetchGalleryPhotos = async () => {
     try {
-      const response = await authenticatedFetch("http://localhost:8000/api/admin/gallery/photos");
+      const response = await api.get('/api/admin/gallery/photos');
       if (response.ok) {
         const data = await response.json();
         setGalleryPhotos(data.photos || []);
@@ -327,11 +314,7 @@ export default function AccountPage() {
       formData.append('category', uploadData.category);
       formData.append('tags', uploadData.tags);
 
-      const response = await fetch("http://localhost:8000/api/admin/gallery/photos", {
-        method: 'POST',
-        body: formData,
-        credentials: "include" // Include cookies for session auth
-      });
+      const response = await api.upload('/api/admin/gallery/photos', formData);
 
       const data = await response.json();
 
@@ -354,10 +337,7 @@ export default function AccountPage() {
 
   const handlePhotoUpdate = async (photoId: string, updateData: Partial<GalleryPhoto>) => {
     try {
-      const response = await authenticatedFetch(`http://localhost:8000/api/admin/gallery/photos/${photoId}`, {
-        method: 'PUT',
-        body: JSON.stringify(updateData)
-      });
+      const response = await api.put(`/api/admin/gallery/photos/${photoId}`, updateData);
 
       if (response.ok) {
         setGallerySuccess("Photo updated successfully!");
@@ -377,9 +357,7 @@ export default function AccountPage() {
     if (!confirm("Are you sure you want to delete this photo?")) return;
 
     try {
-      const response = await authenticatedFetch(`http://localhost:8000/api/admin/gallery/photos/${photoId}`, {
-        method: 'DELETE'
-      });
+      const response = await api.delete(`/api/admin/gallery/photos/${photoId}`);
 
       if (response.ok) {
         setGallerySuccess("Photo deleted successfully!");

@@ -34,19 +34,21 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
   def _write_cors_headers(self) -> None:
     origin = self.headers.get("Origin")
     # Allow localhost origins for development
+    # Also allow cloudflared tunnel URLs for production
     if origin and (origin == config.DEFAULT_ALLOWED_ORIGIN or 
                   origin.startswith("http://localhost:") or 
-                  origin.startswith("http://127.0.0.1:")):
+                  origin.startswith("http://127.0.0.1:") or
+                  origin.startswith("https://") and ".trycloudflare.com" in origin):
       self.send_header("Access-Control-Allow-Origin", origin)
       self.send_header("Vary", "Origin")
       self.send_header("Access-Control-Allow-Credentials", "true")
-      self.send_header("Access-Control-Allow-Headers", "Content-Type")
-      self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
+      self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+      self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
     elif not origin:
       # Allow requests without Origin header (like curl)
       self.send_header("Access-Control-Allow-Origin", "*")
-      self.send_header("Access-Control-Allow-Headers", "Content-Type")
-      self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
+      self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+      self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 
   def _json_response(self, status: int, payload: dict[str, Any]) -> None:
     body = json.dumps(payload, ensure_ascii=True).encode("utf-8")
@@ -77,10 +79,14 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
     session = db.get_session(token)
     if not session:
       return None
+    # Get full user data from database to include phone number and email
+    user_data = db.get_user_by_username(session["username"])
     return {
       "username": session["username"],
       "displayName": session["display_name"],
       "role": session["role"],
+      "phoneNumber": user_data.get("phone_number") if user_data else "",
+      "email": user_data.get("email") if user_data else "",
       "session": session,
     }
 
@@ -155,6 +161,8 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
             "displayName": user["displayName"],
             "role": user["role"],
             "mfaConfigured": bool(config.DEFAULT_ADMIN_TOTP_SECRET),
+            "phoneNumber": user.get("phoneNumber") or "",
+            "email": user.get("email") or "",
           },
         },
       )
@@ -189,10 +197,94 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
       self._json_response(HTTPStatus.OK, {"events": events})
       return
 
+    if path == "/api/affiliations":
+      affiliations = db.list_affiliations()
+      self._json_response(HTTPStatus.OK, {"affiliations": affiliations})
+      return
+
+    if path == "/api/research-interests":
+      interests = db.list_research_interests(published_only=False)
+      self._json_response(HTTPStatus.OK, {"research_interests": interests})
+      return
+
+    if path == "/api/awards":
+      awards = db.list_awards(published_only=False)
+      self._json_response(HTTPStatus.OK, {"awards": awards})
+      return
+
+    if path == "/api/external-profiles":
+      profiles = db.list_external_profiles(published_only=False)
+      self._json_response(HTTPStatus.OK, {"external_profiles": profiles})
+      return
+
+    if path == "/api/collaborators":
+      collaborators = db.list_collaborators(published_only=False)
+      self._json_response(HTTPStatus.OK, {"collaborators": collaborators})
+      return
+
+    if path == "/api/hero":
+      hero = db.get_hero_content()
+      self._json_response(HTTPStatus.OK, {"hero": hero})
+      return
+
+    if path == "/api/statistics":
+      stats = db.list_statistics(published_only=False)
+      self._json_response(HTTPStatus.OK, {"statistics": stats})
+      return
+
+    if path == "/api/services":
+      services = db.list_services(published_only=False)
+      self._json_response(HTTPStatus.OK, {"services": services})
+      return
+
     self._json_response(HTTPStatus.NOT_FOUND, {"error": "Route not found"})
 
   def do_POST(self) -> None:
     path = urlparse(self.path).path
+
+    if path == "/api/auth/signin":
+      try:
+        payload = self._read_json_body()
+      except json.JSONDecodeError:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Invalid JSON payload"})
+        return
+
+      email = str(payload.get("email", "")).strip()
+      password = str(payload.get("password", ""))
+
+      # Try to find user by email (for regular users)
+      user = db.get_user_by_email(email)
+      if not user:
+        self._json_response(HTTPStatus.UNAUTHORIZED, {"error": "Invalid email or password"})
+        return
+
+      # Verify password
+      if not db.verify_user_password(user["id"], password):
+        self._json_response(HTTPStatus.UNAUTHORIZED, {"error": "Invalid email or password"})
+        return
+
+      session_token = generate_session_token()
+      session_created = db.create_session(
+        user_id=user["id"],
+        token=session_token,
+        ip_address=self.client_address[0],
+        user_agent=self.headers.get("User-Agent", "unknown"),
+        expires_hours=config.DEFAULT_SESSION_HOURS,
+      )
+      
+      if not session_created:
+        self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "Failed to create session"})
+        return
+
+      self._json_response(HTTPStatus.OK, {
+        "token": session_token,
+        "user": {
+          "email": user.get("email"),
+          "name": user.get("display_name", user.get("username")),
+          "role": user.get("role", "user"),
+        }
+      })
+      return
 
     if path == "/api/auth/login":
       try:
@@ -238,6 +330,8 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
             "displayName": user["display_name"],
             "role": user["role"],
             "mfaConfigured": bool(config.DEFAULT_ADMIN_TOTP_SECRET),
+            "phoneNumber": user.get("phone_number") or "",
+            "email": user.get("email") or "",
           },
         }
       ).encode("utf-8")
@@ -267,6 +361,72 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
       self.send_header("Content-Length", str(len(body)))
       self.end_headers()
       self.wfile.write(body)
+      return
+
+    if path == "/api/user/phone":
+      try:
+        payload = self._read_json_body()
+      except json.JSONDecodeError:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Invalid JSON payload"})
+        return
+
+      phone_number = str(payload.get("phoneNumber", "")).strip()
+      
+      # Get user ID from session
+      user_data = db.get_user_by_username(user["username"])
+      if not user_data:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "User not found"})
+        return
+
+      success = db.update_user_phone_number(user_data["id"], phone_number)
+      if success:
+        self._json_response(HTTPStatus.OK, {"success": True, "phoneNumber": phone_number})
+      else:
+        self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "Failed to update phone number"})
+      return
+
+    if path == "/api/user/email":
+      try:
+        payload = self._read_json_body()
+      except json.JSONDecodeError:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Invalid JSON payload"})
+        return
+
+      email = str(payload.get("email", "")).strip()
+      
+      # Get user ID from session
+      user_data = db.get_user_by_username(user["username"])
+      if not user_data:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "User not found"})
+        return
+
+      success = db.update_user_email(user_data["id"], email)
+      if success:
+        self._json_response(HTTPStatus.OK, {"success": True, "email": email})
+      else:
+        self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "Failed to update email"})
+      return
+
+    if path == "/api/user/display-name":
+      try:
+        payload = self._read_json_body()
+      except json.JSONDecodeError:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Invalid JSON payload"})
+        return
+
+      display_name = str(payload.get("displayName", "")).strip()
+      
+      # Get user ID from session
+      user_data = db.get_user_by_username(user["username"])
+      if not user_data:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "User not found"})
+        return
+
+      success = db.update_user_display_name(user_data["id"], display_name)
+      if success:
+        self._json_response(HTTPStatus.OK, {"success": True, "displayName": display_name})
+      else:
+        self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "Failed to update display name"})
       return
 
     if path == "/api/media":
@@ -309,6 +469,176 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
       )
       self._json_response(HTTPStatus.CREATED, {"item": item})
       return
+
+    if path == "/api/research-interests":
+      try:
+        payload = self._read_json_body()
+        required = ['title', 'icon', 'color']
+        for field in required:
+          if field not in payload:
+            self._json_response(HTTPStatus.BAD_REQUEST, {"error": f"Missing required field: {field}"})
+            return
+
+        interest = db.create_research_interest(
+          title=payload['title'],
+          description=payload.get('description'),
+          icon=payload['icon'],
+          color=payload['color'],
+          display_order=payload.get('display_order', 0),
+          published=payload.get('published', True)
+        )
+        self._json_response(HTTPStatus.CREATED, interest)
+        return
+      except Exception as e:
+        self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(e)})
+        return
+
+    if path == "/api/awards":
+      try:
+        payload = self._read_json_body()
+        required = ['title', 'year', 'icon', 'color']
+        for field in required:
+          if field not in payload:
+            self._json_response(HTTPStatus.BAD_REQUEST, {"error": f"Missing required field: {field}"})
+            return
+
+        award = db.create_award(
+          title=payload['title'],
+          year=payload['year'],
+          description=payload.get('description'),
+          organization=payload.get('organization'),
+          url=payload.get('url'),
+          image_url=payload.get('image_url'),
+          icon=payload['icon'],
+          color=payload['color'],
+          display_order=payload.get('display_order', 0),
+          published=payload.get('published', True)
+        )
+        self._json_response(HTTPStatus.CREATED, award)
+        return
+      except Exception as e:
+        self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(e)})
+        return
+
+    if path == "/api/external-profiles":
+      try:
+        payload = self._read_json_body()
+        required = ['label', 'description', 'url', 'platform', 'icon', 'color']
+        for field in required:
+          if field not in payload:
+            self._json_response(HTTPStatus.BAD_REQUEST, {"error": f"Missing required field: {field}"})
+            return
+
+        profile = db.create_external_profile(
+          label=payload['label'],
+          description=payload['description'],
+          url=payload['url'],
+          platform=payload['platform'],
+          icon=payload['icon'],
+          color=payload['color'],
+          metrics=payload.get('metrics'),
+          display_order=payload.get('display_order', 0),
+          published=payload.get('published', True)
+        )
+        self._json_response(HTTPStatus.CREATED, profile)
+        return
+      except Exception as e:
+        self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(e)})
+        return
+
+    if path == "/api/collaborators":
+      try:
+        payload = self._read_json_body()
+        required = ['name', 'title', 'role', 'testimonial']
+        for field in required:
+          if field not in payload:
+            self._json_response(HTTPStatus.BAD_REQUEST, {"error": f"Missing required field: {field}"})
+            return
+
+        collaborator = db.create_collaborator(
+          name=payload['name'],
+          title=payload['title'],
+          role=payload['role'],
+          testimonial=payload['testimonial'],
+          display_order=payload.get('display_order', 0),
+          published=payload.get('published', True)
+        )
+        self._json_response(HTTPStatus.CREATED, collaborator)
+        return
+      except Exception as e:
+        self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(e)})
+        return
+
+    if path == "/api/hero":
+      try:
+        payload = self._read_json_body()
+        required = ['eyebrow', 'headline']
+        for field in required:
+          if field not in payload:
+            self._json_response(HTTPStatus.BAD_REQUEST, {"error": f"Missing required field: {field}"})
+            return
+
+        hero = db.create_hero_content(
+          eyebrow=payload['eyebrow'],
+          headline=payload['headline'],
+          description=payload.get('description'),
+          badges=payload.get('badges'),
+          background_image_url=payload.get('background_image_url'),
+          cta_text=payload.get('cta_text'),
+          cta_url=payload.get('cta_url'),
+          published=payload.get('published', True)
+        )
+        self._json_response(HTTPStatus.CREATED, hero)
+        return
+      except Exception as e:
+        self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(e)})
+        return
+
+    if path == "/api/statistics":
+      try:
+        payload = self._read_json_body()
+        required = ['label', 'value']
+        for field in required:
+          if field not in payload:
+            self._json_response(HTTPStatus.BAD_REQUEST, {"error": f"Missing required field: {field}"})
+            return
+
+        stat = db.create_statistic(
+          label=payload['label'],
+          value=payload['value'],
+          suffix=payload.get('suffix'),
+          icon=payload.get('icon'),
+          display_order=payload.get('display_order', 0),
+          published=payload.get('published', True)
+        )
+        self._json_response(HTTPStatus.CREATED, stat)
+        return
+      except Exception as e:
+        self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(e)})
+        return
+
+    if path == "/api/services":
+      try:
+        payload = self._read_json_body()
+        required = ['title', 'icon']
+        for field in required:
+          if field not in payload:
+            self._json_response(HTTPStatus.BAD_REQUEST, {"error": f"Missing required field: {field}"})
+            return
+
+        service = db.create_service(
+          title=payload['title'],
+          icon=payload['icon'],
+          description=payload.get('description'),
+          bullets=payload.get('bullets'),
+          display_order=payload.get('display_order', 0),
+          published=payload.get('published', True)
+        )
+        self._json_response(HTTPStatus.CREATED, service)
+        return
+      except Exception as e:
+        self._json_response(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(e)})
+        return
 
     # Content Management API endpoints
     if path == "/api/content":
@@ -568,14 +898,269 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
       self._json_response(HTTPStatus.OK, {"saved": True})
       return
 
+    if path == "/api/affiliations":
+      affiliation_id = self._get_query_param("id")
+      if not affiliation_id:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Affiliation ID required"})
+        return
+
+      # Convert camelCase to snake_case for database
+      db_payload = {}
+      field_mapping = {
+        "name": "name",
+        "role": "role",
+        "shortDescription": "short_description",
+        "detailedDescription": "detailed_description",
+        "url": "url",
+        "icon": "icon",
+        "color": "color",
+        "displayOrder": "display_order",
+        "published": "published"
+      }
+
+      for camel_key, snake_key in field_mapping.items():
+        if camel_key in payload:
+          db_payload[snake_key] = payload[camel_key]
+
+      success = db.update_affiliation(int(affiliation_id), **db_payload)
+      if success:
+        updated = db.get_affiliation_by_id(int(affiliation_id))
+        self._json_response(HTTPStatus.OK, {"affiliation": updated})
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "Affiliation not found"})
+      return
+
+    if path == "/api/research-interests":
+      if 'id' not in payload:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Missing id"})
+        return
+
+      success = db.update_research_interest(payload['id'], **{k: v for k, v in payload.items() if k != 'id'})
+      if success:
+        interest = db.get_research_interest_by_id(payload['id'])
+        self._json_response(HTTPStatus.OK, interest)
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "Research interest not found"})
+      return
+
+    if path == "/api/awards":
+      if 'id' not in payload:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Missing id"})
+        return
+
+      success = db.update_award(payload['id'], **{k: v for k, v in payload.items() if k != 'id'})
+      if success:
+        award = db.get_award_by_id(payload['id'])
+        self._json_response(HTTPStatus.OK, award)
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "Award not found"})
+      return
+
+    if path == "/api/external-profiles":
+      if 'id' not in payload:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Missing id"})
+        return
+
+      success = db.update_external_profile(payload['id'], **{k: v for k, v in payload.items() if k != 'id'})
+      if success:
+        profile = db.get_external_profile_by_id(payload['id'])
+        self._json_response(HTTPStatus.OK, profile)
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "External profile not found"})
+      return
+
+    if path == "/api/collaborators":
+      if 'id' not in payload:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Missing id"})
+        return
+
+      success = db.update_collaborator(payload['id'], **{k: v for k, v in payload.items() if k != 'id'})
+      if success:
+        collaborator = db.get_collaborator_by_id(payload['id'])
+        self._json_response(HTTPStatus.OK, collaborator)
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "Collaborator not found"})
+      return
+
+    if path == "/api/hero":
+      if 'id' not in payload:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Missing id"})
+        return
+
+      success = db.update_hero_content(payload['id'], **{k: v for k, v in payload.items() if k != 'id'})
+      if success:
+        hero = db.get_hero_content_by_id(payload['id'])
+        self._json_response(HTTPStatus.OK, hero)
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "Hero content not found"})
+      return
+
+    if path == "/api/statistics":
+      if 'id' not in payload:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Missing id"})
+        return
+
+      success = db.update_statistic(payload['id'], **{k: v for k, v in payload.items() if k != 'id'})
+      if success:
+        stat = db.get_statistic_by_id(payload['id'])
+        self._json_response(HTTPStatus.OK, stat)
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "Statistic not found"})
+      return
+
+    if path == "/api/services":
+      if 'id' not in payload:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Missing id"})
+        return
+
+      success = db.update_service(payload['id'], **{k: v for k, v in payload.items() if k != 'id'})
+      if success:
+        service = db.get_service_by_id(payload['id'])
+        self._json_response(HTTPStatus.OK, service)
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "Service not found"})
+      return
+
     self._json_response(HTTPStatus.NOT_FOUND, {"error": "Route not found"})
+
+  def do_DELETE(self) -> None:
+    path = urlparse(self.path).path
+    user = self._require_user()
+    if not user:
+      return
+
+    if path == "/api/affiliations":
+      affiliation_id = self._get_query_param("id")
+      if not affiliation_id:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Affiliation ID required"})
+        return
+
+      success = db.delete_affiliation(int(affiliation_id))
+      if success:
+        self._json_response(HTTPStatus.OK, {"deleted": True})
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "Affiliation not found"})
+      return
+
+    if path == "/api/research-interests":
+      research_id = self._get_query_param("id")
+      if not research_id:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Research interest ID required"})
+        return
+
+      success = db.delete_research_interest(int(research_id))
+      if success:
+        self._json_response(HTTPStatus.OK, {"deleted": True})
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "Research interest not found"})
+      return
+
+    if path == "/api/awards":
+      award_id = self._get_query_param("id")
+      if not award_id:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Award ID required"})
+        return
+
+      success = db.delete_award(int(award_id))
+      if success:
+        self._json_response(HTTPStatus.OK, {"deleted": True})
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "Award not found"})
+      return
+
+    if path == "/api/external-profiles":
+      profile_id = self._get_query_param("id")
+      if not profile_id:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "External profile ID required"})
+        return
+
+      success = db.delete_external_profile(int(profile_id))
+      if success:
+        self._json_response(HTTPStatus.OK, {"deleted": True})
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "External profile not found"})
+      return
+
+    if path == "/api/collaborators":
+      collaborator_id = self._get_query_param("id")
+      if not collaborator_id:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Collaborator ID required"})
+        return
+
+      success = db.delete_collaborator(int(collaborator_id))
+      if success:
+        self._json_response(HTTPStatus.OK, {"deleted": True})
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "Collaborator not found"})
+      return
+
+    if path == "/api/hero":
+      hero_id = self._get_query_param("id")
+      if not hero_id:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Hero ID required"})
+        return
+
+      success = db.delete_hero_content(int(hero_id))
+      if success:
+        self._json_response(HTTPStatus.OK, {"deleted": True})
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "Hero content not found"})
+      return
+
+    if path == "/api/statistics":
+      stat_id = self._get_query_param("id")
+      if not stat_id:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Statistic ID required"})
+        return
+
+      success = db.delete_statistic(int(stat_id))
+      if success:
+        self._json_response(HTTPStatus.OK, {"deleted": True})
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "Statistic not found"})
+      return
+
+    if path == "/api/services":
+      service_id = self._get_query_param("id")
+      if not service_id:
+        self._json_response(HTTPStatus.BAD_REQUEST, {"error": "Service ID required"})
+        return
+
+      success = db.delete_service(int(service_id))
+      if success:
+        self._json_response(HTTPStatus.OK, {"deleted": True})
+      else:
+        self._json_response(HTTPStatus.NOT_FOUND, {"error": "Service not found"})
+      return
+
+    self._json_response(HTTPStatus.NOT_FOUND, {"error": "Route not found"})
+
+
+def create_default_admin_user() -> None:
+  """Create default admin user if not exists"""
+  try:
+    existing = db.get_user_by_username(config.DEFAULT_ADMIN_USERNAME)
+    if existing:
+      return
+    
+    db.create_user(
+      username=config.DEFAULT_ADMIN_USERNAME,
+      password=config.DEFAULT_ADMIN_PASSWORD,
+      display_name=config.DEFAULT_ADMIN_NAME,
+      role="super_admin"
+    )
+    print(f"✅ Created default admin user: {config.DEFAULT_ADMIN_USERNAME}")
+  except Exception as e:
+    print(f"⚠️  Failed to create default admin user: {e}")
 
 
 def main() -> None:
   storage.ensure_storage()
+  create_default_admin_user()
   server = ThreadingHTTPServer(("0.0.0.0", config.PORT), AdminRequestHandler)
   print(f"Admin API listening on http://localhost:{config.PORT}")
   print(f"Allowed frontend origin: {config.DEFAULT_ALLOWED_ORIGIN}")
+  print(f"Default admin credentials: {config.DEFAULT_ADMIN_USERNAME} / {config.DEFAULT_ADMIN_PASSWORD}")
   server.serve_forever()
 
 

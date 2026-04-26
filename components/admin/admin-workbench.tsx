@@ -10,6 +10,8 @@ import {
   useState,
 } from "react";
 import {
+  ChevronLeft,
+  ChevronRight,
   FileText,
   Images,
   LayoutDashboard,
@@ -228,6 +230,9 @@ export function AdminWorkbench({ user: externalUser, activePanel: externalActive
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loginForm, setLoginForm] = useState({ username: "admin", password: "", otp: "" });
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [email, setEmail] = useState("");
+  const [displayName, setDisplayName] = useState("");
 
   const request = async <T,>(path: string, init?: RequestInit) => {
     const response = await fetch(`${API_BASE}${path}`, {
@@ -304,6 +309,9 @@ export function AdminWorkbench({ user: externalUser, activePanel: externalActive
         }
 
         setUser(auth.user);
+        setPhoneNumber(auth.user.phoneNumber || "");
+        setEmail(auth.user.email || "");
+        setDisplayName(auth.user.displayName || "");
         await loadWorkspace();
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unable to connect to the admin service.";
@@ -372,6 +380,67 @@ export function AdminWorkbench({ user: externalUser, activePanel: externalActive
     } catch (error) {
       const message = error instanceof Error ? error.message : "Refresh failed.";
       setErrorMessage(message);
+    }
+  }
+
+  async function updatePhoneNumber() {
+    setPendingAction("auth");
+    setStatusMessage("");
+    setErrorMessage("");
+
+    try {
+      await request("/user/phone", {
+        method: "POST",
+        body: JSON.stringify({ phoneNumber }),
+      });
+      setStatusMessage("Phone number updated successfully.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update phone number.";
+      setErrorMessage(message);
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function updateEmail() {
+    setPendingAction("auth");
+    setStatusMessage("");
+    setErrorMessage("");
+
+    try {
+      await request("/user/email", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+      setStatusMessage("Email updated successfully.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update email.";
+      setErrorMessage(message);
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function updateDisplayName() {
+    setPendingAction("auth");
+    setStatusMessage("");
+    setErrorMessage("");
+
+    try {
+      await request("/user/display-name", {
+        method: "POST",
+        body: JSON.stringify({ displayName }),
+      });
+      setStatusMessage("Display name updated successfully.");
+      // Update local user state
+      if (user) {
+        setUser({ ...user, displayName });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update display name.";
+      setErrorMessage(message);
+    } finally {
+      setPendingAction(null);
     }
   }
 
@@ -628,6 +697,12 @@ export function AdminWorkbench({ user: externalUser, activePanel: externalActive
                 <p className="max-w-3xl text-muted-foreground">{welcome?.subtitle}</p>
               </div>
               <div className="flex flex-wrap gap-3">
+                <Button variant="outline" onClick={() => window.history.back()} title="Go back">
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" onClick={() => window.history.forward()} title="Go forward">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
                 <Button variant="outline" onClick={() => void refreshWorkspace()}>
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Refresh data
@@ -1658,6 +1733,71 @@ export function AdminWorkbench({ user: externalUser, activePanel: externalActive
                         </p>
                       </Card>
                     </div>
+                    <Card className="space-y-4 p-5">
+                      <p className="text-sm font-semibold">Profile Information</p>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Display Name</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={displayName}
+                              onChange={(e) => setDisplayName(e.target.value)}
+                              placeholder="Enter your display name"
+                              className="flex-1 border px-3 py-2 text-sm rounded-md"
+                            />
+                            <Button
+                              onClick={updateDisplayName}
+                              disabled={pendingAction === "auth"}
+                              size="sm"
+                            >
+                              {pendingAction === "auth" ? "Saving..." : "Update"}
+                            </Button>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Email Address</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="email"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              placeholder="Enter your email"
+                              className="flex-1 border px-3 py-2 text-sm rounded-md"
+                            />
+                            <Button
+                              onClick={updateEmail}
+                              disabled={pendingAction === "auth"}
+                              size="sm"
+                            >
+                              {pendingAction === "auth" ? "Saving..." : "Update"}
+                            </Button>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Phone Number</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="tel"
+                              value={phoneNumber}
+                              onChange={(e) => setPhoneNumber(e.target.value)}
+                              placeholder="Enter your phone number"
+                              className="flex-1 border px-3 py-2 text-sm rounded-md"
+                            />
+                            <Button
+                              onClick={updatePhoneNumber}
+                              disabled={pendingAction === "auth"}
+                              size="sm"
+                            >
+                              {pendingAction === "auth" ? "Saving..." : "Update"}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Your contact information can be used for account recovery and notifications.
+                      </p>
+                    </Card>
                     <Card className="space-y-3 border-dashed p-5">
                       <p className="text-sm font-semibold">Recommended production hardening</p>
                       <p className="text-sm text-muted-foreground">

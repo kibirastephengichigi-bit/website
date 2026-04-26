@@ -8,6 +8,7 @@ import { LogIn, Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { api } from "@/components/api/client";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -28,28 +29,22 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email.trim(),
-          password: formData.password
-        })
+      const response = await api.post('/api/auth/signin', {
+        email: formData.email.trim(),
+        password: formData.password
       });
 
       const data = await response.json();
 
       if (response.ok) {
         // Store token and user info
-        localStorage.setItem("authToken", data.access_token);
+        localStorage.setItem("authToken", data.token);
         localStorage.setItem("userSession", JSON.stringify({
           email: data.user.email,
           name: data.user.name,
           role: data.user.role,
           timestamp: Date.now(),
-          token: data.access_token
+          token: data.token
         }));
         
         router.push(callbackUrl);

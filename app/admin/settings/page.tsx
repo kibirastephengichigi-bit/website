@@ -204,7 +204,6 @@ export default function AdminSettingsPage() {
           Integrations
         </button>
       </div>
-      </div>
 
       {/* Tab Content */}
       <div className="p-6">
@@ -301,7 +300,7 @@ export default function AdminSettingsPage() {
                     <Button
                       variant={settings.theme.mode === 'light' ? 'default' : 'outline'}
                       size="sm"
-                      onClick={() => setSettings(prev => ({ ...prev, theme: { ...prev.theme, mode: 'light' }))}
+                      onClick={() => setSettings(prev => ({ ...prev, theme: { ...prev.theme, mode: 'light' }}))}
                     >
                       <Sun className="w-4 h-3 mr-1" />
                       Light
@@ -310,7 +309,7 @@ export default function AdminSettingsPage() {
                     <Button
                       variant={settings.theme.mode === 'dark' ? 'default' : 'outline'}
                       size="sm"
-                      onClick={() => setSettings(prev => ({ ...prev, theme: { ...prev.theme, mode: 'dark' }))}
+                      onClick={() => setSettings(prev => ({ ...prev, theme: { ...prev.theme, mode: 'dark' }}))}
                     >
                       <Moon className="w-4 h-3 mr-1" />
                       Dark
@@ -319,7 +318,7 @@ export default function AdminSettingsPage() {
                     <Button
                       variant={settings.theme.mode === 'auto' ? 'default' : 'outline'}
                       size="sm"
-                      onClick={() => setSettings(prev => ({ ...prev, theme: { ...prev.theme, mode: 'auto' }))}
+                      onClick={() => setSettings(prev => ({ ...prev, theme: { ...prev.theme, mode: 'auto' }}))}
                     >
                       <Monitor className="w-4 h-3 mr-1" />
                       Auto
@@ -333,7 +332,7 @@ export default function AdminSettingsPage() {
                     <Input
                       type="color"
                       value={settings.theme.primaryColor}
-                      onChange={(e) => setSettings(prev => ({ ...prev, theme: { ...prev.theme, primaryColor: e.target.value }))}
+                      onChange={(e) => setSettings(prev => ({ ...prev, theme: { ...prev.theme, primaryColor: e.target.value }}))}
                       className="flex-1"
                     />
                     <div 
@@ -349,7 +348,7 @@ export default function AdminSettingsPage() {
                     <Input
                       type="color"
                       value={settings.theme.secondaryColor}
-                      onChange={(e) => setSettings(prev => ({ ...prev, theme: { ...prev.theme, secondaryColor: e.target.value }))}
+                      onChange={(e) => setSettings(prev => ({ ...prev, theme: { ...prev.theme, secondaryColor: e.target.value }}))}
                       className="flex-1"
                     />
                     <div 
@@ -365,7 +364,7 @@ export default function AdminSettingsPage() {
                     <Input
                       type="color"
                       value={settings.theme.accentColor}
-                      onChange={(e) => setSettings(prev => ({ ...prev, theme: { ...prev.theme, accentColor: e.target.value }))}
+                      onChange={(e) => setSettings(prev => ({ ...prev, theme: { ...prev.theme, accentColor: e.target.value }}))}
                       className="flex-1"
                     />
                     <div 

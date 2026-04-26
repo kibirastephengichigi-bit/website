@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, Facebook, Twitter, Instagram, Linkedin, Zap, Activity, CheckCircle, XCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -12,13 +13,13 @@ import { SiteSidebar } from "./site-sidebar";
 // Get Scholars Forge URL - works in both development and production
 const getScholarsUrl = () => {
   // Use environment variable if set
-  if (process.env.NEXT_PUBLIC_SCHOLARS_URL) {
-    return process.env.NEXT_PUBLIC_SCHOLARS_URL;
+  if (process.env.NEXT_PUBLIC_SCHOLARS_FORGE_URL) {
+    return process.env.NEXT_PUBLIC_SCHOLARS_FORGE_URL;
   }
   
-  // Fallback to localhost for development
-  // For production, set NEXT_PUBLIC_SCHOLARS_URL to the Scholar Forge cloudflared tunnel URL
-  return 'http://localhost:4500';
+  // Fallback to path-based routing for single domain
+  // For production with subdomain, set NEXT_PUBLIC_SCHOLARS_FORGE_URL
+  return '/scholars';
 };
 
 const links = [
@@ -40,6 +41,7 @@ interface UserSession {
 }
 
 export function SiteHeader() {
+  const pathname = usePathname();
   const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -125,6 +127,11 @@ export function SiteHeader() {
     window.location.href = "/";
   };
 
+  // Don't render header on admin pages
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
+
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -159,28 +166,12 @@ export function SiteHeader() {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
-              {/* Backend Status Indicator */}
-              <div className="hidden md:flex items-center gap-1 px-2 py-1 rounded-md bg-slate-100 border border-slate-200">
-                {backendStatus === 'checking' && (
-                  <Activity className="w-3 h-3 text-yellow-500 animate-pulse" />
-                )}
-                {backendStatus === 'online' && (
-                  <CheckCircle className="w-3 h-3 text-green-500" />
-                )}
-                {backendStatus === 'offline' && (
-                  <XCircle className="w-3 h-3 text-red-500" />
-                )}
-                <span className="text-xs text-slate-600">
-                  {backendStatus === 'checking' ? 'Checking...' : backendStatus === 'online' ? 'Admin API' : 'Admin Offline'}
-                </span>
-              </div>
-              
               <Button 
                 asChild 
                 size="sm" 
                 className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0"
               >
-                <a href={scholarsUrl} target="_blank" rel="noopener noreferrer">
+                <a href={scholarsUrl}>
                   🎓 Scholar Forge
                 </a>
               </Button>
