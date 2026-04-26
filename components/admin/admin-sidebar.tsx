@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Sparkles,
@@ -70,7 +71,13 @@ import {
   Briefcase,
   Handshake,
   Megaphone,
-  Command
+  Command,
+  Newspaper,
+  GitBranch,
+  Link as LinkIcon,
+  Building2,
+  Medal,
+  Network
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -95,12 +102,12 @@ const sidebarItems: SidebarItem[] = [
     label: "Dashboard",
     icon: LayoutDashboard,
     href: "/admin",
-    description: "Main admin dashboard"
+    description: "Main admin dashboard with overview and stats"
   },
   {
     id: "content",
     label: "Content Management",
-    icon: Edit3,
+    icon: FileText,
     children: [
       {
         id: "home-page",
@@ -110,44 +117,9 @@ const sidebarItems: SidebarItem[] = [
         description: "Edit home page content, hero section, and basic information"
       },
       {
-        id: "content-overview",
-        label: "Content Overview",
-        icon: Sparkles,
-        href: "/admin/content",
-        description: "Manage all website content"
-      },
-      {
-        id: "site-content",
-        label: "Site Content",
-        icon: FileText,
-        href: "/admin/content",
-        description: "Hero, services, quotes, contact"
-      },
-      {
-        id: "blog",
-        label: "Blog Manager",
-        icon: FileText,
-        href: "/admin/content",
-        description: "Create, edit, and organize publishable articles."
-      },
-      {
-        id: "research",
-        label: "Research Data",
-        icon: FileText,
-        href: "/admin/content",
-        description: "Projects, publications, testimonials, and advanced collections."
-      },
-      {
-        id: "testimonials",
-        label: "Testimonials",
-        icon: FileText,
-        href: "/admin/content",
-        description: "Client testimonials and related profiles."
-      },
-      {
         id: "affiliations",
         label: "Professional Affiliations",
-        icon: Award,
+        icon: Building2,
         href: "/admin/affiliations",
         description: "Manage professional affiliations and descriptions"
       },
@@ -161,14 +133,14 @@ const sidebarItems: SidebarItem[] = [
       {
         id: "awards",
         label: "Awards & Honors",
-        icon: Trophy,
+        icon: Medal,
         href: "/admin/awards",
         description: "Manage awards, honors, and recognition"
       },
       {
         id: "external-profiles",
         label: "External Profiles",
-        icon: Globe,
+        icon: LinkIcon,
         href: "/admin/external-profiles",
         description: "Manage external profile links and social media"
       }
@@ -181,73 +153,10 @@ const sidebarItems: SidebarItem[] = [
     children: [
       {
         id: "media-overview",
-        label: "Media Overview",
+        label: "Media Library",
         icon: Images,
         href: "/admin/media",
-        description: "Manage all media files"
-      },
-      {
-        id: "images",
-        label: "Images",
-        icon: FileImage,
-        href: "/admin/media",
-        description: "Photo gallery"
-      },
-      {
-        id: "videos",
-        label: "Videos",
-        icon: Video,
-        href: "/admin/media",
-        description: "Video content"
-      },
-      {
-        id: "documents",
-        label: "Documents",
-        icon: File,
-        href: "/admin/media",
-        description: "PDFs and files"
-      },
-      {
-        id: "uploads",
-        label: "Upload Manager",
-        icon: Upload,
-        href: "/admin/media",
-        description: "Upload new media"
-      }
-    ]
-  },
-  {
-    id: "seo",
-    label: "SEO Tools",
-    icon: Globe,
-    children: [
-      {
-        id: "seo-overview",
-        label: "SEO Overview",
-        icon: Target,
-        href: "/admin/seo",
-        description: "Comprehensive SEO management"
-      },
-      {
-        id: "meta-tags",
-        label: "Meta Tags",
-        icon: Tag,
-        href: "/admin/seo",
-        description: "SEO metadata"
-      },
-      {
-        id: "sitemap",
-        label: "Sitemap",
-        icon: Grid,
-        href: "/admin/seo",
-        description: "Site structure"
-      },
-      {
-        id: "analytics-tracking",
-        label: "Analytics Tracking",
-        icon: BarChart3,
-        href: "/admin/seo",
-        description: "Tracking codes"
+        description: "Upload, organize, and manage all media files"
       }
     ]
   },
@@ -261,21 +170,7 @@ const sidebarItems: SidebarItem[] = [
         label: "Admin Users",
         icon: ShieldCheck,
         href: "/admin/users",
-        description: "Manage admin accounts"
-      },
-      {
-        id: "permissions",
-        label: "Permissions",
-        icon: Key,
-        href: "/admin/users",
-        description: "Role-based access"
-      },
-      {
-        id: "sessions",
-        label: "Active Sessions",
-        icon: Activity,
-        href: "/admin/users",
-        description: "Monitor sessions"
+        description: "Manage admin accounts and permissions"
       }
     ]
   },
@@ -285,116 +180,39 @@ const sidebarItems: SidebarItem[] = [
     icon: BarChart3,
     children: [
       {
-        id: "traffic",
-        label: "Traffic Stats",
+        id: "analytics-dashboard",
+        label: "Analytics Dashboard",
         icon: TrendingUp,
         href: "/admin/analytics",
-        description: "Visitor analytics"
-      },
-      {
-        id: "content-performance",
-        label: "Content Performance",
-        icon: Star,
-        href: "/admin/analytics",
-        description: "Popular content"
-      },
-      {
-        id: "reports",
-        label: "Reports",
-        icon: Download,
-        href: "/admin/analytics",
-        description: "Export reports"
+        description: "Monitor website performance and traffic statistics"
       }
     ]
   },
   {
-    id: "appearance",
-    label: "Appearance",
-    icon: Palette,
+    id: "seo",
+    label: "SEO Tools",
+    icon: Globe,
     children: [
       {
-        id: "theme",
-        label: "Theme Customization",
-        icon: Palette,
-        href: "#theme",
-        description: "Colors and fonts"
-      },
-      {
-        id: "navigation",
-        label: "Navigation",
-        icon: Menu,
-        href: "#navigation",
-        description: "Menu structure"
-      },
-      {
-        id: "footer",
-        label: "Footer",
-        icon: Grid,
-        href: "#footer",
-        description: "Footer content"
+        id: "seo-tools",
+        label: "SEO Tools",
+        icon: Target,
+        href: "/admin/seo",
+        description: "Optimize website for search engines with meta tags and sitemaps"
       }
     ]
   },
   {
-    id: "technical",
-    label: "Technical",
+    id: "settings",
+    label: "Settings",
     icon: Settings,
     children: [
       {
-        id: "security",
-        label: "Security",
-        icon: ShieldCheck,
-        href: "#security",
-        description: "Security settings"
-      },
-      {
-        id: "backup",
-        label: "Backup & Restore",
-        icon: Database,
-        href: "#backup",
-        description: "Data backup"
-      },
-      {
-        id: "cache",
-        label: "Cache Management",
-        icon: RefreshCw,
-        href: "#cache",
-        description: "Clear cache"
-      },
-      {
-        id: "logs",
-        label: "System Logs",
-        icon: History,
-        href: "#logs",
-        description: "Error logs"
-      }
-    ]
-  },
-  {
-    id: "communication",
-    label: "Communication",
-    icon: Mail,
-    children: [
-      {
-        id: "contact-forms",
-        label: "Contact Forms",
-        icon: MessageSquare,
-        href: "#contact-forms",
-        description: "Form submissions"
-      },
-      {
-        id: "newsletter",
-        label: "Newsletter",
-        icon: Mail,
-        href: "#newsletter",
-        description: "Email subscribers"
-      },
-      {
-        id: "notifications",
-        label: "Notifications",
-        icon: Bell,
-        href: "#notifications",
-        description: "System notifications"
+        id: "site-settings",
+        label: "Site Settings",
+        icon: Settings,
+        href: "/admin/settings",
+        description: "Configure website settings and technical configurations"
       }
     ]
   }
@@ -413,6 +231,7 @@ interface AdminSidebarProps {
 }
 
 export function AdminSidebar({ isOpen, onToggle, activePanel, onPanelChange, user }: AdminSidebarProps) {
+  const router = useRouter();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set(['content', 'media']));
   const [searchQuery, setSearchQuery] = useState("");
   const [recentlyVisited, setRecentlyVisited] = useState<string[]>([]);
@@ -472,14 +291,17 @@ export function AdminSidebar({ isOpen, onToggle, activePanel, onPanelChange, use
     } else if (item.href) {
       // Add to recently visited
       addToRecentlyVisited(item.href);
-      // Extract panel ID from href (remove #)
-      const panelId = item.href.replace('#', '');
-      onPanelChange(panelId);
+      // Navigate using Next.js router
+      router.push(item.href);
+      // Close sidebar on mobile
+      if (window.innerWidth < 1024) {
+        onToggle();
+      }
     }
   };
 
   const renderSidebarItem = (item: SidebarItem, level: number = 0) => {
-    const isActive = item.id === activePanel || (item.href && item.href.includes(activePanel));
+    const isActive = typeof window !== 'undefined' && item.href === window.location.pathname;
     const isExpanded = expandedItems.has(item.id);
     const hasChildren = item.children && item.children.length > 0;
 
@@ -489,8 +311,8 @@ export function AdminSidebar({ isOpen, onToggle, activePanel, onPanelChange, use
           onClick={() => handleItemClick(item)}
           className={`
             w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group
-            ${isActive 
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg' 
+            ${isActive
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg'
               : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
             }
           `}
@@ -499,18 +321,18 @@ export function AdminSidebar({ isOpen, onToggle, activePanel, onPanelChange, use
         >
           <item.icon className="w-5 h-5 flex-shrink-0" />
           <span className="flex-1 text-left font-medium text-sm">{item.label}</span>
-          
+
           <div className="flex items-center gap-2">
             {item.description && !hasChildren && (
               <HelpTooltip content={item.description} />
             )}
-            
+
             {item.badge && (
               <Badge variant={isActive ? "secondary" : "outline"} className="text-xs">
                 {item.badge}
               </Badge>
             )}
-            
+
             {hasChildren && (
               <div className="transition-transform duration-200">
                 {isExpanded ? (
@@ -522,7 +344,7 @@ export function AdminSidebar({ isOpen, onToggle, activePanel, onPanelChange, use
             )}
           </div>
         </button>
-        
+
         {hasChildren && isExpanded && (
           <div className="mt-1 space-y-1">
             {item.children!.map(child => renderSidebarItem(child, level + 1))}
@@ -607,18 +429,20 @@ export function AdminSidebar({ isOpen, onToggle, activePanel, onPanelChange, use
                   const item = sidebarItems.flatMap(i => i.children || [i]).find(i => i.href === href);
                   if (!item) return null;
                   return (
-                    <Link
+                    <button
                       key={href}
-                      href={href}
                       onClick={() => {
                         addToRecentlyVisited(href);
-                        onToggle();
+                        router.push(href);
+                        if (window.innerWidth < 1024) {
+                          onToggle();
+                        }
                       }}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
                     >
                       <item.icon className="w-4 h-4" />
                       <span>{item.label}</span>
-                    </Link>
+                    </button>
                   );
                 })}
               </div>
