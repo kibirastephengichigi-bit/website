@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { HelpTooltip } from "@/components/admin/help-tooltip";
 import { AdminSearch } from "@/components/admin/admin-search";
+import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import {
   LayoutDashboard,
   FileText,
@@ -39,7 +40,8 @@ import {
   Trophy,
   Brain,
   ExternalLink,
-  Command
+  Command,
+  Menu
 } from "lucide-react";
 import { api } from "@/components/api/client";
 
@@ -77,6 +79,26 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activePanel, setActivePanel] = useState('dashboard');
+
+  // Get user from localStorage
+  const user = typeof window !== 'undefined' ? (() => {
+    const session = localStorage.getItem('userSession');
+    if (session) {
+      try {
+        const parsed = JSON.parse(session);
+        return {
+          username: parsed.username || 'admin',
+          displayName: parsed.displayName || 'Administrator',
+          role: parsed.role || 'admin'
+        };
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  })() : null;
 
   // Keyboard shortcut for search
   useEffect(() => {
@@ -354,275 +376,256 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
-          <p className="text-slate-600">Welcome back! Here\'s what\'s happening with your website.</p>
-        </div>
-        <div className="flex items-center gap-2">
+    <div className="flex min-h-screen bg-slate-50">
+      {/* Sidebar */}
+      <AdminSidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        activePanel={activePanel}
+        onPanelChange={setActivePanel}
+        user={user || undefined}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col lg:ml-0">
+        {/* Mobile Header */}
+        <div className="lg:hidden flex items-center justify-between p-4 border-b border-slate-200 bg-white">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+            <h1 className="font-bold text-slate-900">Admin Dashboard</h1>
+          </div>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsSearchOpen(true)}
-            className="gap-2"
           >
             <Search className="w-4 h-4" />
-            <span className="hidden sm:inline">Search</span>
-            <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-mono">
-              <Command className="w-3 h-3" />K
-            </kbd>
-          </Button>
-          <Badge className="bg-emerald-100 text-emerald-800">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            System Healthy
-          </Badge>
-          <Button variant="outline" size="sm" onClick={loadDashboardData}>
-            <RefreshCw className="w-4 h-4 mr-1" />
-            Refresh
           </Button>
         </div>
-      </div>
 
-      {/* Global Search */}
-      <AdminSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-
-      {/* System Stats */}
-      {systemStats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Total Content</p>
-                <p className="text-2xl font-bold text-slate-900">{systemStats.totalContent}</p>
-              </div>
-              <FileText className="w-8 h-8 text-blue-500" />
+        {/* Dashboard Content */}
+        <div className="flex-1 space-y-6 p-6 overflow-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
+              <p className="text-slate-600">Welcome back! Here\'s what\'s happening with your website.</p>
             </div>
-          </Card>
-          
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Media Files</p>
-                <p className="text-2xl font-bold text-slate-900">{systemStats.totalMedia}</p>
-              </div>
-              <Images className="w-8 h-8 text-green-500" />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSearchOpen(true)}
+                className="gap-2"
+              >
+                <Search className="w-4 h-4" />
+                <span className="hidden sm:inline">Search</span>
+                <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-mono">
+                  <Command className="w-3 h-3" />K
+                </kbd>
+              </Button>
+              <Badge className="bg-emerald-100 text-emerald-800">
+                <CheckCircle className="w-3 h-3 mr-1" />
+                System Healthy
+              </Badge>
+              <Button variant="outline" size="sm" onClick={loadDashboardData}>
+                <RefreshCw className="w-4 h-4 mr-1" />
+                Refresh
+              </Button>
             </div>
-          </Card>
-          
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Active Users</p>
-                <p className="text-2xl font-bold text-slate-900">{systemStats.totalUsers}</p>
-              </div>
-              <Users className="w-8 h-8 text-purple-500" />
-            </div>
-          </Card>
-          
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Last Update</p>
-                <p className="text-sm font-medium text-slate-900">
-                  {new Date(systemStats.lastUpdate).toLocaleTimeString()}
-                </p>
-              </div>
-              <Clock className="w-8 h-8 text-orange-500" />
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Tutorial Section */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <BookOpen className="w-6 h-6 text-blue-600" />
-            <h2 className="text-xl font-bold text-slate-900">Getting Started Tutorial</h2>
           </div>
-          <Badge className="bg-blue-100 text-blue-800">
-            {tutorialSteps.filter(step => step.completed).length}/{tutorialSteps.length} Completed
-          </Badge>
-        </div>
 
-        <div className="space-y-4">
-          {tutorialSteps.map((step, index) => (
-            <div 
-              key={step.id} 
-              className={`flex items-start gap-4 p-4 rounded-lg border ${
-                index === currentStep ? 'border-blue-500 bg-blue-50' : 'border-slate-200'
-              }`}
-            >
-              <div className={`p-2 rounded-lg ${
-                step.completed ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-600'
-              }`}>
-                <step.icon className="w-5 h-5" />
-              </div>
-              
-              <div className="flex-1">
-                <h3 className="font-semibold text-slate-900 mb-1">{step.title}</h3>
-                <p className="text-sm text-slate-600 mb-2">{step.description}</p>
-                
-                {step.action && !step.completed && (
-                  <Button 
-                    size="sm" 
-                    onClick={() => {
-                      completeStep(step.id);
-                      const feature = features.find(f => f.id === step.id);
-                      handleAction(step.action || '', feature?.path || '/admin');
-                    }}
-                  >
-                    {step.action}
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                )}
-                
-                {step.completed && (
-                  <Badge className="bg-green-100 text-green-800">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Completed
-                  </Badge>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
+          {/* Global Search */}
+          <AdminSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
-      {/* Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {features.map((feature) => (
-          <Card key={feature.id} className="p-6 hover:shadow-lg transition-all duration-200 hover:scale-105 relative">
-            <div className="flex items-start justify-between mb-4">
-              <div className={`p-3 rounded-lg ${
-                feature.status === 'available' ? 'bg-blue-100 text-blue-800' : 
-                feature.status === 'new' ? 'bg-green-100 text-green-800' : 
-                'bg-gray-100 text-gray-600'
-              }`}>
-                <feature.icon className="w-6 h-6" />
-              </div>
-              <div className="flex items-center gap-2">
-                {feature.helpText && (
-                  <HelpTooltip content={feature.helpText} title={feature.title} />
-                )}
-                {getStatusBadge(feature.status)}
-              </div>
+          {/* System Stats */}
+          {systemStats && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">Total Content</p>
+                    <p className="text-2xl font-bold text-slate-900">{systemStats.totalContent}</p>
+                  </div>
+                  <FileText className="w-8 h-8 text-blue-500" />
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">Media Files</p>
+                    <p className="text-2xl font-bold text-slate-900">{systemStats.totalMedia}</p>
+                  </div>
+                  <Images className="w-8 h-8 text-green-500" />
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">Active Users</p>
+                    <p className="text-2xl font-bold text-slate-900">{systemStats.totalUsers}</p>
+                  </div>
+                  <Users className="w-8 h-8 text-purple-500" />
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">Last Update</p>
+                    <p className="text-sm font-medium text-slate-900">
+                      {new Date(systemStats.lastUpdate).toLocaleTimeString()}
+                    </p>
+                  </div>
+                  <Clock className="w-8 h-8 text-orange-500" />
+                </div>
+              </Card>
             </div>
-            
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">{feature.title}</h3>
-            <p className="text-sm text-slate-600 mb-4">{feature.description}</p>
-            
-            {feature.lastUpdated && (
-              <div className="text-xs text-slate-500 mb-4">
-                <Clock className="w-3 h-3 inline mr-1" />
-                Updated {new Date(feature.lastUpdated).toLocaleString()}
+          )}
+
+          {/* Tutorial Section */}
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <BookOpen className="w-6 h-6 text-blue-600" />
+                <h2 className="text-xl font-bold text-slate-900">Getting Started Tutorial</h2>
               </div>
-            )}
-            
-            <div className="flex gap-2">
-              {feature.status === 'available' ? (
-                <Button 
-                  size="sm" 
-                  onClick={() => window.location.href = feature.path}
-                  className="flex-1"
+              <Badge className="bg-blue-100 text-blue-800">
+                {tutorialSteps.filter(step => step.completed).length}/{tutorialSteps.length} Completed
+              </Badge>
+            </div>
+
+            <div className="space-y-4">
+              {tutorialSteps.map((step, index) => (
+                <div
+                  key={step.id}
+                  className={`flex items-start gap-4 p-4 rounded-lg border ${
+                    index === currentStep ? 'border-blue-500 bg-blue-50' : 'border-slate-200'
+                  }`}
                 >
-                  <Eye className="w-4 h-4 mr-1" />
-                  Open
-                </Button>
-              ) : (
-                <Button size="sm" variant="outline" disabled className="flex-1">
-                  <AlertCircle className="w-4 h-4 mr-1" />
-                  Coming Soon
-                </Button>
-              )}
+                  <div className={`p-2 rounded-lg ${
+                    index === currentStep ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {index + 1}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-slate-900 mb-1">{step.title}</h3>
+                    <p className="text-sm text-slate-600 mb-2">{step.description}</p>
+                    {step.action && (
+                      <Button
+                        size="sm"
+                        onClick={() => window.location.href = step.action}
+                        disabled={index !== currentStep}
+                        className="mt-2"
+                      >
+                        {index === currentStep ? 'Start' : 'Locked'}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </Card>
-        ))}
+
+          {/* Features Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {features.map((feature) => (
+              <Card key={feature.id} className="p-6 hover:shadow-lg transition-all duration-200 hover:scale-105 relative">
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`p-3 rounded-lg ${
+                    feature.status === 'available' ? 'bg-blue-100 text-blue-800' :
+                    feature.status === 'new' ? 'bg-green-100 text-green-800' :
+                    'bg-gray-100 text-gray-600'
+                  }`}>
+                    <feature.icon className="w-6 h-6" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {feature.helpText && (
+                      <HelpTooltip content={feature.helpText} title={feature.title} />
+                    )}
+                    {getStatusBadge(feature.status)}
+                  </div>
+                </div>
+
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">{feature.title}</h3>
+                <p className="text-sm text-slate-600 mb-4">{feature.description}</p>
+
+                {feature.lastUpdated && (
+                  <div className="text-xs text-slate-500 mb-4">
+                    <Clock className="w-3 h-3 inline mr-1" />
+                    Updated {new Date(feature.lastUpdated).toLocaleString()}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  {feature.status === 'available' ? (
+                    <Button
+                      size="sm"
+                      onClick={() => window.location.href = feature.path}
+                      className="flex-1"
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      Open
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="outline" disabled className="flex-1">
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      Coming Soon
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Quick Actions */}
+          <Card className="p-6">
+            <h2 className="text-xl font-bold text-slate-900 mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Button
+                variant="outline"
+                onClick={() => window.location.href = '/admin/content'}
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                New Content
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => window.location.href = '/admin/media'}
+                className="flex items-center gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                Upload Media
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => window.location.href = '/admin/analytics'}
+                className="flex items-center gap-2"
+              >
+                <BarChart3 className="w-4 h-4" />
+                View Stats
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => window.location.href = '/admin/settings'}
+                className="flex items-center gap-2"
+              >
+                <Settings className="w-4 h-4" />
+                Settings
+              </Button>
+            </div>
+          </Card>
+        </div>
       </div>
-
-      {/* Recent Updates */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Zap className="w-6 h-6 text-yellow-600" />
-            <h2 className="text-xl font-bold text-slate-900">Recent Updates</h2>
-          </div>
-          <Badge className="bg-yellow-100 text-yellow-800">
-            <Lightbulb className="w-3 h-3 mr-1" />
-            Live Updates
-          </Badge>
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-slate-900">Database Integration Complete</p>
-              <p className="text-xs text-slate-600">All content and media now stored in database with full CRUD operations</p>
-            </div>
-            <span className="text-xs text-slate-500">Just now</span>
-          </div>
-          
-          <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-slate-900">New Admin Pages Added</p>
-              <p className="text-xs text-slate-600">Individual pages for content, media, users, analytics, and SEO</p>
-            </div>
-            <span className="text-xs text-slate-500">2 hours ago</span>
-          </div>
-          
-          <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
-            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-slate-900">Enhanced Security Features</p>
-              <p className="text-xs text-slate-600">User authentication and session management implemented</p>
-            </div>
-            <span className="text-xs text-slate-500">5 hours ago</span>
-          </div>
-        </div>
-      </Card>
-
-      {/* Quick Actions */}
-      <Card className="p-6">
-        <h2 className="text-xl font-bold text-slate-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.href = '/admin/content'}
-            className="flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            New Content
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.href = '/admin/media'}
-            className="flex items-center gap-2"
-          >
-            <Upload className="w-4 h-4" />
-            Upload Media
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.href = '/admin/analytics'}
-            className="flex items-center gap-2"
-          >
-            <BarChart3 className="w-4 h-4" />
-            View Stats
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.href = '/admin/settings'}
-            className="flex items-center gap-2"
-          >
-            <Settings className="w-4 h-4" />
-            Settings
-          </Button>
-        </div>
-      </Card>
     </div>
   );
 }

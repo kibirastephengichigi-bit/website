@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, X, ExternalLink, FileText, Settings, Users, BarChart3, Globe, Images, ShieldCheck } from "lucide-react";
+import { Search, X, ExternalLink, FileText, Settings, Users, BarChart3, Globe, Images, ShieldCheck, Clock, TrendingUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface SearchResult {
   id: string;
@@ -13,6 +14,7 @@ interface SearchResult {
   href: string;
   icon: any;
   category: string;
+  keywords?: string[];
 }
 
 const searchItems: SearchResult[] = [
@@ -23,7 +25,8 @@ const searchItems: SearchResult[] = [
     description: "Main admin dashboard with overview and stats",
     href: "/admin",
     icon: BarChart3,
-    category: "Dashboard"
+    category: "Dashboard",
+    keywords: ["home", "overview", "stats", "main"]
   },
   // Content Management
   {
@@ -32,7 +35,8 @@ const searchItems: SearchResult[] = [
     description: "Edit home page content, hero section, and basic information",
     href: "/admin/content/home",
     icon: FileText,
-    category: "Content"
+    category: "Content",
+    keywords: ["landing", "front", "hero", "welcome"]
   },
   {
     id: "content-overview",
@@ -40,7 +44,8 @@ const searchItems: SearchResult[] = [
     description: "Manage all website content",
     href: "/admin/content",
     icon: FileText,
-    category: "Content"
+    category: "Content",
+    keywords: ["pages", "text", "articles", "posts"]
   },
   {
     id: "affiliations",
@@ -48,7 +53,8 @@ const searchItems: SearchResult[] = [
     description: "Manage professional affiliations and descriptions",
     href: "/admin/affiliations",
     icon: ShieldCheck,
-    category: "Content"
+    category: "Content",
+    keywords: ["memberships", "organizations", "associations"]
   },
   {
     id: "research-interests",
@@ -56,7 +62,8 @@ const searchItems: SearchResult[] = [
     description: "Manage research interests and focus areas",
     href: "/admin/research-interests",
     icon: FileText,
-    category: "Content"
+    category: "Content",
+    keywords: ["topics", "areas", "focus", "expertise"]
   },
   {
     id: "awards",
@@ -64,7 +71,8 @@ const searchItems: SearchResult[] = [
     description: "Manage awards, honors, and recognition",
     href: "/admin/awards",
     icon: ShieldCheck,
-    category: "Content"
+    category: "Content",
+    keywords: ["honors", "recognition", "achievements", "prizes"]
   },
   {
     id: "external-profiles",
@@ -72,7 +80,8 @@ const searchItems: SearchResult[] = [
     description: "Manage external profile links and social media",
     href: "/admin/external-profiles",
     icon: Globe,
-    category: "Content"
+    category: "Content",
+    keywords: ["social", "links", "profiles", "networks"]
   },
   // Media
   {
@@ -81,7 +90,8 @@ const searchItems: SearchResult[] = [
     description: "Upload, organize, and manage images, videos, and documents",
     href: "/admin/media",
     icon: Images,
-    category: "Media"
+    category: "Media",
+    keywords: ["files", "upload", "images", "videos", "documents", "photos"]
   },
   // Users
   {
@@ -90,7 +100,8 @@ const searchItems: SearchResult[] = [
     description: "Manage admin accounts, roles, and permissions",
     href: "/admin/users",
     icon: Users,
-    category: "Users"
+    category: "Users",
+    keywords: ["accounts", "admin", "permissions", "roles", "access"]
   },
   // Analytics
   {
@@ -99,7 +110,8 @@ const searchItems: SearchResult[] = [
     description: "Monitor website performance and traffic statistics",
     href: "/admin/analytics",
     icon: BarChart3,
-    category: "Analytics"
+    category: "Analytics",
+    keywords: ["stats", "traffic", "performance", "metrics", "data"]
   },
   // SEO
   {
@@ -108,7 +120,8 @@ const searchItems: SearchResult[] = [
     description: "Optimize website for search engines with meta tags and sitemaps",
     href: "/admin/seo",
     icon: Globe,
-    category: "SEO"
+    category: "SEO",
+    keywords: ["search", "optimization", "meta", "sitemap", "google"]
   },
   // Settings
   {
@@ -117,7 +130,8 @@ const searchItems: SearchResult[] = [
     description: "Configure website settings, appearance, and technical configurations",
     href: "/admin/settings",
     icon: Settings,
-    category: "Settings"
+    category: "Settings",
+    keywords: ["config", "configuration", "preferences", "options"]
   }
 ];
 
@@ -126,11 +140,76 @@ interface AdminSearchProps {
   onClose: () => void;
 }
 
+// Fuzzy matching function
+const fuzzyMatch = (text: string, query: string): boolean => {
+  const lowerText = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  
+  // Exact match
+  if (lowerText.includes(lowerQuery)) return true;
+  
+  // Fuzzy match - check if all characters in query appear in order in text
+  let queryIndex = 0;
+  for (let i = 0; i < lowerText.length && queryIndex < lowerQuery.length; i++) {
+    if (lowerText[i] === lowerQuery[queryIndex]) {
+      queryIndex++;
+    }
+  }
+  return queryIndex === lowerQuery.length;
+};
+
+// Calculate relevance score
+const calculateRelevance = (item: SearchResult, query: string): number => {
+  const lowerQuery = query.toLowerCase();
+  let score = 0;
+  
+  // Exact title match
+  if (item.title.toLowerCase() === lowerQuery) score += 100;
+  // Title starts with query
+  else if (item.title.toLowerCase().startsWith(lowerQuery)) score += 80;
+  // Title contains query
+  else if (item.title.toLowerCase().includes(lowerQuery)) score += 60;
+  
+  // Description match
+  if (item.description.toLowerCase().includes(lowerQuery)) score += 40;
+  
+  // Category match
+  if (item.category.toLowerCase().includes(lowerQuery)) score += 30;
+  
+  // Keywords match
+  if (item.keywords) {
+    const keywordMatch = item.keywords.some(k => k.toLowerCase().includes(lowerQuery));
+    if (keywordMatch) score += 50;
+  }
+  
+  // Fuzzy match bonus
+  if (fuzzyMatch(item.title, query)) score += 20;
+  
+  return score;
+};
+
 export function AdminSearch({ isOpen, onClose }: AdminSearchProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Load search history from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('admin-search-history');
+    if (stored) {
+      setSearchHistory(JSON.parse(stored));
+    }
+  }, []);
+
+  // Save search to history
+  const saveToHistory = (searchTerm: string) => {
+    if (!searchTerm.trim()) return;
+    const updated = [searchTerm, ...searchHistory.filter(h => h !== searchTerm)].slice(0, 5);
+    setSearchHistory(updated);
+    localStorage.setItem('admin-search-history', JSON.stringify(updated));
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -143,13 +222,16 @@ export function AdminSearch({ isOpen, onClose }: AdminSearchProps) {
       setResults(searchItems);
       setSelectedIndex(0);
     } else {
-      const filtered = searchItems.filter(
-        (item) =>
-          item.title.toLowerCase().includes(query.toLowerCase()) ||
-          item.description.toLowerCase().includes(query.toLowerCase()) ||
-          item.category.toLowerCase().includes(query.toLowerCase())
-      );
-      setResults(filtered);
+      const scored = searchItems
+        .map(item => ({
+          item,
+          score: calculateRelevance(item, query)
+        }))
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map(({ item }) => item);
+      
+      setResults(scored);
       setSelectedIndex(0);
     }
   }, [query]);
@@ -168,13 +250,19 @@ export function AdminSearch({ isOpen, onClose }: AdminSearchProps) {
         setSelectedIndex((prev) => (prev > 0 ? prev - 1 : 0));
       } else if (e.key === "Enter" && results.length > 0) {
         e.preventDefault();
+        saveToHistory(query);
         window.location.href = results[selectedIndex].href;
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, results, selectedIndex, onClose]);
+  }, [isOpen, results, selectedIndex, onClose, query]);
+
+  const handleHistoryClick = (historyItem: string) => {
+    setQuery(historyItem);
+    inputRef.current?.focus();
+  };
 
   if (!isOpen) return null;
 
@@ -206,10 +294,32 @@ export function AdminSearch({ isOpen, onClose }: AdminSearchProps) {
         </div>
 
         <div className="max-h-96 overflow-y-auto p-2">
+          {/* Search History */}
+          {query.trim() === "" && searchHistory.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2 px-3 py-2 text-xs text-slate-500">
+                <Clock className="w-3 h-3" />
+                <span>Recent Searches</span>
+              </div>
+              <div className="flex flex-wrap gap-2 px-3">
+                {searchHistory.map((item, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleHistoryClick(item)}
+                    className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 rounded-md text-slate-700 transition-colors"
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {results.length === 0 ? (
             <div className="py-8 text-center text-slate-500">
               <Search className="w-12 h-12 mx-auto mb-3 text-slate-300" />
               <p className="text-sm">No results found for "{query}"</p>
+              <p className="text-xs mt-1">Try different keywords or check spelling</p>
             </div>
           ) : (
             <div className="space-y-1">
@@ -217,7 +327,10 @@ export function AdminSearch({ isOpen, onClose }: AdminSearchProps) {
                 <a
                   key={result.id}
                   href={result.href}
-                  onClick={onClose}
+                  onClick={() => {
+                    saveToHistory(query);
+                    onClose();
+                  }}
                   className={`
                     flex items-start gap-3 p-3 rounded-lg transition-colors
                     ${index === selectedIndex ? 'bg-emerald-50 border border-emerald-200' : 'hover:bg-slate-50'}
@@ -229,9 +342,9 @@ export function AdminSearch({ isOpen, onClose }: AdminSearchProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h4 className="font-medium text-slate-900">{result.title}</h4>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                      <Badge variant="outline" className="text-xs">
                         {result.category}
-                      </span>
+                      </Badge>
                     </div>
                     <p className="text-sm text-slate-500 line-clamp-2">{result.description}</p>
                   </div>
@@ -258,7 +371,10 @@ export function AdminSearch({ isOpen, onClose }: AdminSearchProps) {
                 Close
               </span>
             </div>
-            <span>{results.length} results</span>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-3 h-3" />
+              <span>{results.length} results</span>
+            </div>
           </div>
         </div>
       </Card>
