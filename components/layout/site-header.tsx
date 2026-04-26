@@ -2,12 +2,24 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, Facebook, Twitter, Instagram, Linkedin, Zap } from "lucide-react";
+import { Menu, Facebook, Twitter, Instagram, Linkedin, Zap, Activity, CheckCircle, XCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { siteContent } from "@/lib/content/site-content";
 import { SiteSidebar } from "./site-sidebar";
+
+// Get Scholars Forge URL - works in both development and production
+const getScholarsUrl = () => {
+  // Use environment variable if set
+  if (process.env.NEXT_PUBLIC_SCHOLARS_URL) {
+    return process.env.NEXT_PUBLIC_SCHOLARS_URL;
+  }
+  
+  // Fallback to localhost for development
+  // For production, set NEXT_PUBLIC_SCHOLARS_URL to the Scholar Forge cloudflared tunnel URL
+  return 'http://localhost:4500';
+};
 
 const links = [
   { href: "/", label: "Home" },
@@ -32,6 +44,12 @@ export function SiteHeader() {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState("/");
+  const [scholarsUrl, setScholarsUrl] = useState('http://localhost:4500');
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+
+  useEffect(() => {
+    setScholarsUrl(getScholarsUrl());
+  }, []);
 
   useEffect(() => {
     // Check for user session in localStorage
@@ -55,6 +73,46 @@ export function SiteHeader() {
       }
     }
     setLoading(false);
+  }, []);
+
+  // Validate session by checking backend connectivity
+  useEffect(() => {
+    if (userSession) {
+      fetch('http://localhost:8000/api/health')
+        .then(res => {
+          if (!res.ok) {
+            // Backend not responding, clear session
+            localStorage.removeItem("userSession");
+            localStorage.removeItem("authToken");
+            setUserSession(null);
+          }
+        })
+        .catch(() => {
+          // Backend unreachable, keep session but show warning
+          console.warn('Admin backend not reachable');
+        });
+    }
+  }, [userSession]);
+
+  // Check backend status periodically
+  useEffect(() => {
+    const checkBackend = async () => {
+      setBackendStatus('checking');
+      try {
+        const response = await fetch('http://localhost:8000/api/health');
+        if (response.ok) {
+          setBackendStatus('online');
+        } else {
+          setBackendStatus('offline');
+        }
+      } catch {
+        setBackendStatus('offline');
+      }
+    };
+
+    checkBackend();
+    const interval = setInterval(checkBackend, 30000); // Check every 30 seconds
+    return () => clearInterval(interval);
   }, []);
 
   const isSignedIn = !!userSession;
@@ -101,12 +159,28 @@ export function SiteHeader() {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
+              {/* Backend Status Indicator */}
+              <div className="hidden md:flex items-center gap-1 px-2 py-1 rounded-md bg-slate-100 border border-slate-200">
+                {backendStatus === 'checking' && (
+                  <Activity className="w-3 h-3 text-yellow-500 animate-pulse" />
+                )}
+                {backendStatus === 'online' && (
+                  <CheckCircle className="w-3 h-3 text-green-500" />
+                )}
+                {backendStatus === 'offline' && (
+                  <XCircle className="w-3 h-3 text-red-500" />
+                )}
+                <span className="text-xs text-slate-600">
+                  {backendStatus === 'checking' ? 'Checking...' : backendStatus === 'online' ? 'Admin API' : 'Admin Offline'}
+                </span>
+              </div>
+              
               <Button 
                 asChild 
                 size="sm" 
                 className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0"
               >
-                <a href="http://localhost:4500" target="_blank" rel="noopener noreferrer">
+                <a href={scholarsUrl} target="_blank" rel="noopener noreferrer">
                   🎓 Scholar Forge
                 </a>
               </Button>
@@ -119,16 +193,30 @@ export function SiteHeader() {
                   Book Now
                 </a>
               </Button>
-              {!isSignedIn && (
-                <Button 
-                  asChild 
-                  size="sm" 
-                  variant="outline"
-                  className="border-purple-500/30 text-purple-700 hover:bg-purple-50"
-                >
-                  <Link href="/admin-signup">Admin Sign In</Link>
-                </Button>
-              )}
+              <Button 
+                asChild 
+                size="sm" 
+                variant="outline"
+                className="border-purple-500/30 text-purple-700 hover:bg-purple-50"
+              >
+                {isSignedIn ? (
+                  <div className="flex items-center gap-2">
+                    <Link href="/admin">Admin Panel</Link>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSignOut();
+                      }}
+                      className="ml-2 text-xs text-purple-600 hover:text-purple-800"
+                    >
+                      (Sign Out)
+                    </button>
+                  </div>
+                ) : (
+                  <Link href="/admin-signup">Stephen Asatsa Sign In</Link>
+                )}
+              </Button>
 
               {/* Mobile Menu Toggle */}
               <button
