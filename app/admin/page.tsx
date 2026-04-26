@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { HelpTooltip } from "@/components/admin/help-tooltip";
+import { AdminSearch } from "@/components/admin/admin-search";
 import {
   LayoutDashboard,
   FileText,
@@ -31,8 +33,15 @@ import {
   Edit3,
   Plus,
   Clock,
-  Upload
+  Upload,
+  Search,
+  Home,
+  Trophy,
+  Brain,
+  ExternalLink,
+  Command
 } from "lucide-react";
+import { api } from "@/components/api/client";
 
 interface Feature {
   id: string;
@@ -42,6 +51,7 @@ interface Feature {
   status: 'available' | 'coming-soon' | 'new';
   path: string;
   lastUpdated?: string;
+  helpText?: string;
 }
 
 interface TutorialStep {
@@ -66,6 +76,23 @@ export default function AdminDashboard() {
   const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+      if (e.key === 'Escape' && isSearchOpen) {
+        setIsSearchOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchOpen]);
 
   useEffect(() => {
     loadDashboardData();
@@ -77,19 +104,19 @@ export default function AdminDashboard() {
   const loadDashboardData = async () => {
     try {
       // Load system stats
-      const statsResponse = await fetch('http://localhost:8000/api/content');
+      const statsResponse = await api.get('/api/admin/content/site');
       let totalContent = 0;
       if (statsResponse.ok) {
         const data = await statsResponse.json();
-        totalContent = data.content?.length || 0;
+        totalContent = data.content ? Object.keys(data.content).length : 0;
       }
 
       // Load media stats
-      const mediaResponse = await fetch('http://localhost:8000/api/media');
+      const mediaResponse = await api.get('/api/admin/media');
       let totalMedia = 0;
       if (mediaResponse.ok) {
         const data = await mediaResponse.json();
-        totalMedia = data.media?.length || 0;
+        totalMedia = data.items?.length || 0;
       }
 
       setSystemStats({
@@ -108,7 +135,58 @@ export default function AdminDashboard() {
           icon: FileText,
           status: 'available',
           path: '/admin/content',
-          lastUpdated: new Date().toISOString()
+          lastUpdated: new Date().toISOString(),
+          helpText: 'Use this section to manage all textual content on your website. You can create pages, blog posts, research articles, and testimonials. Changes are saved immediately.'
+        },
+        {
+          id: 'home-page',
+          title: 'Home Page',
+          description: 'Edit home page content, hero section, and basic information.',
+          icon: Home,
+          status: 'available',
+          path: '/admin/content/home',
+          lastUpdated: new Date().toISOString(),
+          helpText: 'Customize the homepage hero section, welcome message, and key information that visitors see first.'
+        },
+        {
+          id: 'affiliations',
+          title: 'Professional Affiliations',
+          description: 'Manage professional affiliations and descriptions.',
+          icon: Award,
+          status: 'available',
+          path: '/admin/affiliations',
+          lastUpdated: new Date().toISOString(),
+          helpText: 'Add and manage your professional affiliations, memberships, and organizational relationships.'
+        },
+        {
+          id: 'research-interests',
+          title: 'Research Interests',
+          description: 'Manage research interests and focus areas.',
+          icon: Brain,
+          status: 'available',
+          path: '/admin/research-interests',
+          lastUpdated: new Date().toISOString(),
+          helpText: 'Define and showcase your research interests and areas of expertise.'
+        },
+        {
+          id: 'awards',
+          title: 'Awards & Honors',
+          description: 'Manage awards, honors, and recognition.',
+          icon: Trophy,
+          status: 'available',
+          path: '/admin/awards',
+          lastUpdated: new Date().toISOString(),
+          helpText: 'List your awards, honors, and professional recognition with dates and descriptions.'
+        },
+        {
+          id: 'external-profiles',
+          title: 'External Profiles',
+          description: 'Manage external profile links and social media.',
+          icon: ExternalLink,
+          status: 'available',
+          path: '/admin/external-profiles',
+          lastUpdated: new Date().toISOString(),
+          helpText: 'Add links to your external profiles, social media accounts, and professional networks.'
         },
         {
           id: 'media',
@@ -117,7 +195,8 @@ export default function AdminDashboard() {
           icon: Images,
           status: 'available',
           path: '/admin/media',
-          lastUpdated: new Date().toISOString()
+          lastUpdated: new Date().toISOString(),
+          helpText: 'Upload and manage all media files. Supported formats include images (JPG, PNG, WebP), videos, and documents (PDF).'
         },
         {
           id: 'users',
@@ -126,7 +205,8 @@ export default function AdminDashboard() {
           icon: Users,
           status: 'available',
           path: '/admin/users',
-          lastUpdated: new Date().toISOString()
+          lastUpdated: new Date().toISOString(),
+          helpText: 'Create and manage admin user accounts with different roles and permissions. Monitor active sessions and user activity.'
         },
         {
           id: 'analytics',
@@ -135,7 +215,8 @@ export default function AdminDashboard() {
           icon: BarChart3,
           status: 'available',
           path: '/admin/analytics',
-          lastUpdated: new Date().toISOString()
+          lastUpdated: new Date().toISOString(),
+          helpText: 'View detailed analytics about website traffic, visitor behavior, and content performance.'
         },
         {
           id: 'seo',
@@ -144,7 +225,8 @@ export default function AdminDashboard() {
           icon: Globe,
           status: 'available',
           path: '/admin/seo',
-          lastUpdated: new Date().toISOString()
+          lastUpdated: new Date().toISOString(),
+          helpText: 'Manage SEO metadata, meta tags, sitemaps, and search engine optimization settings.'
         },
         {
           id: 'settings',
@@ -153,7 +235,8 @@ export default function AdminDashboard() {
           icon: Settings,
           status: 'available',
           path: '/admin/settings',
-          lastUpdated: new Date().toISOString()
+          lastUpdated: new Date().toISOString(),
+          helpText: 'Configure global website settings including site name, contact information, and technical preferences.'
         },
         {
           id: 'security',
@@ -161,7 +244,8 @@ export default function AdminDashboard() {
           description: 'Advanced security settings, backup management, and system monitoring.',
           icon: ShieldCheck,
           status: 'coming-soon',
-          path: '/admin/security'
+          path: '/admin/security',
+          helpText: 'Manage security settings, view audit logs, and configure access controls.'
         },
         {
           id: 'api',
@@ -169,7 +253,8 @@ export default function AdminDashboard() {
           description: 'Manage API keys, webhooks, and third-party integrations.',
           icon: Database,
           status: 'coming-soon',
-          path: '/admin/api'
+          path: '/admin/api',
+          helpText: 'Configure API keys, webhooks, and third-party service integrations.'
         }
       ];
 
@@ -277,6 +362,18 @@ export default function AdminDashboard() {
           <p className="text-slate-600">Welcome back! Here\'s what\'s happening with your website.</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsSearchOpen(true)}
+            className="gap-2"
+          >
+            <Search className="w-4 h-4" />
+            <span className="hidden sm:inline">Search</span>
+            <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-mono">
+              <Command className="w-3 h-3" />K
+            </kbd>
+          </Button>
           <Badge className="bg-emerald-100 text-emerald-800">
             <CheckCircle className="w-3 h-3 mr-1" />
             System Healthy
@@ -287,6 +384,9 @@ export default function AdminDashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Global Search */}
+      <AdminSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
       {/* System Stats */}
       {systemStats && (
@@ -394,7 +494,7 @@ export default function AdminDashboard() {
       {/* Features Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {features.map((feature) => (
-          <Card key={feature.id} className="p-6 hover:shadow-lg transition-all duration-200 hover:scale-105">
+          <Card key={feature.id} className="p-6 hover:shadow-lg transition-all duration-200 hover:scale-105 relative">
             <div className="flex items-start justify-between mb-4">
               <div className={`p-3 rounded-lg ${
                 feature.status === 'available' ? 'bg-blue-100 text-blue-800' : 
@@ -403,7 +503,12 @@ export default function AdminDashboard() {
               }`}>
                 <feature.icon className="w-6 h-6" />
               </div>
-              {getStatusBadge(feature.status)}
+              <div className="flex items-center gap-2">
+                {feature.helpText && (
+                  <HelpTooltip content={feature.helpText} title={feature.title} />
+                )}
+                {getStatusBadge(feature.status)}
+              </div>
             </div>
             
             <h3 className="text-lg font-semibold text-slate-900 mb-2">{feature.title}</h3>

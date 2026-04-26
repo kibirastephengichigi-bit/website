@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -28,7 +28,10 @@ import {
   User,
   Mail,
   Phone,
+  Brain,
+  Trophy,
   Globe,
+  Award,
   Lock,
   Key,
   Activity,
@@ -62,17 +65,19 @@ import {
   Info,
   Zap,
   Target,
-  Award,
   BookOpen,
   GraduationCap,
   Briefcase,
   Handshake,
-  Megaphone
+  Megaphone,
+  Command
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { HelpTooltip } from "./help-tooltip";
 
 type SidebarItem = {
   id: string;
@@ -138,6 +143,34 @@ const sidebarItems: SidebarItem[] = [
         icon: FileText,
         href: "/admin/content",
         description: "Client testimonials and related profiles."
+      },
+      {
+        id: "affiliations",
+        label: "Professional Affiliations",
+        icon: Award,
+        href: "/admin/affiliations",
+        description: "Manage professional affiliations and descriptions"
+      },
+      {
+        id: "research-interests",
+        label: "Research Interests",
+        icon: Brain,
+        href: "/admin/research-interests",
+        description: "Manage research interests and focus areas"
+      },
+      {
+        id: "awards",
+        label: "Awards & Honors",
+        icon: Trophy,
+        href: "/admin/awards",
+        description: "Manage awards, honors, and recognition"
+      },
+      {
+        id: "external-profiles",
+        label: "External Profiles",
+        icon: Globe,
+        href: "/admin/external-profiles",
+        description: "Manage external profile links and social media"
       }
     ]
   },
@@ -381,6 +414,45 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ isOpen, onToggle, activePanel, onPanelChange, user }: AdminSidebarProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set(['content', 'media']));
+  const [searchQuery, setSearchQuery] = useState("");
+  const [recentlyVisited, setRecentlyVisited] = useState<string[]>([]);
+
+  // Load recently visited from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('admin-recently-visited');
+    if (stored) {
+      setRecentlyVisited(JSON.parse(stored));
+    }
+  }, []);
+
+  // Add to recently visited when navigating
+  const addToRecentlyVisited = (href: string) => {
+    const updated = [href, ...recentlyVisited.filter(h => h !== href)].slice(0, 5);
+    setRecentlyVisited(updated);
+    localStorage.setItem('admin-recently-visited', JSON.stringify(updated));
+  };
+
+  // Filter sidebar items based on search
+  const filterItems = (items: SidebarItem[], query: string): SidebarItem[] => {
+    if (!query.trim()) return items;
+    
+    const lowerQuery = query.toLowerCase();
+    return items.filter(item => {
+      const matchesLabel = item.label.toLowerCase().includes(lowerQuery);
+      const matchesDescription = item.description?.toLowerCase().includes(lowerQuery);
+      const matchesChildren = item.children?.some(child => 
+        child.label.toLowerCase().includes(lowerQuery) ||
+        child.description?.toLowerCase().includes(lowerQuery)
+      );
+      
+      return matchesLabel || matchesDescription || matchesChildren;
+    }).map(item => ({
+      ...item,
+      children: item.children ? filterItems(item.children, query) : item.children
+    }));
+  };
+
+  const filteredItems = filterItems(sidebarItems, searchQuery);
 
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev => {
@@ -398,6 +470,8 @@ export function AdminSidebar({ isOpen, onToggle, activePanel, onPanelChange, use
     if (item.children) {
       toggleExpanded(item.id);
     } else if (item.href) {
+      // Add to recently visited
+      addToRecentlyVisited(item.href);
       // Extract panel ID from href (remove #)
       const panelId = item.href.replace('#', '');
       onPanelChange(panelId);
@@ -414,18 +488,23 @@ export function AdminSidebar({ isOpen, onToggle, activePanel, onPanelChange, use
         <button
           onClick={() => handleItemClick(item)}
           className={`
-            w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
+            w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group
             ${isActive 
               ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg' 
               : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
             }
           `}
           style={{ paddingLeft: `${level * 12 + 12}px` }}
+          title={item.description}
         >
           <item.icon className="w-5 h-5 flex-shrink-0" />
           <span className="flex-1 text-left font-medium text-sm">{item.label}</span>
           
           <div className="flex items-center gap-2">
+            {item.description && !hasChildren && (
+              <HelpTooltip content={item.description} />
+            )}
+            
             {item.badge && (
               <Badge variant={isActive ? "secondary" : "outline"} className="text-xs">
                 {item.badge}
@@ -472,7 +551,7 @@ export function AdminSidebar({ isOpen, onToggle, activePanel, onPanelChange, use
       `}>
         {/* Header */}
         <div className="p-4 border-b border-slate-200">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
                 <ShieldCheck className="w-5 h-5 text-white" />
@@ -492,12 +571,63 @@ export function AdminSidebar({ isOpen, onToggle, activePanel, onPanelChange, use
               <X className="w-4 h-4" />
             </Button>
           </div>
+
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              type="text"
+              placeholder="Search menu..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9 text-sm"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
         
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto p-4">
+          {/* Recently Visited */}
+          {recentlyVisited.length > 0 && !searchQuery && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2 px-2">
+                <Clock className="w-4 h-4 text-slate-500" />
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Recently Visited</h3>
+              </div>
+              <div className="space-y-1">
+                {recentlyVisited.map((href, index) => {
+                  const item = sidebarItems.flatMap(i => i.children || [i]).find(i => i.href === href);
+                  if (!item) return null;
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={() => {
+                        addToRecentlyVisited(href);
+                        onToggle();
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                    >
+                      <item.icon className="w-4 h-4" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Menu Items */}
           <div className="space-y-2">
-            {sidebarItems.map(item => renderSidebarItem(item))}
+            {filteredItems.map(item => renderSidebarItem(item))}
           </div>
         </div>
         
