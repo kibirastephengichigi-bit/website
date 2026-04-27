@@ -60,10 +60,13 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
     origin = self.headers.get("Origin")
     # Allow localhost origins for development
     # Also allow cloudflared tunnel URLs for production
-    if origin and (origin == config.DEFAULT_ALLOWED_ORIGIN or 
-                  origin.startswith("http://localhost:") or 
+    # For single-domain setup, allow same-origin requests
+    if origin and (origin == config.DEFAULT_ALLOWED_ORIGIN or
+                  origin.startswith("http://localhost:") or
                   origin.startswith("http://127.0.0.1:") or
-                  origin.startswith("https://") and ".trycloudflare.com" in origin):
+                  origin.startswith("https://") and ".trycloudflare.com" in origin or
+                  # Allow same-origin requests for single-domain setup
+                  origin == os.environ.get("NEXT_PUBLIC_SITE_URL", "http://localhost:3000")):
       self.send_header("Access-Control-Allow-Origin", origin)
       self.send_header("Vary", "Origin")
       self.send_header("Access-Control-Allow-Credentials", "true")

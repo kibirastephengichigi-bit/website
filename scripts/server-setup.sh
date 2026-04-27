@@ -17,7 +17,7 @@ set -euo pipefail
 # Configuration
 REPO_URL="${REPO_URL:-}"
 APP_DIR="${APP_DIR:-$HOME/website}"
-DOMAIN_NAME="${DOMAIN_NAME:-devmain.co.ke}"
+DOMAIN_NAME="${DOMAIN_NAME:-your-domain.com}"
 SERVICE_USER="${SERVICE_USER:-$(id -un)}"
 INSTALL_NGINX="${INSTALL_NGINX:-0}"
 INSTALL_DOCKER="${INSTALL_DOCKER:-0}"
@@ -231,7 +231,7 @@ if [ "$INSTALL_NGINX" -eq 1 ]; then
 server {
     listen 80;
     listen [::]:80;
-    server_name devmain.co.ke www.devmain.co.ke;
+    server_name $DOMAIN_NAME www.$DOMAIN_NAME;
 
     client_max_body_size 25m;
 
@@ -248,11 +248,6 @@ server {
     }
 }
 NGINX_EOF
-
-    # Replace domain if different from default
-    if [ "$DOMAIN_NAME" != "devmain.co.ke" ]; then
-      sed -i "s/devmain.co.ke www.devmain.co.ke/$DOMAIN_NAME www.$DOMAIN_NAME/" "$NGINX_CONFIG"
-    fi
 
     run_root cp "$NGINX_CONFIG" /etc/nginx/sites-available/website-main.conf
     run_root ln -sfn /etc/nginx/sites-available/website-main.conf /etc/nginx/sites-enabled/website-main.conf
@@ -343,14 +338,14 @@ if [ ! -f "$APP_DIR/.env" ]; then
 DATABASE_URL="postgresql://postgres:password@localhost:5432/stephenasatsa"
 
 # NextAuth Configuration
-NEXTAUTH_URL="https://devmain.co.ke"
+NEXTAUTH_URL="https://$DOMAIN_NAME"
 NEXTAUTH_SECRET="CHANGE_THIS_TO_A_SECURE_RANDOM_STRING"
 
 # Site Configuration
-NEXT_PUBLIC_SITE_URL="https://devmain.co.ke"
+NEXT_PUBLIC_SITE_URL="https://$DOMAIN_NAME"
 
 # Admin Configuration
-ADMIN_EMAIL="admin@devmain.co.ke"
+ADMIN_EMAIL="admin@$DOMAIN_NAME"
 ADMIN_PASSWORD="CHANGE_THIS"
 
 # Google OAuth (optional)

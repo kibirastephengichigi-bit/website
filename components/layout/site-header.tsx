@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { siteContent } from "@/lib/content/site-content";
 import { SiteSidebar } from "./site-sidebar";
+import { api } from "@/components/api/client";
 
 // Get Scholars Forge URL - works in both development and production
 const getScholarsUrl = () => {
@@ -79,8 +80,7 @@ export function SiteHeader() {
   // Validate session by checking backend connectivity
   useEffect(() => {
     if (userSession) {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
-      fetch(`${apiUrl}/api/health`)
+      api.get('/api/health')
         .then(res => {
           if (!res.ok) {
             // Backend not responding, clear session
@@ -101,8 +101,7 @@ export function SiteHeader() {
     const checkBackend = async () => {
       setBackendStatus('checking');
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
-        const response = await fetch(`${apiUrl}/api/health`);
+        const response = await api.get('/api/health');
         if (response.ok) {
           setBackendStatus('online');
         } else {

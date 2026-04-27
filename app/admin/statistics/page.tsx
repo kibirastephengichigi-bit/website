@@ -86,7 +86,7 @@ export default function StatisticsAdminPage() {
 
   const loadStatistics = async () => {
     try {
-      const response = await api.get("/api/admin/statistics");
+      const response = await api.get("/api/statistics");
       if (!response.ok) {
         console.error(`Failed to load statistics: ${response.status} ${response.statusText}`);
         const text = await response.text();
@@ -107,9 +107,9 @@ export default function StatisticsAdminPage() {
 
     try {
       if (selectedItem.id === 0) {
-        await api.post("/api/admin/statistics", selectedItem);
+        await api.post("/api/statistics", selectedItem);
       } else {
-        await api.put("/api/admin/statistics", selectedItem);
+        await api.put("/api/statistics", selectedItem);
       }
       setSelectedItem(null);
       loadStatistics();
@@ -134,7 +134,7 @@ export default function StatisticsAdminPage() {
 
   const deleteStatistic = async (id: number) => {
     try {
-      await api.delete("/api/admin/statistics", { body: JSON.stringify({ id }) });
+      await api.delete(`/api/statistics?id=${id}`);
       loadStatistics();
     } catch (error) {
       console.error("Failed to delete statistic:", error);
@@ -143,7 +143,7 @@ export default function StatisticsAdminPage() {
 
   const togglePublished = async (item: Statistic) => {
     try {
-      await api.put("/api/admin/statistics", { ...item, published: !item.published });
+      await api.put("/api/statistics", { ...item, published: !item.published });
       loadStatistics();
     } catch (error) {
       console.error("Failed to toggle published:", error);
@@ -154,18 +154,16 @@ export default function StatisticsAdminPage() {
     if (index === 0) return;
     const newStats = [...statistics];
     [newStats[index - 1], newStats[index]] = [newStats[index], newStats[index - 1]];
-    newStats.forEach((item, i) => item.display_order = i);
+    newStats.forEach(item => api.put("/api/statistics", item));
     setStatistics(newStats);
-    newStats.forEach(item => api.put("/api/admin/statistics", item));
   };
 
   const moveDown = (index: number) => {
     if (index === statistics.length - 1) return;
     const newStats = [...statistics];
     [newStats[index], newStats[index + 1]] = [newStats[index + 1], newStats[index]];
-    newStats.forEach((item, i) => item.display_order = i);
+    newStats.forEach(item => api.put("/api/statistics", item));
     setStatistics(newStats);
-    newStats.forEach(item => api.put("/api/admin/statistics", item));
   };
 
   const filteredStatistics = statistics.filter(item =>

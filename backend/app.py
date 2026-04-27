@@ -5,9 +5,14 @@ import secrets
 import json
 import hashlib
 import re
+import os
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3001", "http://localhost:3000"])
+
+# CORS configuration for single-domain setup
+# Allow same-origin requests from the main website
+site_url = os.environ.get("NEXT_PUBLIC_SITE_URL", "http://localhost:3000")
+CORS(app, origins=["http://localhost:3001", "http://localhost:3000", site_url])
 
 # Admin credentials (stored in variables for easy updating)
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@localhost")

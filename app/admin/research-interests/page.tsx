@@ -158,7 +158,7 @@ export default function ResearchInterestsAdminPage() {
 
   const loadInterests = async () => {
     try {
-      const response = await api.get("/api/admin/research-interests");
+      const response = await api.get("/api/research-interests");
       const data = await response.json();
       setInterests(data.research_interests || []);
     } catch (error) {
@@ -173,9 +173,9 @@ export default function ResearchInterestsAdminPage() {
 
     try {
       if (selectedItem.id === 'new') {
-        await api.post("/api/admin/research-interests", selectedItem);
+        await api.post("/api/research-interests", selectedItem);
       } else {
-        await api.put("/api/admin/research-interests", selectedItem);
+        await api.put("/api/research-interests", selectedItem);
       }
       setSelectedItem(null);
       loadInterests();
@@ -198,7 +198,7 @@ export default function ResearchInterestsAdminPage() {
 
   const deleteInterest = async (id: string) => {
     try {
-      await api.delete("/api/admin/research-interests", { body: JSON.stringify({ id }) });
+      await api.delete(`/api/research-interests?id=${id}`);
       loadInterests();
     } catch (error) {
       console.error("Failed to delete research interest:", error);
@@ -207,7 +207,7 @@ export default function ResearchInterestsAdminPage() {
 
   const togglePublished = async (item: ResearchInterest) => {
     try {
-      await api.put("/api/admin/research-interests", { ...item, published: !item.published });
+      await api.put("/api/research-interests", { ...item, published: !item.published });
       loadInterests();
     } catch (error) {
       console.error("Failed to toggle published:", error);
@@ -218,20 +218,16 @@ export default function ResearchInterestsAdminPage() {
     if (index === 0) return;
     const newInterests = [...interests];
     [newInterests[index - 1], newInterests[index]] = [newInterests[index], newInterests[index - 1]];
-    newInterests.forEach((item, i) => item.displayOrder = i);
+    newInterests.forEach(item => api.put("/api/research-interests", item));
     setInterests(newInterests);
-    // Save new order
-    newInterests.forEach(item => api.put("/api/admin/research-interests", item));
   };
 
   const moveDown = (index: number) => {
     if (index === interests.length - 1) return;
     const newInterests = [...interests];
     [newInterests[index], newInterests[index + 1]] = [newInterests[index + 1], newInterests[index]];
-    newInterests.forEach((item, i) => item.displayOrder = i);
+    newInterests.forEach(item => api.put("/api/research-interests", item));
     setInterests(newInterests);
-    // Save new order
-    newInterests.forEach(item => api.put("/api/admin/research-interests", item));
   };
 
   const filteredInterests = interests.filter(item =>

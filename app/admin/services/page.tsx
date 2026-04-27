@@ -107,7 +107,7 @@ export default function ServicesAdminPage() {
 
   const loadServices = async () => {
     try {
-      const response = await api.get("/api/admin/services");
+      const response = await api.get("/api/services");
       if (!response.ok) {
         console.error(`Failed to load services: ${response.status} ${response.statusText}`);
         const text = await response.text();
@@ -128,9 +128,9 @@ export default function ServicesAdminPage() {
 
     try {
       if (selectedItem.id === 0) {
-        await api.post("/api/admin/services", selectedItem);
+        await api.post("/api/services", selectedItem);
       } else {
-        await api.put("/api/admin/services", selectedItem);
+        await api.put("/api/services", selectedItem);
       }
       setSelectedItem(null);
       setPreviewData(null);
@@ -147,7 +147,7 @@ export default function ServicesAdminPage() {
 
   const handleInlineSave = async (id: number) => {
     try {
-      await api.put("/api/admin/services", { ...editForm, id });
+      await api.put("/api/services", { ...editForm, id });
       setEditingId(null);
       setEditForm({});
       loadServices();
@@ -179,7 +179,7 @@ export default function ServicesAdminPage() {
 
   const deleteService = async (id: number) => {
     try {
-      await api.delete("/api/admin/services", { body: JSON.stringify({ id }) });
+      await api.delete(`/api/services?id=${id}`);
       loadServices();
     } catch (error) {
       console.error("Failed to delete service:", error);
@@ -188,7 +188,7 @@ export default function ServicesAdminPage() {
 
   const togglePublished = async (item: Service) => {
     try {
-      await api.put("/api/admin/services", { ...item, published: !item.published });
+      await api.put("/api/services", { ...item, published: !item.published });
       loadServices();
     } catch (error) {
       console.error("Failed to toggle published:", error);
@@ -201,7 +201,7 @@ export default function ServicesAdminPage() {
     [newServices[index - 1], newServices[index]] = [newServices[index], newServices[index - 1]];
     newServices.forEach((item, i) => item.display_order = i);
     setServices(newServices);
-    newServices.forEach(item => api.put("/api/admin/services", item));
+    newServices.forEach(item => api.put("/api/services", item));
   };
 
   const moveDown = (index: number) => {
@@ -210,7 +210,7 @@ export default function ServicesAdminPage() {
     [newServices[index], newServices[index + 1]] = [newServices[index + 1], newServices[index]];
     newServices.forEach((item, i) => item.display_order = i);
     setServices(newServices);
-    newServices.forEach(item => api.put("/api/admin/services", item));
+    newServices.forEach(item => api.put("/api/services", item));
   };
 
   const filteredServices = services.filter(item =>

@@ -25,9 +25,8 @@ export default function AdminSignInPage() {
     const checkBackend = async () => {
       setBackendStatus('checking');
       try {
-        const response = await fetch('/api/admin/health', {
-          credentials: 'include',
-        });
+        // Use the API client which handles the proxy correctly
+        const response = await api.get('/api/health');
         if (response.ok) {
           setBackendStatus('online');
         } else {
@@ -50,9 +49,7 @@ export default function AdminSignInPage() {
       // Retry health check a few times to see if backend comes online
       for (let i = 0; i < 3; i++) {
         await new Promise(resolve => setTimeout(resolve, 1500));
-        const healthResponse = await fetch('/api/admin/health', {
-          credentials: 'include',
-        });
+        const healthResponse = await api.get('/api/health');
         if (healthResponse.ok) {
           setBackendStatus('online');
           setStartingBackend(false);

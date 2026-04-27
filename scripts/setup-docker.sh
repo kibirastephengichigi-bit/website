@@ -5,7 +5,7 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yml"
 NGINX_TEMPLATE="$PROJECT_ROOT/deploy/nginx/website-main.conf"
-DOMAIN_NAME="${DOMAIN_NAME:-devmain.co.ke}"
+DOMAIN_NAME="${DOMAIN_NAME:-your-domain.com}"
 NGINX_AVAILABLE="/etc/nginx/sites-available/website-main.conf"
 NGINX_ENABLED="/etc/nginx/sites-enabled/website-main.conf"
 

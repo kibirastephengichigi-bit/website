@@ -34,8 +34,8 @@ export class ApiClient {
       return this.baseUrl;
     }
 
-    // Server-side fallback
-    this.baseUrl = 'http://localhost:8000';
+    // Server-side fallback - use environment variable or localhost
+    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     return this.baseUrl;
   }
 

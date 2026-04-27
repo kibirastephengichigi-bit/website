@@ -76,7 +76,7 @@ export default function HeroAdminPage() {
 
   const loadHeroes = async () => {
     try {
-      const response = await api.get("/api/admin/hero");
+      const response = await api.get("/api/hero");
       if (!response.ok) {
         console.error(`Failed to load hero content: ${response.status} ${response.statusText}`);
         const text = await response.text();
@@ -97,9 +97,9 @@ export default function HeroAdminPage() {
 
     try {
       if (selectedItem.id === 0) {
-        await api.post("/api/admin/hero", selectedItem);
+        await api.post("/api/hero", selectedItem);
       } else {
-        await api.put("/api/admin/hero", selectedItem);
+        await api.put("/api/hero", selectedItem);
       }
       setSelectedItem(null);
       loadHeroes();
@@ -127,7 +127,7 @@ export default function HeroAdminPage() {
 
   const deleteHero = async (id: number) => {
     try {
-      await api.delete("/api/admin/hero", { body: JSON.stringify({ id }) });
+      await api.delete("/api/hero", { body: JSON.stringify({ id }) });
       loadHero();
     } catch (error) {
       console.error("Failed to delete hero content:", error);
@@ -136,7 +136,7 @@ export default function HeroAdminPage() {
 
   const togglePublished = async (item: HeroContent) => {
     try {
-      await api.put("/api/admin/hero", { ...item, published: !item.published });
+      await api.put("/api/hero", { ...item, published: !item.published });
       loadHero();
     } catch (error) {
       console.error("Failed to toggle published:", error);
@@ -155,7 +155,7 @@ export default function HeroAdminPage() {
         cta_url: item.cta_url,
         published: false
       };
-      await api.post("/api/admin/hero", newItem);
+      await api.post("/api/hero", newItem);
       loadHero();
     } catch (error) {
       console.error("Failed to duplicate hero content:", error);

@@ -156,7 +156,7 @@ export default function AffiliationsAdminPage() {
   const loadAffiliations = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/admin/affiliations');
+      const response = await api.get('/api/affiliations');
       if (response.ok) {
         const data = await response.json();
         setAffiliations(data.affiliations || []);
@@ -182,7 +182,7 @@ export default function AffiliationsAdminPage() {
         published: item.published
       };
 
-      const response = await api.put(`/api/admin/affiliations?id=${item.id}`, payload);
+      const response = await api.put(`/api/affiliations?id=${item.id}`, payload);
       if (response.ok) {
         await loadAffiliations();
         setSelectedItem(null);
@@ -206,7 +206,7 @@ export default function AffiliationsAdminPage() {
         published: item.published !== false
       };
 
-      const response = await api.post('/api/admin/affiliations', payload);
+      const response = await api.post('/api/affiliations', payload);
       if (response.ok) {
         await loadAffiliations();
         setSelectedItem(null);
@@ -218,7 +218,7 @@ export default function AffiliationsAdminPage() {
 
   const deleteAffiliation = async (id: string) => {
     try {
-      const response = await api.delete(`/api/admin/affiliations?id=${id}`);
+      const response = await api.delete(`/api/affiliations?id=${id}`);
       if (response.ok) {
         setAffiliations(prev => prev.filter(item => item.id !== id));
       }

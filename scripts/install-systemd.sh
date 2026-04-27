@@ -10,7 +10,7 @@ BACKEND_SERVICE="${BACKEND_SERVICE:-devmain-backend.service}"
 SYSTEMD_DIR="${SYSTEMD_DIR:-/etc/systemd/system}"
 FRONTEND_PORT="${FRONTEND_PORT:-3000}"
 ADMIN_API_PORT="${ADMIN_API_PORT:-8000}"
-PUBLIC_ORIGIN="${PUBLIC_ORIGIN:-https://devmain.co.ke}"
+PUBLIC_ORIGIN="${PUBLIC_ORIGIN:-https://your-domain.com}"
 
 need_sudo() {
   [ "$(id -u)" -ne 0 ]

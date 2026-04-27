@@ -152,7 +152,7 @@ export default function AwardsAdminPage() {
 
   const loadAwards = async () => {
     try {
-      const response = await api.get("/api/admin/awards");
+      const response = await api.get("/api/awards");
       if (!response.ok) {
         console.error(`Failed to load awards: ${response.status} ${response.statusText}`);
         const text = await response.text();
@@ -175,9 +175,9 @@ export default function AwardsAdminPage() {
 
     try {
       if (selectedItem.id === 'new') {
-        await api.post("/api/admin/awards", selectedItem);
+        await api.post("/api/awards", selectedItem);
       } else {
-        await api.put("/api/admin/awards", selectedItem);
+        await api.put("/api/awards", selectedItem);
       }
       setSelectedItem(null);
       loadAwards();
@@ -204,7 +204,7 @@ export default function AwardsAdminPage() {
 
   const deleteAward = async (id: string) => {
     try {
-      await api.delete("/api/admin/awards", { body: JSON.stringify({ id }) });
+      await api.delete(`/api/awards?id=${id}`);
       loadAwards();
     } catch (error) {
       console.error("Failed to delete award:", error);
@@ -213,7 +213,7 @@ export default function AwardsAdminPage() {
 
   const togglePublished = async (item: Award) => {
     try {
-      await api.put("/api/admin/awards", { ...item, published: !item.published });
+      await api.put("/api/awards", { ...item, published: !item.published });
       loadAwards();
     } catch (error) {
       console.error("Failed to toggle published:", error);
@@ -226,7 +226,7 @@ export default function AwardsAdminPage() {
     [newAwards[index - 1], newAwards[index]] = [newAwards[index], newAwards[index - 1]];
     newAwards.forEach((item, i) => item.displayOrder = i);
     setAwards(newAwards);
-    newAwards.forEach(item => api.put("/api/admin/awards", item));
+    newAwards.forEach(item => api.put("/api/awards", item));
   };
 
   const moveDown = (index: number) => {
@@ -235,7 +235,7 @@ export default function AwardsAdminPage() {
     [newAwards[index], newAwards[index + 1]] = [newAwards[index + 1], newAwards[index]];
     newAwards.forEach((item, i) => item.displayOrder = i);
     setAwards(newAwards);
-    newAwards.forEach(item => api.put("/api/admin/awards", item));
+    newAwards.forEach(item => api.put("/api/awards", item));
   };
 
   const filteredAwards = awards.filter(item =>

@@ -78,7 +78,10 @@ start_dev() {
     
     print_status "Starting development server on port 4500..."
     print_command "npm run dev"
-    
+
+    # Set BASE_PATH for single-domain routing
+    export BASE_PATH="/scholars"
+
     # Start in background and save PID
     nohup npm run dev > "$LOG_FILE" 2>&1 &
     PID=$!
@@ -90,7 +93,7 @@ start_dev() {
     if ps -p $PID > /dev/null 2>&1; then
         print_success "Scholar Forge development server started (PID: $PID)"
         echo ""
-        echo "🌐 Access Scholar Forge at: http://localhost:4500"
+        echo "🌐 Access Scholar Forge at: http://localhost:3000/scholars (proxied) or http://localhost:4500 (direct)"
         echo "📋 Logs: $LOG_FILE"
         echo ""
         print_status "Use './scholar-forge-start.sh stop' to stop the server"
@@ -133,7 +136,10 @@ start_prod() {
     
     print_status "Starting production server on port 4500..."
     print_command "npm run serve"
-    
+
+    # Set BASE_PATH for single-domain routing
+    export BASE_PATH="/scholars"
+
     # Start in background and save PID
     nohup npm run serve > "$LOG_FILE" 2>&1 &
     PID=$!
@@ -145,7 +151,7 @@ start_prod() {
     if ps -p $PID > /dev/null 2>&1; then
         print_success "Scholar Forge production server started (PID: $PID)"
         echo ""
-        echo "🌐 Access Scholar Forge at: http://localhost:4500"
+        echo "🌐 Access Scholar Forge at: http://localhost:3000/scholars (proxied) or http://localhost:4500 (direct)"
         echo "📋 Logs: $LOG_FILE"
         echo ""
         print_status "Use './scholar-forge-start.sh stop' to stop the server"
@@ -199,6 +205,7 @@ check_status() {
             # Check if server is responding
             if curl -s http://localhost:4500 > /dev/null 2>&1; then
                 print_success "Server is responding at http://localhost:4500"
+                print_status "Proxied access available at http://localhost:3000/scholars"
             else
                 print_warning "Server process is running but not responding"
             fi
