@@ -61,7 +61,7 @@ export default function UserManagementPage() {
       {
         id: '1',
         username: 'admin',
-        email: 'admin@stephenasatsa.com',
+        email: process.env.ADMIN_EMAIL || 'admin@localhost',
         displayName: 'Stephen Asatsa',
         role: 'super_admin',
         status: 'active',
