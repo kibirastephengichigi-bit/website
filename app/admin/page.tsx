@@ -135,7 +135,7 @@ export default function AdminDashboard() {
       }
 
       // Load media stats
-      const mediaResponse = await api.get('/api/admin/media');
+      const mediaResponse = await api.get('/api/media');
       let totalMedia = 0;
       if (mediaResponse.ok) {
         const data = await mediaResponse.json();
