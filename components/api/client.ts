@@ -16,13 +16,19 @@ export class ApiClient {
       return this.baseUrl;
     }
 
-    // Use environment variable if set
+    // In development, use empty string to use Next.js rewrites
+    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+      this.baseUrl = '';
+      return this.baseUrl;
+    }
+
+    // Use environment variable if set (for production)
     if (process.env.NEXT_PUBLIC_API_URL) {
       this.baseUrl = process.env.NEXT_PUBLIC_API_URL;
       return this.baseUrl;
     }
 
-    // In browser, use current origin (works with cloudflared tunnel)
+    // In browser for production, use current origin (works with cloudflared tunnel)
     if (typeof window !== 'undefined') {
       this.baseUrl = window.location.origin;
       return this.baseUrl;

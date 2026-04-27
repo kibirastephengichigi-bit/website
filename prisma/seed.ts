@@ -23,7 +23,7 @@ async function main() {
     },
     create: {
       name: "Dr. Stephen Asatsa Admin",
-      email: process.env.ADMIN_EMAIL || "admin@stephenasatsa.com",
+      email: process.env.ADMIN_EMAIL || "admin@localhost",
       passwordHash,
       role: "ADMIN",
     },
