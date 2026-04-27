@@ -77,7 +77,7 @@ export default function MediaManagementPage() {
 
   const loadMedia = async () => {
     try {
-      const response = await fetch('/api/admin/media?limit=100');
+      const response = await fetch('/api/media?limit=100');
       if (response.ok) {
         const data = await response.json();
         if (data.media) {
@@ -125,7 +125,7 @@ export default function MediaManagementPage() {
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 200);
 
-      const response = await fetch('/api/admin/media', {
+      const response = await fetch('/api/media', {
         method: 'POST',
         body: formData
       });
@@ -180,7 +180,7 @@ export default function MediaManagementPage() {
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this media file?')) {
       try {
-        const response = await fetch(`/api/admin/media?id=${id}`, {
+        const response = await fetch(`/api/media?id=${id}`, {
           method: 'DELETE'
         });
         if (response.ok) {

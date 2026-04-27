@@ -198,46 +198,48 @@ export default function HeroAdminPage() {
       </Card>
 
       <div className="space-y-4">
-        {hero ? (
-          <Card key={hero.id} className="p-6">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-600">{hero.eyebrow}</p>
-                  <Badge variant={hero.published ? "default" : "secondary"}>
-                    {hero.published ? "Published" : "Draft"}
-                  </Badge>
-                  <span className="text-xs text-slate-400">ID: {hero.id}</span>
+        {heroes.length > 0 ? (
+          heroes.map((hero) => (
+            <Card key={hero.id} className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-600">{hero.eyebrow}</p>
+                    <Badge variant={hero.published ? "default" : "secondary"}>
+                      {hero.published ? "Published" : "Draft"}
+                    </Badge>
+                    <span className="text-xs text-slate-400">ID: {hero.id}</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">{hero.headline}</h3>
+                  {hero.description && <p className="text-sm text-slate-600 line-clamp-2">{hero.description}</p>}
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">{hero.headline}</h3>
-                {hero.description && <p className="text-sm text-slate-600 line-clamp-2">{hero.description}</p>}
+
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => copyId(hero.id)} title="Copy ID">
+                    {copiedId === hero.id ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => duplicateHero(hero)} title="Duplicate">
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => togglePublished(hero)} title={hero.published ? "Unpublish" : "Publish"}>
+                    {hero.published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setSelectedItem(hero)} title="Edit">
+                    <Edit3 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { if (confirm('Are you sure you want to delete this hero content?')) deleteHero(hero.id); }}
+                    className="text-red-600 hover:text-red-700"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
-              
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => copyId(hero.id)} title="Copy ID">
-                  {copiedId === hero.id ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => duplicateHero(hero)} title="Duplicate">
-                  <Copy className="w-4 h-4" />
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => togglePublished(hero)} title={hero.published ? "Unpublish" : "Publish"}>
-                  {hero.published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setSelectedItem(hero)} title="Edit">
-                  <Edit3 className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { if (confirm('Are you sure you want to delete this hero content?')) deleteHero(hero.id); }}
-                  className="text-red-600 hover:text-red-700"
-                  title="Delete"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          ))
         ) : (
           <div className="text-center text-slate-500 py-12">
             <p className="text-lg font-medium">No hero content found</p>

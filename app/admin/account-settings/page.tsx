@@ -92,7 +92,7 @@ export default function AccountSettingsPage() {
     }
 
     try {
-      const response = await api.put("/api/admin/user/username", { username: newUsername });
+      const response = await api.put("/api/user/username", { username: newUsername });
       if (response.ok) {
         setUsernameSuccess(true);
         // Update session
@@ -132,7 +132,7 @@ export default function AccountSettingsPage() {
     }
 
     try {
-      const response = await api.put("/api/admin/user/password", {
+      const response = await api.put("/api/user/password", {
         currentPassword,
         newPassword
       });

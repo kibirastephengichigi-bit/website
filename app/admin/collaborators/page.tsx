@@ -89,7 +89,7 @@ export default function CollaboratorsPage() {
 
   const loadCollaborators = async () => {
     try {
-      const response = await api.get("/api/admin/collaborators");
+      const response = await api.get("/api/collaborators");
       if (!response.ok) {
         console.error(`Failed to load collaborators: ${response.status} ${response.statusText}`);
         const text = await response.text();
@@ -110,9 +110,9 @@ export default function CollaboratorsPage() {
 
     try {
       if (selectedItem.id === 'new') {
-        await api.post("/api/admin/collaborators", selectedItem);
+        await api.post("/api/collaborators", selectedItem);
       } else {
-        await api.put("/api/admin/collaborators", selectedItem);
+        await api.put("/api/collaborators", selectedItem);
       }
       setSelectedItem(null);
       loadCollaborators();
@@ -128,7 +128,7 @@ export default function CollaboratorsPage() {
 
   const handleInlineSave = async (id: string) => {
     try {
-      await api.put("/api/admin/collaborators", { ...editForm, id });
+      await api.put("/api/collaborators", { ...editForm, id });
       setEditingId(null);
       setEditForm({});
       loadCollaborators();
@@ -265,7 +265,7 @@ export default function CollaboratorsPage() {
   const deleteCollaborator = async (id: string) => {
     if (!confirm('Are you sure you want to delete this collaborator?')) return;
     try {
-      const response = await api.delete(`/api/admin/collaborators?id=${id}`);
+      const response = await api.delete(`/api/collaborators?id=${id}`);
       if (response.ok) {
         loadCollaborators();
       } else {
@@ -281,7 +281,7 @@ export default function CollaboratorsPage() {
 
   const togglePublished = async (item: Collaborator) => {
     try {
-      await api.put("/api/admin/collaborators", { ...item, published: !item.published });
+      await api.put("/api/collaborators", { ...item, published: !item.published });
       loadCollaborators();
     } catch (error) {
       console.error("Failed to toggle published status:", error);

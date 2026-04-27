@@ -127,7 +127,7 @@ export default function AdminDashboard() {
   const loadDashboardData = async () => {
     try {
       // Load system stats
-      const statsResponse = await api.get('/api/admin/content/site');
+      const statsResponse = await api.get('/api/content/site');
       let totalContent = 0;
       if (statsResponse.ok) {
         const data = await statsResponse.json();

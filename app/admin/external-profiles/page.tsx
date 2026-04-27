@@ -182,7 +182,7 @@ export default function SocialLinksPage() {
 
   const loadProfiles = async () => {
     try {
-      const response = await api.get("/api/admin/external-profiles");
+      const response = await api.get("/api/external-profiles");
       if (!response.ok) {
         console.error(`Failed to load external profiles: ${response.status} ${response.statusText}`);
         const text = await response.text();
@@ -206,9 +206,9 @@ export default function SocialLinksPage() {
 
     try {
       if (selectedItem.id === 'new') {
-        await api.post("/api/admin/external-profiles", selectedItem);
+        await api.post("/api/external-profiles", selectedItem);
       } else {
-        await api.put("/api/admin/external-profiles", selectedItem);
+        await api.put("/api/external-profiles", selectedItem);
       }
       setSelectedItem(null);
       loadProfiles();
@@ -235,7 +235,7 @@ export default function SocialLinksPage() {
   const deleteProfile = async (id: string) => {
     if (!confirm('Are you sure you want to delete this profile?')) return;
     try {
-      await api.delete(`/api/admin/external-profiles?id=${id}`);
+      await api.delete(`/api/external-profiles?id=${id}`);
       loadProfiles();
     } catch (error) {
       console.error("Failed to delete profile:", error);
@@ -244,7 +244,7 @@ export default function SocialLinksPage() {
 
   const togglePublished = async (item: ExternalProfile) => {
     try {
-      await api.put("/api/admin/external-profiles", { ...item, published: !item.published });
+      await api.put("/api/external-profiles", { ...item, published: !item.published });
       loadProfiles();
     } catch (error) {
       console.error("Failed to toggle published status:", error);

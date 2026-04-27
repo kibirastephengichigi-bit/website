@@ -79,7 +79,7 @@ export default function BlogAdminPage() {
 
   const loadBlogPosts = async () => {
     try {
-      const response = await api.get("/api/admin/blog");
+      const response = await api.get("/api/blog");
       if (!response.ok) {
         console.error(`Failed to load blog posts: ${response.status} ${response.statusText}`);
         const text = await response.text();
@@ -101,7 +101,7 @@ export default function BlogAdminPage() {
     if (!selectedItem) return;
 
     try {
-      const response = await api.get("/api/admin/blog");
+      const response = await api.get("/api/blog");
       const data = await response.json();
       const currentData = data.content || { blogPosts: [], blogContentBySlug: {} };
 
@@ -125,7 +125,7 @@ export default function BlogAdminPage() {
         blogContentBySlug: currentData.blogContentBySlug
       };
 
-      await api.put("/api/admin/blog", payload);
+      await api.put("/api/blog", payload);
       setSelectedItem(null);
       loadBlogPosts();
     } catch (error) {
@@ -153,7 +153,7 @@ export default function BlogAdminPage() {
   const deletePost = async (id: string) => {
     if (!confirm('Are you sure you want to delete this blog post?')) return;
     try {
-      const response = await api.get("/api/admin/blog");
+      const response = await api.get("/api/blog");
       const data = await response.json();
       const currentData = data.content || { blogPosts: [], blogContentBySlug: {} };
 
@@ -163,7 +163,7 @@ export default function BlogAdminPage() {
         blogContentBySlug: currentData.blogContentBySlug
       };
 
-      await api.put("/api/admin/blog", payload);
+      await api.put("/api/blog", payload);
       loadBlogPosts();
     } catch (error) {
       console.error("Failed to delete blog post:", error);
@@ -172,7 +172,7 @@ export default function BlogAdminPage() {
 
   const togglePublished = async (item: BlogPost) => {
     try {
-      const response = await api.get("/api/admin/blog");
+      const response = await api.get("/api/blog");
       const data = await response.json();
       const currentData = data.content || { blogPosts: [], blogContentBySlug: {} };
 
@@ -185,7 +185,7 @@ export default function BlogAdminPage() {
         blogContentBySlug: currentData.blogContentBySlug
       };
 
-      await api.put("/api/admin/blog", payload);
+      await api.put("/api/blog", payload);
       loadBlogPosts();
     } catch (error) {
       console.error("Failed to toggle published:", error);
@@ -194,7 +194,7 @@ export default function BlogAdminPage() {
 
   const duplicatePost = async (item: BlogPost) => {
     try {
-      const response = await api.get("/api/admin/blog");
+      const response = await api.get("/api/blog");
       const data = await response.json();
       const currentData = data.content || { blogPosts: [], blogContentBySlug: {} };
 
@@ -214,7 +214,7 @@ export default function BlogAdminPage() {
         blogContentBySlug: currentData.blogContentBySlug
       };
 
-      await api.put("/api/admin/blog", payload);
+      await api.put("/api/blog", payload);
       loadBlogPosts();
     } catch (error) {
       console.error("Failed to duplicate blog post:", error);
