@@ -1,0 +1,9 @@
+[
+  {
+    "username": "admin",
+    "displayName": "Website Administrator",
+    "role": "super_admin",
+    "passwordHash": "pbkdf2_sha256$240000$4d5e2f53ad344b4eb93aa075c97c3d08$KGmg_TeJ7Vj0sTiY1umPYHRihBYvzIBiqSR52my5f-Q=",
+    "createdAt": "2026-04-16T15:20:05.402707+00:00"
+  }
+]

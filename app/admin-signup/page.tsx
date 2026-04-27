@@ -45,21 +45,20 @@ export default function AdminSignInPage() {
     setStartingBackend(true);
     setError("");
     try {
-      const response = await fetch('/api/admin/backend/start', { method: 'POST' });
-      if (response.ok) {
-        // Wait a moment for backend to start
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        // Check backend status again
+      // Retry health check a few times to see if backend comes online
+      for (let i = 0; i < 3; i++) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
         const healthResponse = await fetch('/api/admin/health');
         if (healthResponse.ok) {
           setBackendStatus('online');
+          setStartingBackend(false);
+          return;
         }
-      } else {
-        setError("Failed to start backend server");
       }
+      setError("Backend server is not responding. Please ensure the Python backend is running on port 8000.");
     } catch (error) {
-      console.error("Failed to start backend:", error);
-      setError("Failed to start backend server");
+      console.error("Failed to reach backend:", error);
+      setError("Cannot connect to backend. Please ensure the Python backend is running.");
     } finally {
       setStartingBackend(false);
     }
@@ -82,7 +81,7 @@ export default function AdminSignInPage() {
 
     try {
       // Call Python backend API via Next.js proxy
-      const response = await api.post('/api/auth/login', {
+      const response = await api.post('/api/admin/auth/login', {
         username: username,
         password: password,
         otp: "" // Empty OTP since TOTP is not configured by default
@@ -104,11 +103,6 @@ export default function AdminSignInPage() {
         authenticated: data.authenticated,
         timestamp: Date.now()
       }));
-      
-      // Initialize CSRF token and session refresh
-      await api.fetchCsrfToken();
-      await api.refreshSession();
-      api.startSessionRefreshTimer();
 
       // Check if user has already made a caching choice
       const cachingChoice = localStorage.getItem('adminCachingEnabled');

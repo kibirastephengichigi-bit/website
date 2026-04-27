@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 33% 99%;
+  --foreground: 215 43% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 215 43% 12%;
+  --muted: 210 29% 95%;
+  --muted-foreground: 215 16% 39%;
+  --border: 214 24% 89%;
+  --primary: 217 63% 22%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 157 45% 36%;
+  --accent-foreground: 0 0% 100%;
+  --ring: 157 45% 36%;
+  --font-sans: "Trebuchet MS", "Segoe UI", sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+  background-image:
+    linear-gradient(180deg, rgba(241, 245, 249, 0.9), rgba(248, 250, 252, 1)),
+    radial-gradient(circle at top, rgba(22, 78, 99, 0.09), transparent 25%);
+}
+
+::selection {
+  @apply bg-accent text-accent-foreground;
+}
+
+.container-shell {
+  @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+.section-space {
+  @apply py-16 sm:py-20 lg:py-28;
+}
+
+.prose-copy p {
+  @apply mb-4 leading-8 text-muted-foreground;
+}
+
+.prose-copy li {
+  @apply mb-3 leading-7 text-muted-foreground;
+}
