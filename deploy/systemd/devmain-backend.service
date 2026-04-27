@@ -12,7 +12,7 @@ Restart=always
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
 Environment=ADMIN_API_PORT=8000
-Environment=ADMIN_ALLOWED_ORIGIN=https://devmain.co.ke
+Environment=ADMIN_ALLOWED_ORIGIN=https://your-domain.com
 
 [Install]
 WantedBy=multi-user.target

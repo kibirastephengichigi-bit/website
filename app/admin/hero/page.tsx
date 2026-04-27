@@ -127,8 +127,8 @@ export default function HeroAdminPage() {
 
   const deleteHero = async (id: number) => {
     try {
-      await api.delete("/api/hero", { body: JSON.stringify({ id }) });
-      loadHero();
+      await api.delete(`/api/hero?id=${id}`);
+      loadHeroes();
     } catch (error) {
       console.error("Failed to delete hero content:", error);
     }
@@ -137,7 +137,7 @@ export default function HeroAdminPage() {
   const togglePublished = async (item: HeroContent) => {
     try {
       await api.put("/api/hero", { ...item, published: !item.published });
-      loadHero();
+      loadHeroes();
     } catch (error) {
       console.error("Failed to toggle published:", error);
     }
@@ -156,7 +156,7 @@ export default function HeroAdminPage() {
         published: false
       };
       await api.post("/api/hero", newItem);
-      loadHero();
+      loadHeroes();
     } catch (error) {
       console.error("Failed to duplicate hero content:", error);
     }
