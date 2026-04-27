@@ -73,7 +73,7 @@ export default function UserManagementPage() {
       {
         id: '2',
         username: 'editor1',
-        email: 'editor@stephenasatsa.com',
+        email: `editor@${process.env.DOMAIN_NAME || 'localhost'}`,
         displayName: 'Content Editor',
         role: 'editor',
         status: 'active',
