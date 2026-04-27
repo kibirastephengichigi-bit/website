@@ -85,7 +85,7 @@ export default function UserManagementPage() {
       {
         id: '3',
         username: 'viewer1',
-        email: 'viewer@stephenasatsa.com',
+        email: `viewer@${process.env.DOMAIN_NAME || 'localhost'}`,
         displayName: 'Content Viewer',
         role: 'viewer',
         status: 'active',

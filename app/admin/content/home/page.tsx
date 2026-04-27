@@ -135,7 +135,7 @@ export default function HomePageContentManagement() {
         ],
         contact: {
           phone: "+254 712 345 678",
-          email: "contact@stephenasatsa.com",
+          email: process.env.ADMIN_EMAIL || "contact@localhost",
           address: "Nairobi, Kenya",
           hours: "Mon-Fri: 9AM-6PM, Sat: 9AM-1PM"
         },

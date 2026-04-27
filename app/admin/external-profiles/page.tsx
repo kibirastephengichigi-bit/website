@@ -336,7 +336,10 @@ export default function SocialLinksPage() {
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4 flex-1">
                   <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${getColorClasses(item.color).iconBg} text-white shadow-lg`}>
-                    {(iconMap[item.icon] || Globe)({ className: "h-6 w-6" })}
+                    {(() => {
+                      const Icon = iconMap[item.icon] || Globe;
+                      return <Icon className="h-6 w-6" />;
+                    })()}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
