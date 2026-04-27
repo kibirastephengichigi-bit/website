@@ -25,7 +25,9 @@ export default function AdminSignInPage() {
     const checkBackend = async () => {
       setBackendStatus('checking');
       try {
-        const response = await fetch('/api/admin/health');
+        const response = await fetch('/api/admin/health', {
+          credentials: 'include',
+        });
         if (response.ok) {
           setBackendStatus('online');
         } else {
@@ -45,25 +47,21 @@ export default function AdminSignInPage() {
     setStartingBackend(true);
     setError("");
     try {
-      // Call the backend start API
-      const startResponse = await fetch('/api/admin/backend/start', { method: 'POST' });
-      if (!startResponse.ok) {
-        setError("Failed to start backend server");
-        return;
-      }
-
-      // Wait for backend to start and check health
-      for (let i = 0; i < 5; i++) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const healthResponse = await fetch('/api/admin/health');
+      // Retry health check a few times to see if backend comes online
+      for (let i = 0; i < 3; i++) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        const healthResponse = await fetch('/api/admin/health', {
+          credentials: 'include',
+        });
         if (healthResponse.ok) {
           setBackendStatus('online');
+          setStartingBackend(false);
           return;
         }
       }
-      setError("Backend server is not responding after starting. Please check the logs.");
+      setError("Backend server is not responding. Please start it manually.");
     } catch (error) {
-      console.error("Failed to start backend:", error);
+      console.error("Failed to reach backend:", error);
       setError("Cannot connect to backend. Please ensure the Python backend is running.");
     } finally {
       setStartingBackend(false);
