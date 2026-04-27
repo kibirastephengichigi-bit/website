@@ -148,8 +148,8 @@ export default function AdminSettingsPage() {
   };
   const [settings, setSettings] = useState<SettingsData>({
     siteName: 'Stephen Asatsa Website',
-    siteUrl: 'https://stephenasatsa.com',
-    adminEmail: 'admin@stephenasatsa.com',
+    siteUrl: `https://${process.env.DOMAIN_NAME || 'localhost'}`,
+    adminEmail: process.env.ADMIN_EMAIL || 'admin@localhost',
     timezone: 'UTC',
     dateFormat: 'MM/DD/YYYY',
     language: 'en',
